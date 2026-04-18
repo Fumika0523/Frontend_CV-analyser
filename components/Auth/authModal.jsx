@@ -327,7 +327,7 @@ const AuthModal = ({ isOpen, onClose, onAuthSuccess, initialMode = "signin" }) =
         <div
           className="am-card relative bg-white rounded-2xl w-full shadow-2xl"
           style={{
-            maxWidth: isSignup && role === "company" ? 700 : 490,
+            maxWidth: isSignup && 700,
             width: "100%",
             maxHeight: "95vh",
             fontFamily: "'DM Sans', sans-serif",
@@ -337,13 +337,6 @@ const AuthModal = ({ isOpen, onClose, onAuthSuccess, initialMode = "signin" }) =
             opacity: 1,
           }}
         >
-          {/* Accent bar */}
-          <div style={{
-            height: 4, flexShrink: 0,
-            borderRadius: "16px 16px 0 0",
-            background: "linear-gradient(90deg, #f97316, #fb923c, #fbbf24)",
-          }} />
-
           <div style={{ padding: "26px 30px 30px", overflowY: "auto", flex: 1 }}>
             <button className="am-close" onClick={onClose}>✕</button>
 
