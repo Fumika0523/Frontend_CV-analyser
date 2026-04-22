@@ -4,6 +4,7 @@ import { Link as LinkScroll } from "react-scroll";
 import ButtonOutline from "../misc/ButtonOutline.";
 import LogoVPN from "../../public/assets/Logo.svg";
 import AuthModal from "../Auth/authModal";
+import OtpModal from "../Auth/otpModal";
 
 const NAV_GUEST = [
   { id:"about",     label:"About" },
@@ -12,16 +13,16 @@ const NAV_GUEST = [
   { id:"testimoni", label:"Testimonial" },
 ];
 const NAV_CANDIDATE = [
-  { label:"Dashboard",       href:"/candidate/dashboard" },
-  { label:"Browse Jobs",     href:"/candidate/jobs" },
+  // { label:"Dashboard",       href:"/candidate/dashboard" },
+  { label:"Latest Jobs",     href:"/candidate/jobs" },
   { label:"My Applications", href:"/candidate/applications" },
-  { label:"CV Analyser",     href:"/candidate/cv" },
+  { label:"Search for job",     href:"/candidate/search-job" },
 ];
 const NAV_COMPANY = [
-  { label:"Dashboard",  href:"/company/dashboard" },
-  { label:"Post a Job", href:"/company/post-job" },
-  { label:"Applicants", href:"/company/applicants" },
-  { label:"Analytics",  href:"/company/analytics" },
+  // { label:"Dashboard",  href:"/company/dashboard" },
+  { label:"Posted Jobs", href:"/company/posted-job" },
+  { label:"Selected Candidates", href:"/company/selected-candidates" },
+  { label:"Post a new job",  href:"/company/post-job" },
 ];
 
 const HEADER_STYLES = `
@@ -55,7 +56,11 @@ const HEADER_STYLES = `
 const Header = () => {
   const [activeLink,   setActiveLink]   = useState(null);
   const [scrollActive, setScrollActive] = useState(false);
-  // const [showAuth,     setShowAuth]     = useState(false);
+  const [otpModal, setOtpModal] = useState({
+  isOpen: false,
+  userId: "",
+  email: "",
+});
   const [authModal, setAuthModal] = useState({
   isOpen: false,
   mode: "", 
@@ -148,11 +153,11 @@ console.log("authModal",authModal)
               >
                 Sign In
               </a>
-             <button
-              onClick={() => setAuthModal({ isOpen: true, mode: "signup" })}
-            >
-              Sign Up
-            </button>
+            <button
+  onClick={() => setAuthModal({ isOpen: true, mode: "signup" })}
+   className="font-medium tracking-wide py-2 px-5 sm:px-8 border border-orange-500 text-orange-500 bg-white-500 outline-none rounded-l-full rounded-r-full capitalize hover:bg-orange-500 hover:text-white-500 transition-all hover:shadow-orange ">
+  Sign Up
+</button>
               </>
             )}
           </div>
@@ -193,25 +198,53 @@ console.log("authModal",authModal)
           </ul>
         </div>
       </nav>
+{authModal.isOpen && (
+  <AuthModal
+    isOpen={authModal.isOpen}
+    initialMode={authModal.mode}
+    onClose={() => setAuthModal({ isOpen: false, mode: "signin" })}
+    onAuthSuccess={handleAuthSuccess}
+    onOtpSent={({ userId, email }) => {
+      setAuthModal({ isOpen: false, mode: "signin" });
+      setOtpModal({
+        isOpen: true,
+        userId,
+        email,
+      });
+    }}
+  />
+)}
 
-      {authModal.isOpen && (
-        <AuthModal
-          isOpen={authModal.isOpen}
-          initialMode={authModal.mode}
-          onClose={() => setAuthModal({ isOpen: false, mode: "signin" })}
-          onAuthSuccess={handleAuthSuccess}
-        />
-      )}
+{otpModal.isOpen && (
+  <OtpModal
+    isOpen={otpModal.isOpen}
+    userId={otpModal.userId}
+    email={otpModal.email}
+    onClose={() =>
+      setOtpModal({
+        isOpen: false,
+        userId: "",
+        email: "",
+      })
+    }
+    onVerified={(data) => {
+      if (data?.token) {
+        localStorage.setItem("token", data.token);
+      }
 
-      
-      {authModal.isOpen && (
-        <AuthModal
-          isOpen={authModal.isOpen}
-          initialMode={authModal.mode}
-          onClose={() => setAuthModal({ isOpen: false, mode: "signup" })}
-          onAuthSuccess={handleAuthSuccess}
-        />
-      )}
+      handleAuthSuccess({
+        name: data?.user?.name || "User",
+        role: data?.user?.role,
+      });
+
+      setOtpModal({
+        isOpen: false,
+        userId: "",
+        email: "",
+      });
+    }}
+  />
+)}
     </>
   );
 };
