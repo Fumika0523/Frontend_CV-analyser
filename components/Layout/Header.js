@@ -65,7 +65,6 @@ const Header = () => {
   isOpen: false,
   mode: "", 
 });
-console.log("authModal",authModal)
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [user,         setUser]         = useState(null);
@@ -91,7 +90,9 @@ console.log("authModal",authModal)
     ? { background:"#eff6ff", color:"#2563eb", border:"1px solid #bfdbfe" }
     : { background:"#fff7ed", color:"#ea580c", border:"1px solid #fed7aa" };
 
-  return (
+
+
+    return (
     <>
       <style>{HEADER_STYLES}</style>
 
@@ -136,7 +137,7 @@ console.log("authModal",authModal)
                         <p style={{ fontSize:13, fontWeight:700, color:"#111827", fontFamily:"'Sora',sans-serif" }}>{user.name}</p>
                         <p style={{ fontSize:11.5, color:"#9ca3af", marginTop:1 }}>{user.role === "company" ? "Company account" : "Candidate account"}</p>
                       </div>
-                      <Link href={user.role === "company" ? "/company/dashboard" : "/candidate/dashboard"}><a className="hd-ditem">📊 Dashboard</a></Link>
+                      {/* <Link href={user.role === "company" ? "/company/dashboard" : "/candidate/dashboard"}><a className="hd-ditem">📊 Dashboard</a></Link> */}
                       {user.role === "candidate" && <Link href="/candidate/cv"><a className="hd-ditem">📄 CV Analyser</a></Link>}
                       <Link href={user.role === "company" ? "/company/settings" : "/candidate/settings"}><a className="hd-ditem">⚙️ Settings</a></Link>
                       <div style={{ borderTop:"1px solid #f3f4f6", margin:"4px 0" }} />
@@ -154,10 +155,10 @@ console.log("authModal",authModal)
                 Sign In
               </a>
             <button
-  onClick={() => setAuthModal({ isOpen: true, mode: "signup" })}
-   className="font-medium tracking-wide py-2 px-5 sm:px-8 border border-orange-500 text-orange-500 bg-white-500 outline-none rounded-l-full rounded-r-full capitalize hover:bg-orange-500 hover:text-white-500 transition-all hover:shadow-orange ">
-  Sign Up
-</button>
+              onClick={() => setAuthModal({ isOpen: true, mode: "signup" })}
+              className="font-medium tracking-wide py-2 px-5 sm:px-8 border border-orange-500 text-orange-500 bg-white-500 outline-none rounded-l-full rounded-r-full capitalize hover:bg-orange-500 hover:text-white-500 transition-all hover:shadow-orange ">
+              Sign Up
+            </button>
               </>
             )}
           </div>
