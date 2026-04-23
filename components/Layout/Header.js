@@ -5,6 +5,9 @@ import ButtonOutline from "../misc/ButtonOutline.";
 import LogoVPN from "../../public/assets/Logo.svg";
 import AuthModal from "../Auth/authModal";
 import OtpModal from "../Auth/otpModal";
+import axios from "axios";
+import SettingsModal from "../Auth/settingsModal";
+
 
 const NAV_GUEST = [
   { id:"about",     label:"About" },
@@ -65,6 +68,7 @@ const Header = () => {
   isOpen: false,
   mode: "", 
 });
+const [settingsModalOpen, setSettingsModalOpen] = useState(false);
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [user,         setUser]         = useState(null);
@@ -81,7 +85,7 @@ const Header = () => {
     return () => document.removeEventListener("click", close);
   }, [dropdownOpen]);
 
-  const handleAuthSuccess = ({ name, role }) => setUser({ name, role });
+  const handleAuthSuccess = (userData) => setUser(userData);
   const handleLogout = () => { localStorage.removeItem("token"); setUser(null); setDropdownOpen(false); };
 
   const navLinks  = user ? (user.role === "company" ? NAV_COMPANY : NAV_CANDIDATE) : null;
@@ -90,7 +94,41 @@ const Header = () => {
     ? { background:"#eff6ff", color:"#2563eb", border:"1px solid #bfdbfe" }
     : { background:"#fff7ed", color:"#ea580c", border:"1px solid #fed7aa" };
 
+useEffect(() => {
+  const fetchUser = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return;
 
+      const res = await axios.get("http://localhost:8002/api/users/user-profile", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const fetchedUser = res.data.user;
+
+      setUser({
+        id: fetchedUser._id,
+        firstName: fetchedUser.firstName,
+        lastName: fetchedUser.lastName,
+        name: `${fetchedUser.firstName || ""} ${fetchedUser.lastName || ""}`.trim(),
+        email: fetchedUser.email,
+        role: fetchedUser.role,
+        phoneNumber: fetchedUser.phoneNumber || "",
+        companyName: fetchedUser.companyName || "",
+        companyDescription: fetchedUser.companyDescription || "",
+        location: fetchedUser.location || { city: "", country: "" },
+      });
+    } catch (error) {
+      console.error("Failed to fetch user:", error);
+      localStorage.removeItem("token");
+      setUser(null);
+    }
+  };
+
+  fetchUser();
+}, []);
 
     return (
     <>
@@ -133,13 +171,16 @@ const Header = () => {
                   </div>
                   {dropdownOpen && (
                     <div className="hd-dropdown">
-                      <div style={{ padding:"8px 14px 10px", borderBottom:"1px solid #f3f4f6", marginBottom:4 }}>
-                        <p style={{ fontSize:13, fontWeight:700, color:"#111827", fontFamily:"'Sora',sans-serif" }}>{user.name}</p>
-                        <p style={{ fontSize:11.5, color:"#9ca3af", marginTop:1 }}>{user.role === "company" ? "Company account" : "Candidate account"}</p>
-                      </div>
-                      {/* <Link href={user.role === "company" ? "/company/dashboard" : "/candidate/dashboard"}><a className="hd-ditem">📊 Dashboard</a></Link> */}
                       {user.role === "candidate" && <Link href="/candidate/cv"><a className="hd-ditem">📄 CV Analyser</a></Link>}
-                      <Link href={user.role === "company" ? "/company/settings" : "/candidate/settings"}><a className="hd-ditem">⚙️ Settings</a></Link>
+                      <button
+                          className="hd-ditem"
+                          onClick={() => {
+                            setSettingsModalOpen(true);
+                            setDropdownOpen(false);
+                          }}
+                        >
+                          ⚙️ Settings
+                        </button>
                       <div style={{ borderTop:"1px solid #f3f4f6", margin:"4px 0" }} />
                       <button className="hd-ditem danger" onClick={handleLogout}>🚪 Sign Out</button>
                     </div>
@@ -234,8 +275,16 @@ const Header = () => {
       }
 
       handleAuthSuccess({
+        id: data?.user?.id,
+        firstName: data?.user?.firstName || "",
+        lastName: data?.user?.lastName || "",
         name: data?.user?.name || "User",
+        email: data?.user?.email || "",
         role: data?.user?.role,
+        phoneNumber: data?.user?.phoneNumber || "",
+        companyName: data?.user?.companyName || "",
+        companyDescription: data?.user?.companyDescription || "",
+        location: data?.user?.location || { city: "", country: "" },
       });
 
       setOtpModal({
@@ -243,6 +292,18 @@ const Header = () => {
         userId: "",
         email: "",
       });
+    }}
+  />
+)}
+
+{settingsModalOpen && (
+  <SettingsModal
+    isOpen={settingsModalOpen}
+    user={user}
+    onClose={() => setSettingsModalOpen(false)}
+    onUserUpdated={(updatedUser) => {
+      setUser(updatedUser);
+      setSettingsModalOpen(false);
     }}
   />
 )}
