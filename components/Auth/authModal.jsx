@@ -222,6 +222,28 @@ const PasswordField = ({ name, label, value, onChange, placeholder, hint, requir
   );
 };
 
+const FREE_DOMAINS = [
+  "gmail.com",
+  "yahoo.com",
+  "hotmail.com",
+  "outlook.com",
+  "live.com",
+  "icloud.com",
+  "aol.com",
+  "protonmail.com",
+  "mail.com",
+  "ymail.com",
+  "googlemail.com",
+  "msn.com",
+  "me.com",
+  "mac.com",
+];
+
+const isPersonalEmail = (email) => {
+  const domain = email.split("@")[1]?.toLowerCase();
+  return FREE_DOMAINS.includes(domain);
+};
+
 const CloseBtn = ({ onClick }) => (
   <button className="am-close" onClick={onClick} aria-label="Close">
     <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
@@ -244,7 +266,19 @@ const SignInModal = ({ isOpen, onClose, onAuthSuccess, onOtpSent, onSwitchToSign
 
   if (!isOpen) return null;
 
-  const handleChange = (e) => setForm(p => ({ ...p, [e.target.name]: e.target.value }));
+const handleChange = (e) => {
+  const { name, value } = e.target;
+
+  setForm((prev) => ({ ...prev, [name]: value }));
+
+  // if (role === "company" && name === "email") {
+  //   if (value.includes("@") && isPersonalEmail(value)) {
+  //     setEmailWarn("Please use your official company email, not Gmail/Yahoo/etc.");
+  //   } else {
+  //     setEmailWarn("");
+  //   }
+  // }
+};
 
   const handleSubmit = async (e) => {
     e.preventDefault(); setMessage(""); setLoading(true);
@@ -371,7 +405,15 @@ const SignUpModal = ({ isOpen, onClose, onOtpSent, onSwitchToSignIn }) => {
   const handleChange = (e) => setForm(p => ({ ...p, [e.target.name]: e.target.value }));
 
   const handleSubmit = async (e) => {
-    e.preventDefault(); setMessage(""); setLoading(true);
+    e.preventDefault(); 
+    setMessage(""); 
+//     if (role === "company" && isPersonalEmail(form.email)) {
+//   setEmailWarn("Please use your official company email, not Gmail/Yahoo/etc.");
+//   setMessage("Company accounts cannot use personal email domains.");
+//   return;
+// }
+    
+    setLoading(true);
     try {
       const payload = role === "candidate"
         ? { firstName:form.firstName, lastName:form.lastName, email:form.email, password:form.password,
@@ -426,7 +468,17 @@ const SignUpModal = ({ isOpen, onClose, onOtpSent, onSwitchToSignIn }) => {
                 ].map(({ value, icon, label }) => (
                   <button key={value} type="button"
                     className={`am-role-btn ${role === value ? "active" : ""}`}
-                    onClick={() => { setRole(value); setEmailWarn(""); setMessage(""); }}>
+                  onClick={() => {
+  setRole(value);
+  setMessage("");
+
+  // if (value === "company" && form.email.includes("@") && isPersonalEmail(form.email)) {
+  //   setEmailWarn("Please use your official company email, not Gmail/Yahoo/etc.");
+  // } else {
+  //   setEmailWarn("");
+  // }
+}}
+>
                     <span style={{ fontSize: 16 }}>{icon}</span> {label}
                   </button>
                 ))}
