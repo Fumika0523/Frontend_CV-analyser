@@ -130,7 +130,9 @@ const STYLES = `
     display: flex; align-items: center; justify-content: center; gap: 8px;
   }
   .am-submit:hover:not(:disabled) { opacity: .91; transform: translateY(-1.5px); box-shadow: 0 6px 22px rgba(249,115,22,.42); }
-  .am-submit:disabled              { opacity: .6; cursor: not-allowed; }
+  .am-submit:disabled   {
+   opacity: .6; cursor: not-allowed; 
+   }
 
   .am-two  { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
   .am-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; align-items: start; }
