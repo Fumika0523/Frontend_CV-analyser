@@ -1,7 +1,6 @@
-/* purgecss start ignore */
-
 @tailwind base;
 @tailwind components;
+@tailwind utilities;
 
 html {
   font-family: "Rubik", sans-serif;
@@ -12,13 +11,15 @@ body {
 p {
   @apply text-black-500;
 }
+
 .animation-hover:after {
-  background: none repeat scroll 0 0 transparent;
   content: "";
   height: 2px;
-  transition: width 0.3s ease 0s, left 0.3s ease 0s;
-  @apply w-0 bg-orange-500 left-1/2 block bottom-0 absolute;
+  transition: width 0.3s ease, left 0.3s ease;
+  @apply w-0 left-1/2 block bottom-0 absolute;
+  background-color: #1e3a8a; /* deep navy */
 }
+
 .animation-active:after {
   @apply left-0 w-full;
 }
@@ -58,8 +59,10 @@ li.check:before {
 .slick-dots span {
   @apply bg-gray-500;
 }
+
 .slick-dots .slick-active span {
-  @apply bg-orange-500 rounded-l-full rounded-r-full w-12;
+  @apply rounded-l-full rounded-r-full w-12;
+  background-color: #1e3a8a; /* deep navy */
 }
 
 /* purgecss end ignore */
