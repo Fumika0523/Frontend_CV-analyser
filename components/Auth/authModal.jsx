@@ -32,7 +32,7 @@ const STYLES = `
     align-items: center !important;
     justify-content: center !important;
     padding: 16px !important;
-    background: rgba(0,0,0,0.62) !important;
+    background: rgba(15,23,42,0.68) !important;
     backdrop-filter: blur(5px);
     animation: amFadeIn 0.2s ease;
   }
@@ -52,16 +52,17 @@ const STYLES = `
     max-height: 92vh;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 28px 64px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.07);
+    box-shadow: 0 28px 64px rgba(15,23,42,0.22), 0 2px 8px rgba(15,23,42,0.08);
     animation: amSlideUp 0.32s cubic-bezier(0.34,1.56,0.64,1);
     overflow: hidden;
   }
+
   .am-card-signin { max-width: 440px; }
   .am-card-signup { max-width: 660px; }
 
   .am-top-bar {
     height: 4px; flex-shrink: 0;
-    background: linear-gradient(90deg, #f97316, #fb923c);
+    background: linear-gradient(90deg, #0f172a, #1d4ed8);
     border-radius: 20px 20px 0 0;
   }
 
@@ -69,70 +70,97 @@ const STYLES = `
     padding: 20px 30px;
     overflow-y: auto; flex: 1;
     scrollbar-width: thin;
-    scrollbar-color: #f97316 #f3f4f6;
+    scrollbar-color: #1d4ed8 #f1f5f9;
   }
+
   .am-body::-webkit-scrollbar       { width: 5px; }
-  .am-body::-webkit-scrollbar-track { background: #f9fafb; }
-  .am-body::-webkit-scrollbar-thumb { background: #f97316; border-radius: 99px; }
+  .am-body::-webkit-scrollbar-track { background: #f8fafc; }
+  .am-body::-webkit-scrollbar-thumb { background: #1d4ed8; border-radius: 99px; }
 
   .am-close {
     position: absolute; top: 14px; right: 14px;
     width: 32px; height: 32px; border-radius: 50%;
-    background: #f3f4f6; border: none; cursor: pointer;
+    background: #f1f5f9; border: none; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    color: #6b7280; z-index: 10;
+    color: #64748b; z-index: 10;
     transition: background .15s, color .15s, transform .18s;
   }
-  .am-close:hover { background: #fee2e2; color: #ef4444; }
+
+  .am-close:hover { background: #dbeafe; color: #1d4ed8; }
 
   .am-input {
     width: 100%; padding: 10px 13px;
-    border: 1.5px solid #e5e7eb; border-radius: 10px;
+    border: 1.5px solid #e2e8f0; border-radius: 10px;
     font-size: 13.5px; font-family: 'DM Sans', sans-serif;
-    color: #111827; background: #fff; outline: none;
+    color: #0f172a; background: #fff; outline: none;
     transition: border-color .2s, box-shadow .2s;
   }
-  .am-input:focus      { border-color: #f97316; box-shadow: 0 0 0 3px rgba(249,115,22,.13); }
-  .am-input::placeholder { color: #9ca3af; }
-  .am-input.error      { border-color: #f43f5e; box-shadow: 0 0 0 3px rgba(244,63,94,.10); }
+
+  .am-input:focus {
+    border-color: #1d4ed8;
+    box-shadow: 0 0 0 3px rgba(29,78,216,.13);
+  }
+
+  .am-input::placeholder { color: #94a3b8; }
+
+  .am-input.error {
+    border-color: #f43f5e;
+    box-shadow: 0 0 0 3px rgba(244,63,94,.10);
+  }
 
   .am-label {
-    font-size: 11.5px; font-weight: 600; color: #374151;
+    font-size: 11.5px; font-weight: 600; color: #334155;
     font-family: 'Sora', sans-serif; letter-spacing: .03em;
     margin-bottom: 4px; display: block;
   }
-  .am-label span { color: #f97316; }
 
-  .am-hint { font-size: 11.5px; color: #9ca3af; margin-top: 3px; font-family: 'DM Sans', sans-serif; }
-  .am-hint.warn { color: #f97316; }
+  .am-label span { color: red; }
+
+  .am-hint { font-size: 11.5px; color: #94a3b8; margin-top: 3px; font-family: 'DM Sans', sans-serif; }
+  .am-hint.warn { color: #1d4ed8; }
 
   .am-role-btn {
     flex: 1; padding: 12px 0; border-radius: 11px;
     font-size: 14px; font-weight: 600; font-family: 'Sora', sans-serif;
-    cursor: pointer; border: 1.5px solid #e5e7eb;
-    background: #fff; color: #6b7280;
+    cursor: pointer; border: 1.5px solid #e2e8f0;
+    background: #fff; color: #64748b;
     transition: all .18s ease;
     display: flex; align-items: center; justify-content: center; gap: 7px;
   }
-  .am-role-btn:hover  { border-color: #f97316; color: #f97316; background: #fff7ed; }
+
+  .am-role-btn:hover {
+    border-color: #1d4ed8;
+    color: #1d4ed8;
+    background: #eff6ff;
+  }
+
   .am-role-btn.active {
-    background: #fff7ed; border-color: #f97316; color: #ea580c;
-    box-shadow: 0 0 0 2.5px rgba(249,115,22,.18);
+    background: #eff6ff;
+    border-color: #1d4ed8;
+    color: #1e3a8a;
+    box-shadow: 0 0 0 2.5px rgba(29,78,216,.18);
   }
 
   .am-submit {
     width: 100%; padding: 13px; border: none; border-radius: 12px;
-    background: linear-gradient(135deg, #f97316, #ea580c);
+    background: linear-gradient(135deg, #1d4ed8, #1e3a8a);
     color: #fff; font-size: 14.5px; font-weight: 700;
     font-family: 'Sora', sans-serif; cursor: pointer; letter-spacing: .02em;
     transition: opacity .2s, transform .15s, box-shadow .2s;
-    box-shadow: 0 4px 16px rgba(249,115,22,.32);
+    box-shadow: 0 4px 16px rgba(29,78,216,.28);
     display: flex; align-items: center; justify-content: center; gap: 8px;
   }
-  .am-submit:hover:not(:disabled) { opacity: .91; transform: translateY(-1.5px); box-shadow: 0 6px 22px rgba(249,115,22,.42); }
-  .am-submit:disabled   {
-   opacity: .6; cursor: not-allowed; 
-   }
+
+  .am-submit:hover:not(:disabled) {
+    opacity: .94;
+    transform: translateY(-1.5px);
+    box-shadow: 0 6px 22px rgba(29,78,216,.38);
+  }
+
+  .am-submit:disabled {
+    opacity: .6;
+    cursor: not-allowed;
+  }
 
   .am-two  { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
   .am-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; align-items: start; }
@@ -140,18 +168,23 @@ const STYLES = `
 
   .am-divider {
     display: flex; align-items: center; gap: 10px;
-    color: #9ca3af; font-size: 12px; font-family: 'DM Sans', sans-serif;
+    color: #94a3b8; font-size: 12px; font-family: 'DM Sans', sans-serif;
     margin: 18px 0 14px;
   }
-  .am-divider::before,.am-divider::after { content: ''; flex: 1; height: 1px; background: #e5e7eb; }
+
+  .am-divider::before,.am-divider::after {
+    content: ''; flex: 1; height: 1px; background: #e2e8f0;
+  }
 
   .am-pw-wrap { position: relative; }
+
   .am-pw-eye {
     position: absolute; right: 11px; top: 50%; transform: translateY(-50%);
-    background: none; border: none; cursor: pointer; color: #9ca3af; padding: 0;
+    background: none; border: none; cursor: pointer; color: #94a3b8; padding: 0;
     display: flex; align-items: center; transition: color .15s;
   }
-  .am-pw-eye:hover { color: #f97316; }
+
+  .am-pw-eye:hover { color: #1d4ed8; }
 
   @media (max-width: 540px) {
     .am-two  { grid-template-columns: 1fr; }
@@ -286,24 +319,32 @@ const handleChange = (e) => {
     e.preventDefault(); setMessage(""); setLoading(true);
     try {
       const res = await axios.post("http://localhost:8002/api/users/signin", form);
-      console.log("handleSubmit",res.data.user)
-      if (res.data.token) {
-        localStorage.setItem("token", res.data.token);
-        setMessage("Login successful!");
-        onAuthSuccess?.({ name: res.data.user?.name || "User", role: res.data.user?.role });
-        setTimeout(onClose, 800);
-      } else if (res.data.userId) {
-        setMessage(res.data.message || "OTP sent to your email");
-        onOtpSent?.({ userId: res.data.userId, email: form.email });
-      }
-    } catch (err) {
-      if (err?.response?.status === 403 && err?.response?.data?.userId) {
-        setMessage(err.response.data.message || "Please verify your email");
-        onOtpSent?.({ userId: err.response.data.userId, email: form.email });
-      } else {
-        setMessage(err?.response?.data?.message || "Invalid email or password.");
-      }
-    }
+      console.log("handleSubmit",res.data)
+     if (res.data.userId) {
+  setMessage(res.data.message || "OTP sent to your email");
+
+  onOtpSent?.({
+    userId: res.data.userId,
+    email: form.email,
+  });
+}
+ } catch (err) {
+  console.log("SIGNIN ERROR:", err.response?.data);
+  console.log("onOtpSent exists?", onOtpSent);
+
+  if (err?.response?.status === 403 && err?.response?.data?.userId) {
+    console.log("CALLING onOtpSent NOW");
+
+    setMessage(err.response.data.message || "Please verify your email");
+
+    onOtpSent?.({
+      userId: err.response.data.userId,
+      email: form.email,
+    });
+  } else {
+    setMessage(err?.response?.data?.message || "Invalid email or password.");
+  }
+}
     setLoading(false);
   };
 
@@ -320,14 +361,14 @@ const handleChange = (e) => {
             <div style={{ textAlign: "center", marginBottom: 24 }}>
               <div style={{
                 width: 60, height: 60, borderRadius: "50%", margin: "0 auto 14px",
-                background: "linear-gradient(145deg,#fff7ed,#ffedd5)",
-                border: "2px solid #fed7aa",
+                background: "linear-gradient(145deg,#eff6ff,#dbeafe)",
+                border: "2px solid #bfdbfe",
                 display: "flex", alignItems: "center", justifyContent: "center",
               }}>
                 {/* Person icon */}
                 <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-                  <circle cx="14" cy="10" r="5" stroke="#f97316" strokeWidth="1.8"/>
-                  <path d="M4 25c0-5.523 4.477-10 10-10s10 4.477 10 10" stroke="#f97316" strokeWidth="1.8" strokeLinecap="round"/>
+                  <circle cx="14" cy="10" r="5" stroke="#1d4ed8" strokeWidth="1.8"/>
+                  <path d="M4 25c0-5.523 4.477-10 10-10s10 4.477 10 10" stroke="#1d4ed8" strokeWidth="1.8" strokeLinecap="round"/>
                 </svg>
               </div>
               <h2 style={{ margin: 0, fontFamily: "'Sora',sans-serif", fontSize: 22, fontWeight: 700, color: "#111827" }}>
@@ -348,7 +389,7 @@ const handleChange = (e) => {
                 <PasswordField name="password" label="Password" required
                   placeholder="Your password" value={form.password} onChange={handleChange} />
                 <div style={{ textAlign: "right", marginTop: 5 }}>
-                  <a href="#" style={{ fontSize: 12.5, color: "#f97316", fontWeight: 600, textDecoration: "none", fontFamily: "'DM Sans',sans-serif" }}>
+                  <a href="#" style={{ fontSize: 12.5, color: "grey", fontWeight: 600, textDecoration: "none", fontFamily: "'DM Sans',sans-serif" }}>
                     Forgot password?
                   </a>
                 </div>
@@ -366,7 +407,7 @@ const handleChange = (e) => {
             <p style={{ textAlign: "center", fontSize: 14, fontFamily: "'DM Sans',sans-serif", color: "#6b7280", margin: 0 }}>
               Don't have an account?{" "}
               <span onClick={onSwitchToSignUp}
-                style={{ color: "#f97316", cursor: "pointer", fontWeight: 700, textDecoration: "underline", textUnderlineOffset: 3 }}>
+                style={{ color: "#1d4ed8", cursor: "pointer", fontWeight: 700, textDecoration: "underline", textUnderlineOffset: 3 }}>
                 Create one free →
               </span>
             </p>
@@ -461,7 +502,7 @@ const SignUpModal = ({ isOpen, onClose, onOtpSent, onSwitchToSignIn }) => {
             {/* Role selector */}
             <div style={{ marginBottom: 16 }}>
               <p className="am-label" style={{ marginBottom: 8 }}>
-                I'm joining as… <span style={{ color: "#f97316" }}>*</span>
+                I'm joining as… <span style={{ color: "red" }}>*</span>
               </p>
               <div style={{ display: "flex", gap: 10 }}>
                 {[
@@ -626,7 +667,7 @@ const SignUpModal = ({ isOpen, onClose, onOtpSent, onSwitchToSignIn }) => {
             <p style={{ textAlign:"center", fontSize:14, fontFamily:"'DM Sans',sans-serif", color:"#6b7280", margin:0 }}>
               Already have an account?{" "}
               <span onClick={onSwitchToSignIn}
-                style={{ color:"#f97316", cursor:"pointer", fontWeight:700, textDecoration:"underline", textUnderlineOffset:3 }}>
+                style={{ color:"#1d4ed8", cursor:"pointer", fontWeight:700, textDecoration:"underline", textUnderlineOffset:3 }}>
                 Sign in →
               </span>
             </p>

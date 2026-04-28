@@ -41,21 +41,25 @@ li.custom-list:before {
   top: -0.35em;
   @apply absolute block;
 }
+
 li.circle-check:before {
   background-image: url("/assets/Icon/checklist.svg");
   left: -0.7em;
   top: -0.4em;
 }
+
 li.check:before {
   left: -0.5em;
   background-image: url("/assets/Icon/jam_check.svg");
   top: -0.5em;
   font-size: 400%;
 }
+
 /* Slideshow */
 .slick-dots li {
   @apply inline-block;
 }
+
 .slick-dots span {
   @apply bg-gray-500;
 }
@@ -65,7 +69,5 @@ li.check:before {
   background-color: #1e3a8a; /* deep navy */
 }
 
-/* purgecss end ignore */
-@tailwind utilities;
-/* purgecss start ignore */
-/* purgecss end ignore */
+
+

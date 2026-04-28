@@ -17,8 +17,8 @@ const STYLES = `
     to   { opacity: 1; transform: translateY(0)   scale(1);    }
   }
   @keyframes amPulse {
-    0%, 100% { box-shadow: 0 0 0 0   rgba(249,115,22,.35); }
-    50%       { box-shadow: 0 0 0 12px rgba(249,115,22,.0);  }
+    0%, 100% { box-shadow: 0 0 0 0   rgba(29,78,216,.35); }
+    50%       { box-shadow: 0 0 0 12px rgba(29,78,216,.0);  }
   }
   @keyframes amBounce {
     0%,100% { transform: translateY(0); }
@@ -29,26 +29,26 @@ const STYLES = `
 
   .otp-box {
     width: 48px; height: 56px;
-    border: 2px solid #e5e7eb; border-radius: 12px;
+    border: 2px solid #e2e8f0; border-radius: 12px;
     font-size: 22px; font-weight: 700; font-family: 'Sora', sans-serif;
-    color: #111827; text-align: center; background: #fafafa; outline: none;
+    color: #111827; text-align: center; background: #f8fafc; outline: none;
     transition: border-color .2s, box-shadow .2s, background .2s;
-    caret-color: #f97316;
+    caret-color: #1d4ed8;
   }
-  .otp-box:focus  { border-color: #f97316; background: #fff7ed; box-shadow: 0 0 0 3.5px rgba(249,115,22,.18); }
-  .otp-box.filled { border-color: #fb923c; background: #fff7ed; color: #ea580c; }
+  .otp-box:focus  { border-color: #1d4ed8; background: #eff6ff; box-shadow: 0 0 0 3.5px rgba(29,78,216,.18); }
+  .otp-box.filled { border-color: #3b82f6; background: #eff6ff; color: #1d4ed8; }
   .otp-box.error  { border-color: #f43f5e; background: #fff1f2; box-shadow: 0 0 0 3px rgba(244,63,94,.12); animation: amBounce .4s ease; }
 
   .otp-submit {
-    width: 100%; padding: 13px; background: linear-gradient(135deg, #f97316, #ea580c);
+    width: 100%; padding: 13px; background: linear-gradient(135deg, #1d4ed8, #1e3a8a);
     color: #fff; border: none; border-radius: 12px;
     font-size: 15px; font-weight: 700; font-family: 'Sora', sans-serif;
     cursor: pointer; letter-spacing: .02em;
     transition: opacity .2s, transform .15s, box-shadow .2s;
-    box-shadow: 0 4px 14px rgba(249,115,22,.35);
+    box-shadow: 0 4px 14px rgba(29,78,216,.35);
     display: flex; align-items: center; justify-content: center; gap: 8px;
   }
-  .otp-submit:hover:not(:disabled)  { opacity: .92; transform: translateY(-1.5px); box-shadow: 0 6px 20px rgba(249,115,22,.42); }
+  .otp-submit:hover:not(:disabled)  { opacity: .92; transform: translateY(-1.5px); box-shadow: 0 6px 20px rgba(29,78,216,.42); }
   .otp-submit:active:not(:disabled) { transform: translateY(0); }
   .otp-submit:disabled              { opacity: .6; cursor: not-allowed; }
 
@@ -60,18 +60,18 @@ const STYLES = `
     border-radius: 50%;
     transition: background .15s, color .15s, transform .18s;
   }
-  .otp-close:hover { background: #fee2e2; color: #ef4444; ; }
+  .otp-close:hover { background: #dbeafe; color: #1d4ed8; }
 
   .otp-icon-ring { animation: amPulse 2.4s ease infinite; }
 
   .otp-resend {
-    background: none; border: none; color: #f97316;
+    background: none; border: none; color: #1d4ed8;
     font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 600;
     cursor: pointer; padding: 0;
     text-decoration: underline; text-underline-offset: 2px;
     transition: color .15s;
   }
-  .otp-resend:hover    { color: #ea580c; }
+  .otp-resend:hover    { color: #1e3a8a; }
   .otp-resend:disabled { color: #9ca3af; cursor: default; text-decoration: none; }
 
   .otp-spinner {
@@ -86,12 +86,12 @@ const EmailShieldIcon = () => (
   <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
     <path d="M26 4L8 11v14c0 10.5 7.7 20.3 18 22.7C36.3 45.3 44 35.5 44 25V11L26 4z" fill="url(#sg)" opacity="0.15"/>
     <path d="M26 6L9.5 12.5v12.8c0 9.8 7.2 19 16.5 21.2C35.3 44.3 42.5 35.1 42.5 25.3V12.5L26 6z"
-      stroke="#f97316" strokeWidth="1.6" fill="none" strokeLinejoin="round"/>
-    <rect x="15" y="20" width="22" height="15" rx="2.5" fill="white" stroke="#f97316" strokeWidth="1.5"/>
-    <path d="M15 22l11 7.5L37 22" stroke="#f97316" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+      stroke="#1d4ed8" strokeWidth="1.6" fill="none" strokeLinejoin="round"/>
+    <rect x="15" y="20" width="22" height="15" rx="2.5" fill="white" stroke="#1d4ed8" strokeWidth="1.5"/>
+    <path d="M15 22l11 7.5L37 22" stroke="#1d4ed8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
     <defs>
       <linearGradient id="sg" x1="8" y1="4" x2="44" y2="48" gradientUnits="userSpaceOnUse">
-        <stop stopColor="#f97316"/><stop offset="1" stopColor="#ea580c"/>
+        <stop stopColor="#1d4ed8"/><stop offset="1" stopColor="#1e3a8a"/>
       </linearGradient>
     </defs>
   </svg>
@@ -118,10 +118,34 @@ const OtpModal = ({ isOpen, onClose, userId, email, onVerified }) => {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const inputRefs = useRef([]);
-
+const [resending, setResending] = useState(false);
   if (!isOpen) return null;
 
   const otp = digits.join("");
+
+  //resend otp
+  const handleResendOtp = async () => {
+  try {
+    setResending(true);
+    setMessage("");
+    setIsError(false);
+
+    const res = await axios.post("http://localhost:8002/api/users/resend-otp", {
+      userId,
+    });
+
+    setDigits(["", "", "", "", "", ""]);
+    setMessage(res.data.message || "A new OTP has been sent.");
+    setIsError(false);
+
+    setTimeout(() => inputRefs.current[0]?.focus(), 50);
+  } catch (err) {
+    setIsError(true);
+    setMessage(err?.response?.data?.message || "Failed to resend OTP.");
+  } finally {
+    setResending(false);
+  }
+};
 
   const handleChange = (i, val) => {
     const v = val.replace(/\D/, "").slice(-1);
@@ -183,7 +207,7 @@ const OtpModal = ({ isOpen, onClose, userId, email, onVerified }) => {
           alignItems: "center",
           justifyContent: "center",
           padding: "16px",
-          background: "rgba(15,15,20,0.65)",
+          background: "rgba(15,23,42,0.68)",
           backdropFilter: "blur(5px)",
         }}
       >
@@ -195,7 +219,6 @@ const OtpModal = ({ isOpen, onClose, userId, email, onVerified }) => {
             width: "100%", maxWidth: 420,
             background: "#ffffff",
             borderRadius: 20,
-            // borderTop: "4px solid #f97316",
             padding: "32px 28px 28px",
             boxShadow: "0 24px 60px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.08)",
           }}
@@ -211,9 +234,9 @@ const OtpModal = ({ isOpen, onClose, userId, email, onVerified }) => {
           <div style={{ display: "flex", justifyContent: "center", marginBottom: 20 }}>
             <div className="otp-icon-ring" style={{
               width: 80, height: 80, borderRadius: "50%",
-              background: "linear-gradient(145deg, #fff7ed, #ffedd5)",
+              background: "linear-gradient(145deg, #eff6ff, #dbeafe)",
               display: "flex", alignItems: "center", justifyContent: "center",
-              border: "2px solid #fed7aa",
+              border: "2px solid #bfdbfe",
             }}>
               <EmailShieldIcon />
             </div>
@@ -227,7 +250,7 @@ const OtpModal = ({ isOpen, onClose, userId, email, onVerified }) => {
           {/* Sub-text */}
           <p style={{ margin: "0 0 24px", fontFamily: "'DM Sans', sans-serif", fontSize: 13.5, color: "#6b7280", textAlign: "center", lineHeight: 1.55 }}>
             We sent a 6-digit code to{" "}
-            <span style={{ color: "#374151", fontWeight: 600 }}>{maskedEmail}</span>
+            <span style={{ color: "#1e3a8a", fontWeight: 600 }}>{maskedEmail}</span>
           </p>
 
           {/* OTP inputs */}
@@ -283,7 +306,14 @@ const OtpModal = ({ isOpen, onClose, userId, email, onVerified }) => {
           {/* Resend */}
           <p style={{ marginTop: 18, textAlign: "center", fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: "#9ca3af" }}>
             Didn't receive it?{" "}
-            <button className="otp-resend" type="button">Resend code</button>
+            <button
+                className="otp-resend"
+                type="button"
+                onClick={handleResendOtp}
+                disabled={resending}
+              >
+                {resending ? "Sending..." : "Resend code"}
+              </button>
           </p>
         </div>
       </div>

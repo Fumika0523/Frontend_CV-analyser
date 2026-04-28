@@ -8,12 +8,12 @@ import ApplyJobs from "../../components/Dashboard/ApplyJobs";
 export default function Dashboard() {
   return (
     <>
-      <SeoHead title='Candidate Dashboard' />
+      {/* <SeoHead title='Candidate Dashboard' /> */}
       <Layout className="border border-orange-500">
         <div className="bg-gray-50 py-8">
-          <div       className="max-w-screen-xl mt-24 px-8 xl:px-16 mx-auto"
+          <div  className="max-w-screen-xl mt-24 px-8 xl:px-16 mx-auto"
 >
-            <h1 className="text-3xl font-bold text-gray-800 mb-8">Candidate Dashboard</h1>
+            {/* <h1 className="text-3xl font-bold text-gray-800 mb-8">Candidate Dashboard</h1> */}
             
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Section 1: Applied Jobs Status */}

@@ -8,7 +8,6 @@ import OtpModal from "../Auth/otpModal";
 import axios from "axios";
 import SettingsModal from "../Auth/settingsModal";
 import ButtonPrimary from "../misc/ButtonPrimary";
-
 import {
   FiInfo, FiStar, FiCreditCard,
   FiMessageCircle, FiGrid, FiBriefcase,
@@ -44,39 +43,32 @@ const HEADER_STYLES = `
     to { opacity:1; transform:translateY(0); }
   }
 
-  /* NAV TEXT */
   .hd-nav-link {
-    color:#334155; /* slate-700 */
+    color:navy;
   }
-
   .hd-nav-link svg {
-    color:#1e3a8a; /* navy */
+    color:#1e3a8a;
   }
-
   .hd-nav-link:hover {
-    color:#1d4ed8; /* blue-700 */
+    color:#1d4ed8;
   }
-
   .hd-nav-link:hover svg {
     color:#1d4ed8;
   }
 
-  /* AVATAR */
   .hd-avatar {
     width:34px;height:34px;border-radius:50%;
-    background:linear-gradient(135deg,#0f172a,#1e3a8a);
+    background:linear-gradient(135deg,#0f172a,#1d4ed8);
     color:#fff;font-weight:700;font-size:13px;font-family:'Sora',sans-serif;
     display:flex;align-items:center;justify-content:center;
     cursor:pointer;border:2px solid #fff;
     box-shadow:0 0 0 2px #0f172a;
     transition:box-shadow .2s;
   }
-
   .hd-avatar:hover {
     box-shadow:0 0 0 3px #1d4ed8;
   }
 
-  /* DROPDOWN */
   .hd-dropdown {
     position:absolute;top:calc(100% + 8px);right:0;min-width:170px;
     background:#ffffff;
@@ -101,12 +93,10 @@ const HEADER_STYLES = `
     text-align:left;
     transition:background .15s;
   }
-
   .hd-ditem:hover {
     background:#f1f5f9;
     color:#1d4ed8;
   }
-
   .hd-ditem.danger:hover {
     background:#fff1f2;
     color:#e11d48;
@@ -124,19 +114,32 @@ const HEADER_STYLES = `
 `;
 
 const Header = () => {
+ // console.log("HEADER IS RENDERING");
   const [activeLink, setActiveLink] = useState(null);
   const [scrollActive, setScrollActive] = useState(false);
 
   const [otpModal, setOtpModal] = useState({
-    isOpen: false,
-    userId: "",
-    email: "",
-  });
+  isOpen: false,
+  userId: "",
+  email: "",
+});
+
+useEffect(() => {
+  console.log("OTP MODAL STATE CHANGED:", otpModal);
+}, [otpModal]);
 
   const [authModal, setAuthModal] = useState({
     isOpen: false,
     mode: "",
   });
+
+
+const handleOtpSent = ({ userId, email }) => {
+  console.log("HANDLE OTP SENT CALLED:", userId, email);
+
+  setAuthModal({ isOpen: false, mode: "signin" });
+  setOtpModal({ isOpen: true, userId, email });
+};
 
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -165,9 +168,9 @@ const Header = () => {
   const navLinks = user ? (user.role === "company" ? NAV_COMPANY : NAV_CANDIDATE) : null;
   const initials = user ? user.name.slice(0, 2).toUpperCase() : "";
 
-const pillStyle = user?.role === "company"
-  ? { background:"#eff6ff", color:"#1d4ed8", border:"1px solid #dbeafe" }
-  : { background:"#f1f5f9", color:"#0f172a", border:"1px solid #e2e8f0" };
+  const pillStyle = user?.role === "company"
+    ? { background: "#eff6ff", color: "#1d4ed8", border: "1px solid #dbeafe" }
+    : { background: "#f1f5f9", color: "#0f172a", border: "1px solid #e2e8f0" };
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -176,13 +179,10 @@ const pillStyle = user?.role === "company"
         if (!token) return;
 
         const res = await axios.get("http://localhost:8002/api/users/user-profile", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         });
 
         const fetchedUser = res.data.user;
-
         setUser({
           id: fetchedUser._id,
           firstName: fetchedUser.firstName,
@@ -209,17 +209,22 @@ const pillStyle = user?.role === "company"
     <>
       <style>{HEADER_STYLES}</style>
 
-      <header className={"fixed top-0 w-full z-30 bg-white/95 backdrop-blur-md transition-all " + (scrollActive ? "shadow-sm pt-0" : "pt-4")}>
+      <header
+        className={
+          "fixed top-0 w-full z-30 bg-white/95 backdrop-blur-md transition-all " +
+          (scrollActive ? "shadow-sm pt-0" : "pt-4")
+        }
+      >
         <nav className="max-w-screen-xl px-6 sm:px-8 lg:px-16 mx-auto grid grid-flow-col py-3 sm:py-4">
-          <div className="col-start-1 col-end-2 flex items-center text-blue-900 font-bold tracking-tight">
-          CV-Analyser
-        </div>
 
-          <ul className="hidden lg:flex col-start-4 col-end-8 text-black-500 items-center">
+          <div className="col-start-1 col-end-2 flex items-center text-blue-700 font-bold tracking-tight">
+            CV-Analyser
+          </div>
+
+          <ul className="hidden lg:flex col-start-4 col-end-8 text-blue-600 items-center">
             {user ? (
               navLinks.map((item) => {
                 const Icon = item.icon;
-
                 return (
                   <Link key={item.href} href={item.href}>
                     <a className="hd-nav-link px-4 py-2 mx-2 text-sm font-medium transition-colors items-center gap-2 animation-hover inline-flex relative">
@@ -241,7 +246,7 @@ const pillStyle = user?.role === "company"
                   onSetActive={() => setActiveLink(id)}
                   className={
                     "hd-nav-link px-4 py-2 mx-2 cursor-pointer animation-hover inline-flex items-center gap-2 relative " +
-                    (activeLink === id ? "text-blue-700 animation-active" : "")
+                    (activeLink === id ? "text-blue-600 animation-active" : "")
                   }
                 >
                   <Icon className="text-base" />
@@ -257,12 +262,13 @@ const pillStyle = user?.role === "company"
                 <span className="hd-pill" style={pillStyle}>
                   {user.role === "company" ? "🏢 Company" : "👤 Candidate"}
                 </span>
-
                 <div style={{ position: "relative" }}>
-                  <div className="hd-avatar" onClick={(e) => { e.stopPropagation(); setDropdownOpen(v => !v); }}>
+                  <div
+                    className="hd-avatar"
+                    onClick={(e) => { e.stopPropagation(); setDropdownOpen(v => !v); }}
+                  >
                     {initials}
                   </div>
-
                   {dropdownOpen && (
                     <div className="hd-dropdown">
                       {user.role === "candidate" && (
@@ -270,19 +276,13 @@ const pillStyle = user?.role === "company"
                           <a className="hd-ditem">📄 CV Analyser</a>
                         </Link>
                       )}
-
                       <button
                         className="hd-ditem"
-                        onClick={() => {
-                          setSettingsModalOpen(true);
-                          setDropdownOpen(false);
-                        }}
+                        onClick={() => { setSettingsModalOpen(true); setDropdownOpen(false); }}
                       >
                         ⚙️ Settings
                       </button>
-
                       <div style={{ borderTop: "1px solid #dbeafe", margin: "4px 0" }} />
-
                       <button className="hd-ditem danger" onClick={handleLogout}>
                         🚪 Sign Out
                       </button>
@@ -293,19 +293,17 @@ const pillStyle = user?.role === "company"
             ) : (
               <>
               <a
-                onClick={() => setAuthModal({ isOpen: true, mode: "signin" })}
-                className="cursor-pointer mx-2 sm:mx-4 transition-colors"
-                style={{ color: "#475569" }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = "#1d4ed8")}
-                onMouseLeave={(e) => (e.currentTarget.style.color = "#475569")}
+                  onClick={() => setAuthModal({ isOpen: true, mode: "signin" })}
+                  className="cursor-pointer mx-2 sm:mx-4 transition-colors"
+                  style={{ color: "#475569" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = "#1d4ed8")}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = "#475569")}
                 >
-                Sign In
-              </a>
-              <ButtonPrimary
-                onClick={() => setAuthModal({ isOpen: true, mode: "signup" })}
-              >
-                Sign Up
-              </ButtonPrimary>
+                  Sign In
+                </a>
+                <ButtonPrimary onClick={() => setAuthModal({ isOpen: true, mode: "signup" })}>
+                  Sign Up
+                </ButtonPrimary>
               </>
             )}
           </div>
@@ -319,7 +317,6 @@ const pillStyle = user?.role === "company"
             {user ? (
               navLinks.slice(0, 4).map((item) => {
                 const Icon = item.icon;
-
                 return (
                   <Link key={item.href} href={item.href}>
                     <a className="mx-1 sm:mx-2 px-3 sm:px-4 py-2 flex flex-col items-center text-xs border-t-2 border-transparent hover:border-blue-700 hover:text-blue-700 transition-all">
@@ -354,41 +351,21 @@ const pillStyle = user?.role === "company"
           </ul>
         </div>
       </nav>
-
-      {authModal.isOpen && (
-        <AuthModal
-          isOpen={authModal.isOpen}
-          initialMode={authModal.mode}
-          onClose={() => setAuthModal({ isOpen: false, mode: "signin" })}
-          onAuthSuccess={handleAuthSuccess}
-          onOtpSent={({ userId, email }) => {
-            setAuthModal({ isOpen: false, mode: "signin" });
-            setOtpModal({
-              isOpen: true,
-              userId,
-              email,
-            });
-          }}
-        />
-      )}
-
+    <AuthModal
+      isOpen={authModal.isOpen}
+      initialMode={authModal.mode}
+      onClose={() => setAuthModal({ isOpen: false, mode: "signin" })}
+      onAuthSuccess={handleAuthSuccess}
+      onOtpSent={handleOtpSent}
+    />
       {otpModal.isOpen && (
         <OtpModal
           isOpen={otpModal.isOpen}
           userId={otpModal.userId}
           email={otpModal.email}
-          onClose={() =>
-            setOtpModal({
-              isOpen: false,
-              userId: "",
-              email: "",
-            })
-          }
+          onClose={() => setOtpModal({ isOpen: false, userId: "", email: "" })}
           onVerified={(data) => {
-            if (data?.token) {
-              localStorage.setItem("token", data.token);
-            }
-
+            if (data?.token) localStorage.setItem("token", data.token);
             handleAuthSuccess({
               id: data?.user?.id,
               firstName: data?.user?.firstName || "",
@@ -401,12 +378,7 @@ const pillStyle = user?.role === "company"
               companyDescription: data?.user?.companyDescription || "",
               location: data?.user?.location || { city: "", country: "" },
             });
-
-            setOtpModal({
-              isOpen: false,
-              userId: "",
-              email: "",
-            });
+            setOtpModal({ isOpen: false, userId: "", email: "" });
           }}
         />
       )}
@@ -422,6 +394,7 @@ const pillStyle = user?.role === "company"
           }}
         />
       )}
+       
     </>
   );
 };
