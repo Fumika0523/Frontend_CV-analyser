@@ -3,23 +3,23 @@ import React from "react";
 const statusStyles = {
   pending: {
     badge: { background: "#fffbeb", color: "#b45309", borderColor: "#fde68a" },
-    card: { background: "rgba(255, 251, 235, 0.45)" },
+    // card: { background: "rgba(255, 251, 235, 0.45)" },
   },
   review: {
     badge: { background: "#eff6ff", color: "#1d4ed8", borderColor: "#bfdbfe" },
-    card: { background: "rgba(239, 246, 255, 0.45)" },
+    // card: { background: "rgba(239, 246, 255, 0.45)" },
   },
   interview: {
     badge: { background: "#eef2ff", color: "#4338ca", borderColor: "#c7d2fe" },
-    card: { background: "rgba(238, 242, 255, 0.45)" },
+    // card: { background: "rgba(238, 242, 255, 0.45)" },
   },
   rejected: {
     badge: { background: "#fff1f2", color: "#be123c", borderColor: "#fecdd3" },
-    card: { background: "rgba(255, 241, 242, 0.45)" },
+    // card: { background: "rgba(255, 241, 242, 0.45)" },
   },
   accepted: {
     badge: { background: "#ecfdf5", color: "#047857", borderColor: "#a7f3d0" },
-    card: { background: "rgba(236, 253, 245, 0.45)" },
+    // card: { background: "rgba(236, 253, 245, 0.45)" },
   },
 };
 

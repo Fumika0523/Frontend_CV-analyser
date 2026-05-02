@@ -4,6 +4,7 @@ import SeoHead from "../../components/SeoHead";
 import AppliedJobs from "../../components/Dashboard/AppliedJobs";
 import MatchingJobs from "../../components/Dashboard/MatchingJobs";
 import ApplyJobs from "../../components/Dashboard/ApplyJobs";
+import MyApplication from "./MyApplication";
 
 export default function Dashboard() {
   return (
@@ -14,7 +15,7 @@ export default function Dashboard() {
           <div  className="max-w-screen-xl mt-24 px-8 xl:px-16 mx-auto"
 >
             {/* <h1 className="text-3xl font-bold text-gray-800 mb-8">Candidate Dashboard</h1> */}
-            
+          
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Section 1: Applied Jobs Status */}
               <div className="lg:col-span-2">
@@ -30,6 +31,10 @@ export default function Dashboard() {
             {/* Section 3: Apply for New Jobs */}
             <div className="mt-6">
               <ApplyJobs />
+            </div>
+
+              <div className="mt-6">
+              <MyApplication />
             </div>
           </div>
         </div>

@@ -41,7 +41,7 @@ const UploadButton = ({ file }) => {
       disabled={!file || loading}
       className="px-5 py-2.5 rounded-lg text-sm font-semibold text-white shadow-md flex items-center justify-center gap-2"
       style={{
-        background: "linear-gradient(135deg, #1d4ed8, #0f172a)",
+        background: "linear-gradient(135deg, #7c94d8, #020818)",
         opacity: !file || loading ? 0.6 : 1,
         cursor: !file || loading ? "not-allowed" : "pointer",
       }}
