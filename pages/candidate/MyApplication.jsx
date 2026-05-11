@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import Layout from "../../components/Layout/Layout";
 import axios from "axios";
-
-const API_URL = "http://localhost:8002/api";
+import {url} from "../../utils/constant"
+import { toast } from "react-toastify";
 
 export default function MyApplication() {
   const [file, setFile] = useState(null);
@@ -60,7 +60,7 @@ export default function MyApplication() {
   const fetchLatestCV = async () => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get(`${API_URL}/cv/latest`, {
+      const response = await axios.get(`${url}/cv/latest`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setUploadedCV(response.data);
@@ -79,11 +79,11 @@ export default function MyApplication() {
     if (selectedFile) {
       const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
       if (!allowedTypes.includes(selectedFile.type)) {
-        alert("Please upload a PDF or Word document");
+        toast.error("Please upload a PDF or Word document");
         return;
       }
       if (selectedFile.size > 5 * 1024 * 1024) {
-        alert("File size must be less than 5MB");
+        toast.error("File size must be less than 5MB");
         return;
       }
       setFile(selectedFile);
@@ -91,7 +91,7 @@ export default function MyApplication() {
   };
 
   const handleUpload = async () => {
-    if (!file) return alert("Please select a CV");
+    if (!file) return toast.error("Please select a CV");
 
     setLoading(true);
 
@@ -102,7 +102,7 @@ export default function MyApplication() {
       const token = localStorage.getItem("token");
 
       const res = await axios.post(
-        `${API_URL}/cv/upload`,
+        `${url}/cv/upload`,
         formData,
         {
           headers: {
@@ -113,15 +113,15 @@ export default function MyApplication() {
       );
       console.log("res from application",res.data)
       setUploadedCV(res.data.cv);
-      alert("CV uploaded successfully!");
+      toast.success("CV uploaded successfully!");
     } catch (err) {
   console.error("Upload error:", err);
 
   if (err.response) {
     console.log("Backend error:", err.response.data);
-    alert(err.response.data.message || "Upload failed from backend");
+    toast.error(err.response.data.message || "Upload failed from backend");
   } else {
-    alert("Upload failed. Backend may not be running.");
+    toast.error("Upload failed. Backend may not be running.");
   }
 } finally {
       setLoading(false);

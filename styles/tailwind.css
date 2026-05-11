@@ -6,10 +6,11 @@ html {
   font-family: "Rubik", sans-serif;
 }
 body {
-  @apply bg-white-500;
+@apply bg-white;
 }
+
 p {
-  @apply text-black-500;
+  @apply text-slate-600;
 }
 
 .animation-hover:after {

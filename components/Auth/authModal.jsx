@@ -316,7 +316,7 @@ const handleChange = (e) => {
 };
 
 //Sign in
- const handleSubmit = async (e) => {
+const handleSubmit = async (e) => {
   e.preventDefault();
   setMessage("");
   setLoading(true);
@@ -324,15 +324,21 @@ const handleChange = (e) => {
   try {
     const res = await axios.post("http://localhost:8002/signin", form);
 
-    console.log("SIGNIN SUCCESS:", res.data);
-    localStorage.setItem("token", res.data.token);
-    console.log("token", token)
-    onAuthSuccess?.(res.data);
+    const token = res.data.token;
+
+    localStorage.setItem("token", token);
+
+    onAuthSuccess?.({
+      id: res.data.user._id,
+      userId: res.data.user.userId,
+      name: res.data.user.name,
+      email: res.data.user.email,
+      role: res.data.user.role,
+    });
 
     onClose();
-
   } catch (err) {
-    console.log("SIGNIN ERROR:", err.response?.data);
+    console.log("SIGNIN ERROR:", err.response?.data || err.message);
 
     if (err?.response?.status === 403 && err?.response?.data?._id) {
       setMessage(err.response.data.message || "Please verify your email");
@@ -350,6 +356,7 @@ const handleChange = (e) => {
     setLoading(false);
   }
 };
+
   return (
     <div className="am-modal-root">
       <style>{STYLES}</style>

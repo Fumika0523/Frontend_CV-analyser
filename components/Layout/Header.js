@@ -13,7 +13,7 @@ import {
   FiMessageCircle, FiGrid, FiBriefcase,
   FiFileText, FiSearch, FiUsers, FiPlusCircle,
 } from "react-icons/fi";
-import Dashboard from "../../pages/company/dashboard";
+import Dashboard from "../../pages/company/Dashboard";
 
 const NAV_GUEST = [
   { id: "about", label: "About", icon: FiInfo },
@@ -22,12 +22,19 @@ const NAV_GUEST = [
   { id: "testimoni", label: "Testimonial", icon: FiMessageCircle },
 ];
 
+const NAV_CANDIDATE = [
+  { label: "Dashboard", href: "/candidate/dashboard", icon: FiGrid },
+  { label: "Latest Jobs", href: "/candidate/Dashboard/LatestJobs", icon: FiBriefcase },
+  { label: "My Application", href: "/candidate/MyApplication", icon: FiFileText },
+  { label: "Search for job", href: "/candidate/search-job", icon: FiSearch },
+];
+
 
 const NAV_COMPANY = [
   { label: "Dashboard", href: "/company/dashboard", icon: FiGrid },
-  { label: "Posted Jobs", href: "/company/posted-job", icon: FiBriefcase },
+  { label: "Posted Jobs", href: "/company/Dashboard/PostedJobs/PostedJobsPage", icon: FiBriefcase },
   { label: "Selected Candidates", href: "/company/selected-candidates", icon: FiUsers },
-  { label: "Post a new job", href: "/company/post-job", icon: FiPlusCircle },
+  { label: "Post a new job", href: "/company/Dashboard/postjob", icon: FiPlusCircle },
 ];
 
 const HEADER_STYLES = `

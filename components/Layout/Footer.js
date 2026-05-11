@@ -1,90 +1,155 @@
 import React from "react";
-import LogoVPN from "../../public/assets/Logo.svg";
-import Facebook from "../../public/assets/Icon/facebook.svg";
-import Twitter from "../../public/assets/Icon/twitter.svg";
-import Instagram from "../../public/assets/Icon/instagram.svg";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faFacebookF,
+  faTwitter,
+  faInstagram,
+  faLinkedinIn,
+} from "@fortawesome/free-brands-svg-icons";
+
 const Footer = () => {
   return (
-    <div className="bg-white-300 pt-44 pb-24">
-      <div className="max-w-screen-xl w-full mx-auto px-6 sm:px-8 lg:px-16 grid grid-rows-6 sm:grid-rows-1 grid-flow-row sm:grid-flow-col grid-cols-3 sm:grid-cols-12 gap-4">
-        <div className="row-span-2 sm:col-span-4 col-start-1 col-end-4 sm:col-end-5 flex flex-col items-start ">
-          <LogoVPN className="h-8 w-auto mb-6" />
-          <p className="mb-4">
-            <strong className="font-medium">LaslesVPN</strong> is a private
-            virtual network that has unique features and has high security.
-          </p>
-          <div className="flex w-full mt-2 mb-8 -mx-2">
-            <div className="mx-2 bg-white-500 rounded-full items-center justify-center flex p-2 shadow-md">
-              <Facebook className="h-6 w-6" />
-            </div>
-            <div className="mx-2 bg-white-500 rounded-full items-center justify-center flex p-2 shadow-md">
-              <Twitter className="h-6 w-6" />
-            </div>
-            <div className="mx-2 bg-white-500 rounded-full items-center justify-center flex p-2 shadow-md">
-              <Instagram className="h-6 w-6" />
-            </div>
+    <footer className="bg-slate-50 border-t border-blue-100 py-10">
+      <div className="max-w-screen-xl w-full mx-auto px-6 sm:px-8 lg:px-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-10">
+
+        {/* Brand Section */}
+        <div className="lg:col-span-5 flex flex-col">
+          <div className="flex items-center text-blue-800 font-bold text-2xl tracking-tight">
+            SkillfulJobs.ai
           </div>
-          <p className="text-gray-400">©{new Date().getFullYear()} - LaslesVPN</p>
+
+          <p className="mt-5 text-slate-600 leading-7 max-w-md">
+            SkillfulJobs.ai helps candidates discover meaningful career
+            opportunities while enabling companies to connect with talented
+            professionals faster through AI-powered recruitment tools.
+          </p>
+
+          {/* Social Icons */}
+          <div className="flex items-center gap-4 mt-6">
+
+  <a
+    href="#"
+    className="w-11 h-11 rounded-full bg-white border border-slate-200 shadow-sm flex items-center justify-center text-blue-700 hover:bg-blue-700 hover:text-white hover:-translate-y-1 transition-all duration-200"
+  >
+    <FontAwesomeIcon icon={faFacebookF} />
+  </a>
+
+  <a
+    href="#"
+    className="w-11 h-11 rounded-full bg-white border border-slate-200 shadow-sm flex items-center justify-center text-blue-700 hover:bg-blue-700 hover:text-white hover:-translate-y-1 transition-all duration-200"
+  >
+    <FontAwesomeIcon icon={faTwitter} />
+  </a>
+
+  <a
+    href="#"
+    className="w-11 h-11 rounded-full bg-white border border-slate-200 shadow-sm flex items-center justify-center text-blue-700 hover:bg-blue-700 hover:text-white hover:-translate-y-1 transition-all duration-200"
+  >
+    <FontAwesomeIcon icon={faInstagram} />
+  </a>
+
+  <a
+    href="#"
+    className="w-11 h-11 rounded-full bg-white border border-slate-200 shadow-sm flex items-center justify-center text-blue-700 hover:bg-blue-700 hover:text-white hover:-translate-y-1 transition-all duration-200"
+  >
+    <FontAwesomeIcon icon={faLinkedinIn} />
+  </a>
+
+</div>
+
+          <p className="text-slate-400 text-sm mt-8">
+            © {new Date().getFullYear()} SkillfulJobs.ai — All rights reserved.
+          </p>
         </div>
-        <div className=" row-span-2 sm:col-span-2 sm:col-start-7 sm:col-end-9 flex flex-col">
-          <p className="text-black-600 mb-4 font-medium text-lg">Product</p>
-          <ul className="text-black-500 ">
-            <li className="my-2 hover:text-orange-500 cursor-pointer transition-all">
-              Download{" "}
+
+        {/* For Candidates */}
+        <div className="lg:col-span-2 lg:col-start-7 flex flex-col">
+          <p className="text-slate-900 mb-4 font-semibold text-lg">
+            For Candidates
+          </p>
+
+          <ul className="text-slate-600 space-y-3">
+            <li className="hover:text-blue-700 cursor-pointer transition-all">
+              Browse Jobs
             </li>
-            <li className="my-2 hover:text-orange-500 cursor-pointer transition-all">
-              Pricing{" "}
+
+            <li className="hover:text-blue-700 cursor-pointer transition-all">
+              Upload CV
             </li>
-            <li className="my-2 hover:text-orange-500 cursor-pointer transition-all">
-              Locations{" "}
+
+            <li className="hover:text-blue-700 cursor-pointer transition-all">
+              Application Tracker
             </li>
-            <li className="my-2 hover:text-orange-500 cursor-pointer transition-all">
-              Server{" "}
+
+            <li className="hover:text-blue-700 cursor-pointer transition-all">
+              Career Advice
             </li>
-            <li className="my-2 hover:text-orange-500 cursor-pointer transition-all">
-              Countries{" "}
-            </li>
-            <li className="my-2 hover:text-orange-500 cursor-pointer transition-all">
-              Blog{" "}
+
+            <li className="hover:text-blue-700 cursor-pointer transition-all">
+              AI CV Analysis
             </li>
           </ul>
         </div>
-        <div className="row-span-2 sm:col-span-2 sm:col-start-9 sm:col-end-11 flex flex-col">
-          <p className="text-black-600 mb-4 font-medium text-lg">Engage</p>
-          <ul className="text-black-500">
-            <li className="my-2 hover:text-orange-500 cursor-pointer transition-all">
-              LaslesVPN ?{" "}
+
+        {/* For Employers */}
+        <div className="lg:col-span-2 flex flex-col">
+          <p className="text-slate-900 mb-4 font-semibold text-lg">
+            For Employers
+          </p>
+
+          <ul className="text-slate-600 space-y-3">
+            <li className="hover:text-blue-700 cursor-pointer transition-all">
+              Post a Job
             </li>
-            <li className="my-2 hover:text-orange-500 cursor-pointer transition-all">
-              FAQ{" "}
+
+            <li className="hover:text-blue-700 cursor-pointer transition-all">
+              Manage Candidates
             </li>
-            <li className="my-2 hover:text-orange-500 cursor-pointer transition-all">
-              Tutorials{" "}
+
+            <li className="hover:text-blue-700 cursor-pointer transition-all">
+              Recruitment Dashboard
             </li>
-            <li className="my-2 hover:text-orange-500 cursor-pointer transition-all">
-              About Us{" "}
+
+            <li className="hover:text-blue-700 cursor-pointer transition-all">
+              Hiring Solutions
             </li>
-            <li className="my-2 hover:text-orange-500 cursor-pointer transition-all">
-              Privacy Policy{" "}
-            </li>
-            <li className="my-2 hover:text-orange-500 cursor-pointer transition-all">
-              Terms of Service{" "}
+
+            <li className="hover:text-blue-700 cursor-pointer transition-all">
+              Talent Search
             </li>
           </ul>
         </div>
-        <div className="row-span-2 sm:col-span-2 sm:col-start-11 sm:col-end-13 flex flex-col">
-          <p className="text-black-600 mb-4 font-medium text-lg">Earn Money</p>
-          <ul className="text-black-500">
-            <li className="my-2 hover:text-orange-500 cursor-pointer transition-all">
-              Affiliate{" "}
+
+        {/* Support */}
+        <div className="lg:col-span-2 flex flex-col">
+          <p className="text-slate-900 mb-4 font-semibold text-lg">
+            Support
+          </p>
+
+          <ul className="text-slate-600 space-y-3">
+            <li className="hover:text-blue-700 cursor-pointer transition-all">
+              Help Center
             </li>
-            <li className="my-2 hover:text-orange-500 cursor-pointer transition-all">
-              Become Partner{" "}
+
+            <li className="hover:text-blue-700 cursor-pointer transition-all">
+              Contact Us
+            </li>
+
+            <li className="hover:text-blue-700 cursor-pointer transition-all">
+              Privacy Policy
+            </li>
+
+            <li className="hover:text-blue-700 cursor-pointer transition-all">
+              Terms & Conditions
+            </li>
+
+            <li className="hover:text-blue-700 cursor-pointer transition-all">
+              FAQ
             </li>
           </ul>
         </div>
       </div>
-    </div>
+    </footer>
   );
 };
 
