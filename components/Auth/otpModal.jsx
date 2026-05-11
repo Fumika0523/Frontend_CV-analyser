@@ -111,7 +111,8 @@ const ErrorIcon = () => (
   </svg>
 );
 
-const OtpModal = ({ isOpen, onClose, userId, email, onVerified }) => {
+const OtpModal = ({ isOpen, onClose, _id, email, onVerified }) => {
+  console.log("_id",_id)
   const [digits,  setDigits]  = useState(["", "", "", "", "", ""]);
   const [message, setMessage] = useState("");
   const [isError, setIsError] = useState(false);
@@ -130,8 +131,8 @@ const [resending, setResending] = useState(false);
     setMessage("");
     setIsError(false);
 
-    const res = await axios.post("http://localhost:8002/api/users/resend-otp", {
-      userId,
+    const res = await axios.post("http://localhost:8002/resend-otp", {
+      _id,
     });
 
     setDigits(["", "", "", "", "", ""]);
@@ -175,7 +176,11 @@ const [resending, setResending] = useState(false);
     if (otp.length < 6) { setMessage("Please enter all 6 digits"); setIsError(true); return; }
     setLoading(true); setMessage("");
     try {
-      const res = await axios.post("http://localhost:8002/api/users/verify-otp", { userId, otp });
+      console.log("OTP MODAL _id:", _id);
+console.log("OTP MODAL otp:", otp);
+console.log("VERIFY PAYLOAD:", { _id, otp });
+      const res = await axios.post("http://localhost:8002/verify-otp", { _id, otp });
+      console.log("res",res.data)
       setSuccess(true); setMessage("Verified successfully!");
       setTimeout(() => onVerified?.(res.data), 900);
     } catch (err) {

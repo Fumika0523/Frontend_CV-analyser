@@ -13,19 +13,13 @@ import {
   FiMessageCircle, FiGrid, FiBriefcase,
   FiFileText, FiSearch, FiUsers, FiPlusCircle,
 } from "react-icons/fi";
+import Dashboard from "../../pages/company/dashboard";
 
 const NAV_GUEST = [
   { id: "about", label: "About", icon: FiInfo },
   { id: "feature", label: "Feature", icon: FiStar },
   { id: "pricing", label: "Pricing", icon: FiCreditCard },
   { id: "testimoni", label: "Testimonial", icon: FiMessageCircle },
-];
-
-const NAV_CANDIDATE = [
-  { label: "Dashboard", href: "/candidate/dashboard", icon: FiGrid },
-  { label: "Latest Jobs", href: "/candidate/jobs", icon: FiBriefcase },
-  { label: "My Application", href: "/candidate/applications", icon: FiFileText },
-  { label: "Search for job", href: "/candidate/search-job", icon: FiSearch },
 ];
 
 
@@ -115,13 +109,13 @@ const HEADER_STYLES = `
 `;
 
 const Header = () => {
- // console.log("HEADER IS RENDERING");
+ console.log("HEADER IS RENDERING");
   const [activeLink, setActiveLink] = useState(null);
   const [scrollActive, setScrollActive] = useState(false);
 
-  const [otpModal, setOtpModal] = useState({
+const [otpModal, setOtpModal] = useState({
   isOpen: false,
-  userId: "",
+  _id: "",
   email: "",
 });
 
@@ -135,11 +129,23 @@ useEffect(() => {
   });
 
 
-const handleOtpSent = ({ userId, email }) => {
-  console.log("HANDLE OTP SENT CALLED:", userId, email);
+const handleOtpSent = (data) => {
+  console.log("HANDLE OTP SENT DATA:", data);
+
+  const mongoId = data?._id;
+
+  if (!mongoId) {
+    console.error("OTP modal cannot open because _id is missing:", data);
+    return;
+  }
 
   setAuthModal({ isOpen: false, mode: "signin" });
-  setOtpModal({ isOpen: true, userId, email });
+
+  setOtpModal({
+    isOpen: true,
+    _id: mongoId,
+    email: data.email || "",
+  });
 };
 
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
@@ -167,7 +173,7 @@ const handleOtpSent = ({ userId, email }) => {
   };
 
   const navLinks = user ? (user.role === "company" ? NAV_COMPANY : NAV_CANDIDATE) : null;
-  const initials = user ? user.name.slice(0, 2).toUpperCase() : "";
+  const initials = user ? user.name?.slice(0, 2).toUpperCase() : "";
 
   const pillStyle = user?.role === "company"
     ? { background: "#eff6ff", color: "#1d4ed8", border: "1px solid #dbeafe" }
@@ -177,13 +183,14 @@ const handleOtpSent = ({ userId, email }) => {
     const fetchUser = async () => {
       try {
         const token = localStorage.getItem("token");
+        console.log("token from header",token)
         if (!token) return;
 
-        const res = await axios.get("http://localhost:8002/api/users/user-profile", {
+        const res = await axios.get("http://localhost:8002/user-profile", {
           headers: { Authorization: `Bearer ${token}` },
         });
-
         const fetchedUser = res.data.user;
+        console.log("fetchedUser",res.data.user)
         setUser({
           id: fetchedUser._id,
           firstName: fetchedUser.firstName,
@@ -219,7 +226,7 @@ const handleOtpSent = ({ userId, email }) => {
         <nav className="max-w-screen-xl px-6 sm:px-8 lg:px-16 mx-auto grid grid-flow-col py-3 sm:py-4">
 
           <div className="col-start-1 col-end-2 flex items-center text-blue-700 font-bold tracking-tight">
-            CV-Analyser
+            SkillfulJobs.ai
           </div>
 
           <ul className="hidden lg:flex col-start-4 col-end-8 text-blue-600 items-center">
@@ -359,30 +366,33 @@ const handleOtpSent = ({ userId, email }) => {
       onAuthSuccess={handleAuthSuccess}
       onOtpSent={handleOtpSent}
     />
-      {otpModal.isOpen && (
-        <OtpModal
-          isOpen={otpModal.isOpen}
-          userId={otpModal.userId}
-          email={otpModal.email}
-          onClose={() => setOtpModal({ isOpen: false, userId: "", email: "" })}
-          onVerified={(data) => {
-            if (data?.token) localStorage.setItem("token", data.token);
-            handleAuthSuccess({
-              id: data?.user?.id,
-              firstName: data?.user?.firstName || "",
-              lastName: data?.user?.lastName || "",
-              name: data?.user?.name || "User",
-              email: data?.user?.email || "",
-              role: data?.user?.role,
-              phoneNumber: data?.user?.phoneNumber || "",
-              companyName: data?.user?.companyName || "",
-              companyDescription: data?.user?.companyDescription || "",
-              location: data?.user?.location || { city: "", country: "" },
-            });
-            setOtpModal({ isOpen: false, userId: "", email: "" });
-          }}
-        />
-      )}
+     {otpModal.isOpen && (
+  <OtpModal
+    isOpen={otpModal.isOpen}
+    _id={otpModal._id}
+    email={otpModal.email}
+    onClose={() => setOtpModal({ isOpen: false, _id: "", email: "" })}
+    onVerified={(data) => {
+      if (data?.token) localStorage.setItem("token", data.token);
+
+      handleAuthSuccess({
+        _id: data?.user?._id,
+        userId: data?.user?.userId,
+        firstName: data?.user?.firstName || "",
+        lastName: data?.user?.lastName || "",
+        name: data?.user?.name || "User",
+        email: data?.user?.email || "",
+        role: data?.user?.role,
+        phoneNumber: data?.user?.phoneNumber || "",
+        companyName: data?.user?.companyName || "",
+        companyDescription: data?.user?.companyDescription || "",
+        location: data?.user?.location || { city: "", country: "" },
+      });
+
+      setOtpModal({ isOpen: false, _id: "", email: "" });
+    }}
+  />
+)}
 
       {settingsModalOpen && (
         <SettingsModal

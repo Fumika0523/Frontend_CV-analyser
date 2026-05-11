@@ -315,39 +315,41 @@ const handleChange = (e) => {
   // }
 };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault(); setMessage(""); setLoading(true);
-    try {
-      const res = await axios.post("http://localhost:8002/api/users/signin", form);
-      console.log("handleSubmit",res.data)
-     if (res.data.userId) {
-  setMessage(res.data.message || "OTP sent to your email");
+//Sign in
+ const handleSubmit = async (e) => {
+  e.preventDefault();
+  setMessage("");
+  setLoading(true);
 
-  onOtpSent?.({
-    userId: res.data.userId,
-    email: form.email,
-  });
-}
- } catch (err) {
-  console.log("SIGNIN ERROR:", err.response?.data);
-  console.log("onOtpSent exists?", onOtpSent);
+  try {
+    const res = await axios.post("http://localhost:8002/signin", form);
 
-  if (err?.response?.status === 403 && err?.response?.data?.userId) {
-    console.log("CALLING onOtpSent NOW");
+    console.log("SIGNIN SUCCESS:", res.data);
+    localStorage.setItem("token", res.data.token);
+    console.log("token", token)
+    onAuthSuccess?.(res.data);
 
-    setMessage(err.response.data.message || "Please verify your email");
+    onClose();
 
-    onOtpSent?.({
-      userId: err.response.data.userId,
-      email: form.email,
-    });
-  } else {
-    setMessage(err?.response?.data?.message || "Invalid email or password.");
-  }
-}
+  } catch (err) {
+    console.log("SIGNIN ERROR:", err.response?.data);
+
+    if (err?.response?.status === 403 && err?.response?.data?._id) {
+      setMessage(err.response.data.message || "Please verify your email");
+
+      onOtpSent?.({
+        _id: err.response.data._id,
+        email: form.email,
+      });
+
+      onClose();
+    } else {
+      setMessage(err?.response?.data?.message || "Invalid email or password.");
+    }
+  } finally {
     setLoading(false);
-  };
-
+  }
+};
   return (
     <div className="am-modal-root">
       <style>{STYLES}</style>
@@ -466,15 +468,21 @@ const SignUpModal = ({ isOpen, onClose, onOtpSent, onSwitchToSignIn }) => {
             companyName:form.companyName, companyDescription:form.companyDescription,
             companySize:form.companySize, companyType:form.companyType,
             location:{city:form.companyCity, country:form.companyCountry} };
-
-      const res = await axios.post("http://localhost:8002/api/users/signup", payload);
+      console.log("SIGNUP PAYLOAD:", payload);
+      const res = await axios.post("http://localhost:8002/signup", payload);
+      console.log("SIGNUP RESPONSE:", res.data);
       setMessage(res.data.message);
-      onOtpSent?.({ userId: res.data.userId, email: form.email });
+      onOtpSent?.({ _id: res.data.mongoId, email: form.email });
     } catch (err) {
-      if (err?.response?.status === 403 && err?.response?.data?.userId) {
+      console.log("SIGNUP ERROR FULL:", err);
+      console.log("SIGNUP ERROR RESPONSE:", err.response);
+      console.log("SIGNUP ERROR DATA:", err.response?.data);
+      console.log("SIGNUP ERROR STATUS:", err.response?.status);
+      if (err?.response?.status === 403 && err?.response?.data?._id) {
         setMessage(err.response.data.message || "Please verify your email");
-        onOtpSent?.({ userId: err.response.data.userId, email: form.email });
+        onOtpSent?.({ _id: err.response.data._id, email: form.email });
       } else {
+        console.log("error",err)
         setMessage(err?.response?.data?.message || "Signup failed. Please try again.");
       }
     }

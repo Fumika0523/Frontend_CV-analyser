@@ -1,9 +1,9 @@
 import React from "react";
 import Layout from "../../components/Layout/Layout";
 import SeoHead from "../../components/SeoHead";
-import AppliedJobs from "../../components/Dashboard/AppliedJobs";
-import MatchingJobs from "../../components/Dashboard/MatchingJobs";
-import ApplyJobs from "../../components/Dashboard/ApplyJobs";
+import AppliedJobs from "./Dashboard/AppliedJobs";
+import MatchingJobs from "./Dashboard/MatchingJobs";
+import ApplyJobs from "./Dashboard/ApplyJobs";
 import MyApplication from "./MyApplication";
 
 export default function Dashboard() {
@@ -33,7 +33,7 @@ export default function Dashboard() {
               <ApplyJobs />
             </div>
 
-              <div className="mt-6">
+              <div className="mt-5">
               <MyApplication />
             </div>
           </div>
