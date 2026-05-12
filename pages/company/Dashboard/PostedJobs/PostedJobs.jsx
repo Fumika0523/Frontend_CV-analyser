@@ -120,8 +120,6 @@ export default function PostedJobs() {
 
   return (
     <>
-    {/* <Layout> */}
-  {/* <div className="min-h-screen bg-slate-50 py-10"> */}
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 mt-5">
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-6">
         <h2 className="text-xl font-bold text-slate-900 mb-4">Posted Jobs</h2>

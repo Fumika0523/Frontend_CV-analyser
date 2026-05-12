@@ -4,7 +4,7 @@ import SeoHead from "../../components/SeoHead";
 import AppliedJobs from "./Dashboard/AppliedJobs";
 import MatchingJobs from "./Dashboard/MatchingJobs";
 import ApplyJobs from "./Dashboard/ApplyJobs";
-import MyApplication from "./MyApplication";
+import MyApplication from "./Dashboard/MyApplication/MyApplication";
 
 export default function Dashboard() {
   return (

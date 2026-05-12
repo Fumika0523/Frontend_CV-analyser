@@ -25,7 +25,7 @@ const NAV_GUEST = [
 const NAV_CANDIDATE = [
   { label: "Dashboard", href: "/candidate/dashboard", icon: FiGrid },
   { label: "Latest Jobs", href: "/candidate/Dashboard/LatestJobs", icon: FiBriefcase },
-  { label: "My Application", href: "/candidate/MyApplication", icon: FiFileText },
+  { label: "My Application", href: "/candidate/Dashboard/MyApplication/MyApplicationPage", icon: FiFileText },
   { label: "Search for job", href: "/candidate/search-job", icon: FiSearch },
 ];
 

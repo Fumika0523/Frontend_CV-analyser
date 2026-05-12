@@ -12,7 +12,6 @@ const LatestJobs = () => {
   const fetchJobs = async () => {
     try {
       setLoading(true);
-
       const res = await axios.get(`${url}/all-jobs`);
       setJobs(res.data);
     } catch (error) {
