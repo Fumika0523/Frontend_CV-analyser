@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Link as LinkScroll } from "react-scroll";
-import ButtonOutline from "../misc/ButtonOutline.";
-import LogoVPN from "../../public/assets/Logo.svg";
 import AuthModal from "../Auth/authModal";
 import OtpModal from "../Auth/otpModal";
 import axios from "axios";
@@ -13,7 +11,6 @@ import {
   FiMessageCircle, FiGrid, FiBriefcase,
   FiFileText, FiSearch, FiUsers, FiPlusCircle,
 } from "react-icons/fi";
-import Dashboard from "../../pages/company/Dashboard";
 
 const NAV_GUEST = [
   { id: "about", label: "About", icon: FiInfo },
@@ -114,21 +111,23 @@ const HEADER_STYLES = `
     letter-spacing:.05em;
   }
 `;
-
-const Header = () => {
- console.log("HEADER IS RENDERING");
+const Header = ({
+  guestView,
+  setGuestView,
+}) => {
+  console.log("HEADER IS RENDERING");
   const [activeLink, setActiveLink] = useState(null);
   const [scrollActive, setScrollActive] = useState(false);
 
-const [otpModal, setOtpModal] = useState({
-  isOpen: false,
-  _id: "",
-  email: "",
-});
+  const [otpModal, setOtpModal] = useState({
+    isOpen: false,
+    _id: "",
+    email: "",
+  });
 
-useEffect(() => {
-  console.log("OTP MODAL STATE CHANGED:", otpModal);
-}, [otpModal]);
+  useEffect(() => {
+    console.log("OTP MODAL STATE CHANGED:", otpModal);
+  }, [otpModal]);
 
   const [authModal, setAuthModal] = useState({
     isOpen: false,
@@ -136,24 +135,24 @@ useEffect(() => {
   });
 
 
-const handleOtpSent = (data) => {
-  console.log("HANDLE OTP SENT DATA:", data);
+  const handleOtpSent = (data) => {
+    console.log("HANDLE OTP SENT DATA:", data);
 
-  const mongoId = data?._id;
+    const mongoId = data?._id;
 
-  if (!mongoId) {
-    console.error("OTP modal cannot open because _id is missing:", data);
-    return;
-  }
+    if (!mongoId) {
+      console.error("OTP modal cannot open because _id is missing:", data);
+      return;
+    }
 
-  setAuthModal({ isOpen: false, mode: "signin" });
+    setAuthModal({ isOpen: false, mode: "signin" });
 
-  setOtpModal({
-    isOpen: true,
-    _id: mongoId,
-    email: data.email || "",
-  });
-};
+    setOtpModal({
+      isOpen: true,
+      _id: mongoId,
+      email: data.email || "",
+    });
+  };
 
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -190,14 +189,14 @@ const handleOtpSent = (data) => {
     const fetchUser = async () => {
       try {
         const token = localStorage.getItem("token");
-        console.log("token from header",token)
+        console.log("token from header", token)
         if (!token) return;
 
         const res = await axios.get("http://localhost:8002/user-profile", {
           headers: { Authorization: `Bearer ${token}` },
         });
         const fetchedUser = res.data.user;
-        console.log("fetchedUser",res.data.user)
+        console.log("fetchedUser", res.data.user)
         setUser({
           id: fetchedUser._id,
           firstName: fetchedUser.firstName,
@@ -232,7 +231,7 @@ const handleOtpSent = (data) => {
       >
         <nav className="max-w-screen-xl px-6 sm:px-8 lg:px-16 mx-auto grid grid-flow-col py-3 sm:py-4">
 
-          <div className="col-start-1 col-end-2 flex items-center text-blue-700 font-bold tracking-tight">
+          <div className="col-start-1 col-end-2 flex items-center text-blue-700 font-bold text-lg  tracking-tight">
             SkillfulJobs.ai
           </div>
 
@@ -307,7 +306,20 @@ const handleOtpSent = (data) => {
               </div>
             ) : (
               <>
-              <a
+                <button
+                  onClick={() =>
+                    setGuestView(
+                      guestView === "candidate" ? "company" : "candidate"
+                    )
+                  }
+                  className="hidden sm:inline-flex items-center px-3 py-2 rounded-lg border border-green-100 bg-green-50 text-sm font-medium text-green-700 hover:bg-green-100 hover:border-green-300 transition-all"
+                >
+                  {guestView === "candidate"
+                    ? "🏢 Recruiting? Post a job"
+                    : "👤 Apply for new job"}
+                </button>
+
+                <a
                   onClick={() => setAuthModal({ isOpen: true, mode: "signin" })}
                   className="cursor-pointer mx-2 sm:mx-4 transition-colors"
                   style={{ color: "#475569" }}
@@ -316,6 +328,7 @@ const handleOtpSent = (data) => {
                 >
                   Sign In
                 </a>
+
                 <ButtonPrimary onClick={() => setAuthModal({ isOpen: true, mode: "signup" })}>
                   Sign Up
                 </ButtonPrimary>
@@ -366,40 +379,40 @@ const handleOtpSent = (data) => {
           </ul>
         </div>
       </nav>
-    <AuthModal
-      isOpen={authModal.isOpen}
-      initialMode={authModal.mode}
-      onClose={() => setAuthModal({ isOpen: false, mode: "signin" })}
-      onAuthSuccess={handleAuthSuccess}
-      onOtpSent={handleOtpSent}
-    />
-     {otpModal.isOpen && (
-  <OtpModal
-    isOpen={otpModal.isOpen}
-    _id={otpModal._id}
-    email={otpModal.email}
-    onClose={() => setOtpModal({ isOpen: false, _id: "", email: "" })}
-    onVerified={(data) => {
-      if (data?.token) localStorage.setItem("token", data.token);
+      <AuthModal
+        isOpen={authModal.isOpen}
+        initialMode={authModal.mode}
+        onClose={() => setAuthModal({ isOpen: false, mode: "signin" })}
+        onAuthSuccess={handleAuthSuccess}
+        onOtpSent={handleOtpSent}
+      />
+      {otpModal.isOpen && (
+        <OtpModal
+          isOpen={otpModal.isOpen}
+          _id={otpModal._id}
+          email={otpModal.email}
+          onClose={() => setOtpModal({ isOpen: false, _id: "", email: "" })}
+          onVerified={(data) => {
+            if (data?.token) localStorage.setItem("token", data.token);
 
-      handleAuthSuccess({
-        _id: data?.user?._id,
-        userId: data?.user?.userId,
-        firstName: data?.user?.firstName || "",
-        lastName: data?.user?.lastName || "",
-        name: data?.user?.name || "User",
-        email: data?.user?.email || "",
-        role: data?.user?.role,
-        phoneNumber: data?.user?.phoneNumber || "",
-        companyName: data?.user?.companyName || "",
-        companyDescription: data?.user?.companyDescription || "",
-        location: data?.user?.location || { city: "", country: "" },
-      });
+            handleAuthSuccess({
+              _id: data?.user?._id,
+              userId: data?.user?.userId,
+              firstName: data?.user?.firstName || "",
+              lastName: data?.user?.lastName || "",
+              name: data?.user?.name || "User",
+              email: data?.user?.email || "",
+              role: data?.user?.role,
+              phoneNumber: data?.user?.phoneNumber || "",
+              companyName: data?.user?.companyName || "",
+              companyDescription: data?.user?.companyDescription || "",
+              location: data?.user?.location || { city: "", country: "" },
+            });
 
-      setOtpModal({ isOpen: false, _id: "", email: "" });
-    }}
-  />
-)}
+            setOtpModal({ isOpen: false, _id: "", email: "" });
+          }}
+        />
+      )}
 
       {settingsModalOpen && (
         <SettingsModal
@@ -412,7 +425,7 @@ const handleOtpSent = (data) => {
           }}
         />
       )}
-       
+
     </>
   );
 };
