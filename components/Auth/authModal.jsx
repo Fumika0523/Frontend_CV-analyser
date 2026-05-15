@@ -428,8 +428,14 @@ const handleSubmit = async (e) => {
 };
 
 /* SIGN UP  */
-const SignUpModal = ({ isOpen, onClose, onOtpSent, onSwitchToSignIn }) => {
-  const [role,      setRole]      = useState("candidate");
+const SignUpModal = ({
+  isOpen,
+  onClose,
+  onOtpSent,
+  onSwitchToSignIn,
+  initialRole = "candidate",
+}) => {
+const [role, setRole] = useState(initialRole);
   const [loading,   setLoading]   = useState(false);
   const [message,   setMessage]   = useState("");
   const [emailWarn, setEmailWarn] = useState("");
@@ -443,10 +449,13 @@ const SignUpModal = ({ isOpen, onClose, onOtpSent, onSwitchToSignIn }) => {
   const resetForm = () => {
     setForm({ firstName:"",lastName:"",email:"",password:"",phoneNumber:"",city:"",country:"",
       companyName:"",companyDescription:"",companyCity:"",companyCountry:"",companySize:"",companyType:"" });
-    setMessage(""); setEmailWarn(""); setRole("candidate");
+    setMessage(""); setEmailWarn(""); 
+setRole(initialRole);
   };
 
-  useEffect(() => { if (isOpen) resetForm(); }, [isOpen]);
+ useEffect(() => {
+  if (isOpen) resetForm();
+}, [isOpen, initialRole]);
   useEffect(() => {
     document.body.style.overflow = isOpen ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
@@ -694,7 +703,14 @@ const SignUpModal = ({ isOpen, onClose, onOtpSent, onSwitchToSignIn }) => {
 };
 
 /* ══════════ DROP-IN WRAPPER — same API as the old AuthModal ══════════ */
-const AuthModal = ({ isOpen, onClose, onAuthSuccess, onOtpSent, initialMode = "signin" }) => {
+const AuthModal = ({
+  isOpen,
+  onClose,
+  onAuthSuccess,
+  onOtpSent,
+  initialMode = "signin",
+  initialRole = "candidate",
+}) => {
   const [mode, setMode] = useState(initialMode);
   useEffect(() => { if (isOpen) setMode(initialMode); }, [isOpen, initialMode]);
 
@@ -707,12 +723,13 @@ const AuthModal = ({ isOpen, onClose, onAuthSuccess, onOtpSent, initialMode = "s
         onOtpSent={onOtpSent}
         onSwitchToSignUp={() => setMode("signup")}
       />
-      <SignUpModal
-        isOpen={isOpen && mode === "signup"}
-        onClose={onClose}
-        onOtpSent={onOtpSent}
-        onSwitchToSignIn={() => setMode("signin")}
-      />
+ <SignUpModal
+  isOpen={isOpen && mode === "signup"}
+  onClose={onClose}
+  onOtpSent={onOtpSent}
+  onSwitchToSignIn={() => setMode("signin")}
+  initialRole={initialRole}
+/>
     </>
   );
 };

@@ -5,7 +5,7 @@ import { AiOutlineFileSearch } from "react-icons/ai";
 import { FiEye } from "react-icons/fi";
 import { url } from "../../../utils/constant";
 
-export default function CVUploadBox({ isGuest = false }) {
+export default function CVUpload({ isGuest = false, onSignUpClick  }) {
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [uploadedCV, setUploadedCV] = useState(null);
@@ -85,11 +85,23 @@ export default function CVUploadBox({ isGuest = false }) {
             <h2 className="text-base font-semibold text-slate-900">
               {isGuest ? "Upload CV as Guest" : "Your CV"}
             </h2>
-            <p className="text-xs text-slate-400 mt-0.5">
-              {isGuest
-                ? "Temporary upload only. Sign up to save your CV."
-                : "Upload your CV to apply for jobs instantly"}
-            </p>
+         <p className="text-xs text-slate-400 mt-0.5">
+  {isGuest ? (
+    <>
+      Temporary upload only.{" "}
+      <button
+        type="button"
+        onClick={onSignUpClick}
+        className="text-blue-600 font-semibold underline underline-offset-2 hover:text-blue-800"
+      >
+        Sign up
+      </button>{" "}
+      to save your CV.
+    </>
+  ) : (
+    "Upload your CV to apply for jobs instantly"
+  )}
+</p>
           </div>
         </div>
 
@@ -115,7 +127,7 @@ export default function CVUploadBox({ isGuest = false }) {
       >
         <input
           type="file"
-          accept=".pdf,.doc,.docx"
+          accept=".pdf"
           onChange={handleFileChange}
           className="sr-only"
         />
@@ -126,10 +138,10 @@ export default function CVUploadBox({ isGuest = false }) {
 
         <div className="min-w-0">
           <p className="text-sm text-slate-600 truncate">
-            {file ? file.name : "Click to upload or drag & drop"}
+            {file ? file.name : "Cliack to upload or drag & drop"}
           </p>
           <p className="text-xs text-slate-400 mt-0.5">
-            PDF, DOC, DOCX — max 5MB
+            PDF — max 5MB
           </p>
         </div>
       </label>

@@ -6,6 +6,8 @@ import getScrollAnimation from "../utils/getScrollAnimation";
 import ScrollAnimationWrapper from "./Layout/ScrollAnimationWrapper";
 import { FaFileUpload, FaBrain, FaChartBar } from "react-icons/fa";
 import CVUpload from "../pages/candidate/Dashboard/CVUpload";
+import AuthModal from "./Auth/authModal";
+
 
 const listUser = [
   {
@@ -42,8 +44,11 @@ const heroContent = {
 
 const Hero = ({ guestView, setGuestView }) => {
   const scrollAnimation = useMemo(() => getScrollAnimation(), []);
-  const content = heroContent[guestView];
 
+const [authRole, setAuthRole] = useState("candidate");
+  const content = heroContent[guestView];
+const [authOpen, setAuthOpen] = useState(false);
+const [authMode, setAuthMode] = useState("signup");
   const [guestUploadOpen, setGuestUploadOpen] = useState(false);
 const [guestPostJobOpen, setGuestPostJobOpen] = useState(false);
   const handlePrimaryClick = () => {
@@ -133,7 +138,15 @@ const [guestPostJobOpen, setGuestPostJobOpen] = useState(false);
               ×
             </button>
 
-            <CVUpload isGuest={true} />
+            <CVUpload
+              isGuest={true}
+              onSignUpClick={() => {
+                setGuestUploadOpen(false);
+                setAuthMode("signup");
+                setAuthRole("candidate");
+                setAuthOpen(true);
+              }}
+            />
           </div>
         </div>
       )}
@@ -157,10 +170,12 @@ const [guestPostJobOpen, setGuestPostJobOpen] = useState(false);
       </p>
 
       <button
-        onClick={() => {
-          setGuestPostJobOpen(false);
-          // open signup modal here later
-        }}
+      onClick={() => {
+  setGuestPostJobOpen(false);
+  setAuthMode("signup");
+  setAuthRole("company");
+  setAuthOpen(true);
+}}
         className="w-full py-2.5 rounded-xl text-sm font-semibold text-white"
         style={{
           background: "linear-gradient(135deg, #1d4ed8, #1e3a8a)",
@@ -171,6 +186,12 @@ const [guestPostJobOpen, setGuestPostJobOpen] = useState(false);
     </div>
   </div>
 )}
+<AuthModal
+  isOpen={authOpen}
+  initialMode={authMode}
+  initialRole={authRole}
+  onClose={() => setAuthOpen(false)}
+/>
     </>
   );
 };
