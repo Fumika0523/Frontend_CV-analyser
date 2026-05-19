@@ -476,14 +476,41 @@ setRole(initialRole);
     
     setLoading(true);
     try {
-      const payload = role === "candidate"
-        ? { firstName:form.firstName, lastName:form.lastName, email:form.email, password:form.password,
-            role:"candidate", phoneNumber:form.phoneNumber, location:{city:form.city, country:form.country} }
-        : { firstName:form.firstName, lastName:form.lastName, email:form.email, password:form.password,
-            phoneNumber:form.phoneNumber, role:"company",
-            companyName:form.companyName, companyDescription:form.companyDescription,
-            companySize:form.companySize, companyType:form.companyType,
-            location:{city:form.companyCity, country:form.companyCountry} };
+     
+
+    const guestSessionId = localStorage.getItem("guest_session_id");
+      console.log("guestSessionId",guestSessionId)
+const payload = role === "candidate"
+  ? {
+      firstName: form.firstName,
+      lastName: form.lastName,
+      email: form.email,
+      password: form.password,
+      role: "candidate",
+      phoneNumber: form.phoneNumber,
+      location: {
+        city: form.city,
+        country: form.country,
+      },
+      guestSessionId,
+    }
+  : {
+      firstName: form.firstName,
+      lastName: form.lastName,
+      email: form.email,
+      password: form.password,
+      phoneNumber: form.phoneNumber,
+      role: "company",
+      companyName: form.companyName,
+      companyDescription: form.companyDescription,
+      companySize: form.companySize,
+      companyType: form.companyType,
+      location: {
+        city: form.companyCity,
+        country: form.companyCountry,
+      },
+    };
+     
       console.log("SIGNUP PAYLOAD:", payload);
       const res = await axios.post("http://localhost:8002/signup", payload);
       console.log("SIGNUP RESPONSE:", res.data);
@@ -723,13 +750,14 @@ const AuthModal = ({
         onOtpSent={onOtpSent}
         onSwitchToSignUp={() => setMode("signup")}
       />
- <SignUpModal
-  isOpen={isOpen && mode === "signup"}
-  onClose={onClose}
-  onOtpSent={onOtpSent}
-  onSwitchToSignIn={() => setMode("signin")}
-  initialRole={initialRole}
-/>
+
+      <SignUpModal
+        isOpen={isOpen && mode === "signup"}
+        onClose={onClose}
+        onOtpSent={onOtpSent}
+        onSwitchToSignIn={() => setMode("signin")}
+        initialRole={initialRole}
+      />
     </>
   );
 };

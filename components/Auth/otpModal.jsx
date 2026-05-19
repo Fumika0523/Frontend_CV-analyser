@@ -181,7 +181,8 @@ console.log("OTP MODAL otp:", otp);
 console.log("VERIFY PAYLOAD:", { _id, otp });
       const res = await axios.post("http://localhost:8002/verify-otp", { _id, otp });
       console.log("res",res.data)
-      setSuccess(true); setMessage("Verified successfully!");
+      setSuccess(true); 
+      setMessage("Verified successfully!");
       setTimeout(() => onVerified?.(res.data), 900);
     } catch (err) {
       setIsError(true);

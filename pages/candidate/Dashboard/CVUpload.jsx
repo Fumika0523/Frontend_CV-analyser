@@ -34,44 +34,61 @@ export default function CVUpload({ isGuest = false, onSignUpClick  }) {
     setFile(selectedFile);
   };
 
-  const handleUpload = async () => {
-    if (!file) return toast.error("Please select a CV");
+const handleUpload = async () => {
+  if (!file) return toast.error("Please select a CV");
 
-    setLoading(true);
+  setLoading(true);
 
-    try {
-      const formData = new FormData();
-      formData.append("cv", file);
+  try {
+    const formData = new FormData();
+    formData.append("cv", file);
 
-      const endpoint = isGuest
-        ? `${url}/cv/guest-upload`
-        : `${url}/cv/upload`;
+    const endpoint = isGuest
+      ? `${url}/cv/guest-upload`
+      : `${url}/cv/upload`;
 
-      const headers = {
-        "Content-Type": "multipart/form-data",
-      };
+    const headers = {
+      "Content-Type": "multipart/form-data",
+    };
 
-      if (!isGuest) {
-        const token = localStorage.getItem("token");
-        headers.Authorization = `Bearer ${token}`;
+    if (isGuest) {
+      let guestSessionId = localStorage.getItem("guest_session_id");
+
+      if (!guestSessionId) {
+        guestSessionId = `guest_${Date.now()}_${Math.random()
+          .toString(36)
+          .substring(2, 10)}`;
+
+        localStorage.setItem("guest_session_id", guestSessionId);
       }
 
-      const res = await axios.post(endpoint, formData, { headers });
-
-      setUploadedCV(res.data.cv || null);
-
-      toast.success(
-        isGuest
-          ? "CV uploaded for temporary analysis!"
-          : "CV uploaded successfully!"
-      );
-    } catch (err) {
-      console.error("Upload error:", err);
-      toast.error(err.response?.data?.message || "Upload failed");
-    } finally {
-      setLoading(false);
+      formData.append("guestSessionId", guestSessionId);
+    } else {
+      const token = localStorage.getItem("token");
+      headers.Authorization = `Bearer ${token}`;
     }
-  };
+console.log("isGuest:", isGuest);
+console.log("endpoint:", endpoint);
+console.log("file:", file);
+console.log("guest_session_id:", localStorage.getItem("guest_session_id"));
+    const res = await axios.post(endpoint, formData, { headers });
+
+    console.log("CV upload response:", res.data);
+
+    setUploadedCV(res.data.cv || null);
+
+    toast.success(
+      isGuest
+        ? "CV analysed temporarily! Sign up to save it."
+        : "CV uploaded successfully!"
+    );
+  } catch (err) {
+    console.error("Upload error:", err);
+    toast.error(err.response?.data?.message || "Upload failed");
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
@@ -98,9 +115,11 @@ export default function CVUpload({ isGuest = false, onSignUpClick  }) {
       </button>{" "}
       to save your CV.
     </>
-  ) : (
+  ) : 
+  (
     "Upload your CV to apply for jobs instantly"
-  )}
+  )
+  }
 </p>
           </div>
         </div>

@@ -7,7 +7,8 @@ import ScrollAnimationWrapper from "./Layout/ScrollAnimationWrapper";
 import { FaFileUpload, FaBrain, FaChartBar } from "react-icons/fa";
 import CVUpload from "../pages/candidate/Dashboard/CVUpload";
 import AuthModal from "./Auth/authModal";
-
+import OtpModal from "./Auth/otpModal";
+import { useRouter } from "next/router";
 
 const listUser = [
   {
@@ -44,20 +45,44 @@ const heroContent = {
 
 const Hero = ({ guestView, setGuestView }) => {
   const scrollAnimation = useMemo(() => getScrollAnimation(), []);
-
+const router = useRouter();
+  const [otpModal, setOtpModal] = useState({
+  isOpen: false,
+  _id: "",
+  email: "",
+});
 const [authRole, setAuthRole] = useState("candidate");
   const content = heroContent[guestView];
 const [authOpen, setAuthOpen] = useState(false);
 const [authMode, setAuthMode] = useState("signup");
   const [guestUploadOpen, setGuestUploadOpen] = useState(false);
 const [guestPostJobOpen, setGuestPostJobOpen] = useState(false);
-  const handlePrimaryClick = () => {
+  
+const handlePrimaryClick = () => {
     if (guestView === "candidate") {
       setGuestUploadOpen(true);
     } else {
   setGuestPostJobOpen(true);    }
   };
 
+  const handleOtpSent = (data) => {
+  console.log("OTP SENT FROM HERO:", data);
+
+  const mongoId = data?._id;
+
+  if (!mongoId) {
+    console.error("Missing _id for OTP modal:", data);
+    return;
+  }
+
+  setAuthOpen(false);
+
+  setOtpModal({
+    isOpen: true,
+    _id: mongoId,
+    email: data.email || "",
+  });
+};
   return (
     <>
       <div className="max-w-screen-xl mt-24 px-8 xl:px-16 mx-auto" id="about">
@@ -186,12 +211,37 @@ const [guestPostJobOpen, setGuestPostJobOpen] = useState(false);
     </div>
   </div>
 )}
+
 <AuthModal
   isOpen={authOpen}
   initialMode={authMode}
   initialRole={authRole}
   onClose={() => setAuthOpen(false)}
+  onOtpSent={handleOtpSent}
 />
+{otpModal.isOpen && (
+  <OtpModal
+    isOpen={otpModal.isOpen}
+    _id={otpModal._id}
+    email={otpModal.email}
+    onClose={() => setOtpModal({ isOpen: false, _id: "", email: "" })}
+   onVerified={(data) => {
+  if (data?.token) {
+    localStorage.setItem("token", data.token);
+  }
+
+  localStorage.removeItem("guest_session_id");
+
+  setOtpModal({ isOpen: false, _id: "", email: "" });
+
+  if (data?.user?.role === "company") {
+    router.push("/company/dashboard");
+  } else {
+    router.push("/candidate/dashboard");
+  }
+}}
+  />
+)}
     </>
   );
 };

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import { Link as LinkScroll } from "react-scroll";
 import AuthModal from "../Auth/authModal";
 import OtpModal from "../Auth/otpModal";
@@ -7,9 +8,16 @@ import axios from "axios";
 import SettingsModal from "../Auth/settingsModal";
 import ButtonPrimary from "../misc/ButtonPrimary";
 import {
-  FiInfo, FiStar, FiCreditCard,
-  FiMessageCircle, FiGrid, FiBriefcase,
-  FiFileText, FiSearch, FiUsers, FiPlusCircle,
+  FiInfo,
+  FiStar,
+  FiCreditCard,
+  FiMessageCircle,
+  FiGrid,
+  FiBriefcase,
+  FiFileText,
+  FiSearch,
+  FiUsers,
+  FiPlusCircle,
 } from "react-icons/fi";
 
 const NAV_GUEST = [
@@ -26,7 +34,6 @@ const NAV_CANDIDATE = [
   { label: "Search for job", href: "/candidate/search-job", icon: FiSearch },
 ];
 
-
 const NAV_COMPANY = [
   { label: "Dashboard", href: "/company/dashboard", icon: FiGrid },
   { label: "Posted Jobs", href: "/company/Dashboard/PostedJobs/PostedJobsPage", icon: FiBriefcase },
@@ -34,106 +41,23 @@ const NAV_COMPANY = [
   { label: "Post a new job", href: "/company/Dashboard/postjob", icon: FiPlusCircle },
 ];
 
-const HEADER_STYLES = `
-  @import url('https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=DM+Sans:wght@400;500&display=swap');
-
-  @keyframes hdFadeIn {
-    from { opacity:0; transform:translateY(-6px); }
-    to { opacity:1; transform:translateY(0); }
-  }
-
-  .hd-nav-link {
-    color:navy;
-  }
-  .hd-nav-link svg {
-    color:#1e3a8a;
-  }
-  .hd-nav-link:hover {
-    color:#1d4ed8;
-  }
-  .hd-nav-link:hover svg {
-    color:#1d4ed8;
-  }
-
-  .hd-avatar {
-    width:34px;height:34px;border-radius:50%;
-    background:linear-gradient(135deg,#0f172a,#1d4ed8);
-    color:#fff;font-weight:700;font-size:13px;font-family:'Sora',sans-serif;
-    display:flex;align-items:center;justify-content:center;
-    cursor:pointer;border:2px solid #fff;
-    box-shadow:0 0 0 2px #0f172a;
-    transition:box-shadow .2s;
-  }
-  .hd-avatar:hover {
-    box-shadow:0 0 0 3px #1d4ed8;
-  }
-
-  .hd-dropdown {
-    position:absolute;top:calc(100% + 8px);right:0;min-width:170px;
-    background:#ffffff;
-    border:1px solid #e2e8f0;
-    border-radius:12px;
-    box-shadow:0 8px 24px rgba(15,23,42,.08);
-    padding:6px;
-    z-index:100;
-    animation:hdFadeIn .15s ease;
-  }
-
-  .hd-ditem {
-    display:block;width:100%;
-    padding:9px 14px;
-    border-radius:8px;
-    font-size:13px;
-    font-family:'DM Sans',sans-serif;
-    color:#1e293b;
-    background:none;
-    border:none;
-    cursor:pointer;
-    text-align:left;
-    transition:background .15s;
-  }
-  .hd-ditem:hover {
-    background:#f1f5f9;
-    color:#1d4ed8;
-  }
-  .hd-ditem.danger:hover {
-    background:#fff1f2;
-    color:#e11d48;
-  }
-
-  .hd-pill {
-    font-size:11px;
-    font-weight:700;
-    font-family:'Sora',sans-serif;
-    padding:3px 10px;
-    border-radius:20px;
-    text-transform:uppercase;
-    letter-spacing:.05em;
-  }
-`;
-const Header = ({
-  guestView,
-  setGuestView,
-}) => {
-  console.log("HEADER IS RENDERING");
+const Header = ({ guestView, setGuestView }) => {
   const [activeLink, setActiveLink] = useState(null);
   const [scrollActive, setScrollActive] = useState(false);
+  const [settingsModalOpen, setSettingsModalOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [user, setUser] = useState(null);
+const router = useRouter();
+  const [authModal, setAuthModal] = useState({
+    isOpen: false,
+    mode: "signin",
+  });
 
   const [otpModal, setOtpModal] = useState({
     isOpen: false,
     _id: "",
     email: "",
   });
-
-  useEffect(() => {
-    console.log("OTP MODAL STATE CHANGED:", otpModal);
-  }, [otpModal]);
-
-  const [authModal, setAuthModal] = useState({
-    isOpen: false,
-    mode: "",
-  });
-
 
   const handleOtpSent = (data) => {
     console.log("HANDLE OTP SENT DATA:", data);
@@ -154,51 +78,63 @@ const Header = ({
     });
   };
 
-  const [settingsModalOpen, setSettingsModalOpen] = useState(false);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [user, setUser] = useState(null);
-
-  useEffect(() => {
-    const onScroll = () => setScrollActive(window.scrollY > 20);
-    window.addEventListener("scroll", onScroll);
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  useEffect(() => {
-    const close = () => setDropdownOpen(false);
-    if (dropdownOpen) document.addEventListener("click", close);
-    return () => document.removeEventListener("click", close);
-  }, [dropdownOpen]);
-
-  const handleAuthSuccess = (userData) => setUser(userData);
+  const handleAuthSuccess = (userData) => {
+    setUser(userData);
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("token");
     setUser(null);
     setDropdownOpen(false);
+    router.push("/");
   };
 
-  const navLinks = user ? (user.role === "company" ? NAV_COMPANY : NAV_CANDIDATE) : null;
-  const initials = user ? user.name?.slice(0, 2).toUpperCase() : "";
+  const navLinks = user
+    ? user.role === "company"
+      ? NAV_COMPANY
+      : NAV_CANDIDATE
+    : [];
 
-  const pillStyle = user?.role === "company"
-    ? { background: "#eff6ff", color: "#1d4ed8", border: "1px solid #dbeafe" }
-    : { background: "#f1f5f9", color: "#0f172a", border: "1px solid #e2e8f0" };
+  const initials = user
+    ? `${user.firstName?.[0] || ""}${user.lastName?.[0] || ""}`.toUpperCase() ||
+      user.name?.slice(0, 2).toUpperCase()
+    : "";
+
+  useEffect(() => {
+    const onScroll = () => setScrollActive(window.scrollY > 20);
+
+    window.addEventListener("scroll", onScroll);
+    onScroll();
+
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    const closeDropdown = () => setDropdownOpen(false);
+
+    if (dropdownOpen) {
+      document.addEventListener("click", closeDropdown);
+    }
+
+    return () => document.removeEventListener("click", closeDropdown);
+  }, [dropdownOpen]);
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const token = localStorage.getItem("token");
-        console.log("token from header", token)
+
         if (!token) return;
 
         const res = await axios.get("http://localhost:8002/user-profile", {
           headers: { Authorization: `Bearer ${token}` },
         });
+
         const fetchedUser = res.data.user;
-        console.log("fetchedUser", res.data.user)
+
         setUser({
           id: fetchedUser._id,
+          userId: fetchedUser.userId,
           firstName: fetchedUser.firstName,
           lastName: fetchedUser.lastName,
           name: `${fetchedUser.firstName || ""} ${fetchedUser.lastName || ""}`.trim(),
@@ -221,83 +157,103 @@ const Header = ({
 
   return (
     <>
-      <style>{HEADER_STYLES}</style>
-
       <header
-        className={
-          "fixed top-0 w-full z-30 bg-white/95 backdrop-blur-md transition-all " +
-          (scrollActive ? "shadow-sm pt-0" : "pt-4")
-        }
+        className={`fixed top-0 w-full z-30 bg-white/95 backdrop-blur-md transition-all duration-300 ${
+          scrollActive ? "pt-0 shadow-sm" : "pt-4"
+        }`}
       >
-        <nav className="max-w-screen-xl px-6 sm:px-8 lg:px-16 mx-auto grid grid-flow-col py-3 sm:py-4">
-
-          <div className="col-start-1 col-end-2 flex items-center text-blue-700 font-bold text-lg  tracking-tight">
+        <nav className="max-w-screen-xl mx-auto grid grid-flow-col items-center px-6 sm:px-8 lg:px-16 py-3 sm:py-4">
+          <div className="col-start-1 col-end-2 flex items-center text-lg font-bold tracking-tight text-blue-700">
             SkillfulJobs.ai
           </div>
 
-          <ul className="hidden lg:flex col-start-4 col-end-8 text-blue-600 items-center">
-            {user ? (
-              navLinks.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <Link key={item.href} href={item.href}>
-                    <a className="hd-nav-link px-4 py-2 mx-2 text-sm font-medium transition-colors items-center gap-2 animation-hover inline-flex relative">
-                      <Icon className="text-base" />
-                      {item.label}
-                    </a>
-                  </Link>
-                );
-              })
-            ) : (
-              NAV_GUEST.map(({ id, label, icon: Icon }) => (
-                <LinkScroll
-                  key={id}
-                  activeClass="active"
-                  to={id}
-                  spy
-                  smooth
-                  duration={1000}
-                  onSetActive={() => setActiveLink(id)}
-                  className={
-                    "hd-nav-link px-4 py-2 mx-2 cursor-pointer animation-hover inline-flex items-center gap-2 relative " +
-                    (activeLink === id ? "text-blue-600 animation-active" : "")
-                  }
-                >
-                  <Icon className="text-base" />
-                  {label}
-                </LinkScroll>
-              ))
-            )}
+          <ul className="hidden lg:flex col-start-4 col-end-8 items-center text-blue-600">
+            {user
+              ? navLinks.map((item) => {
+                  const Icon = item.icon;
+
+                  return (
+                    <Link key={item.href} href={item.href}>
+                      <a className="group relative inline-flex items-center gap-2 px-4 py-2 mx-2 text-sm font-medium text-blue-900 transition-colors hover:text-blue-600">
+                        <Icon className="text-base text-blue-900 transition-colors group-hover:text-blue-600" />
+                        {item.label}
+                      </a>
+                    </Link>
+                  );
+                })
+              : NAV_GUEST.map(({ id, label, icon: Icon }) => (
+                  <LinkScroll
+                    key={id}
+                    activeClass="active"
+                    to={id}
+                    spy
+                    smooth
+                    duration={1000}
+                    onSetActive={() => setActiveLink(id)}
+                    className={`group relative inline-flex cursor-pointer items-center gap-2 px-4 py-2 mx-2 transition-colors hover:text-blue-600 ${
+                      activeLink === id ? "text-blue-600" : "text-blue-900"
+                    }`}
+                  >
+                    <Icon className="text-base text-blue-900 transition-colors group-hover:text-blue-600" />
+                    {label}
+                  </LinkScroll>
+                ))}
           </ul>
 
-          <div className="col-start-10 col-end-12 font-medium flex justify-end items-center gap-3">
+          <div className="col-start-10 col-end-12 flex justify-end items-center gap-3 font-medium">
             {user ? (
-              <div style={{ display: "flex", alignItems: "center", gap: 10, position: "relative" }}>
-                <span className="hd-pill" style={pillStyle}>
+              <div className="relative flex items-center gap-3">
+                <span
+                  className={`rounded-full border px-3 py-1 text-[11px] font-bold uppercase tracking-wider ${
+                    user.role === "company"
+                      ? "border-blue-100 bg-blue-50 text-blue-700"
+                      : "border-slate-200 bg-slate-100 text-slate-900"
+                  }`}
+                >
                   {user.role === "company" ? "🏢 Company" : "👤 Candidate"}
                 </span>
-                <div style={{ position: "relative" }}>
-                  <div
-                    className="hd-avatar"
-                    onClick={(e) => { e.stopPropagation(); setDropdownOpen(v => !v); }}
+
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setDropdownOpen((prev) => !prev);
+                    }}
+                    className="flex h-[34px] w-[34px] items-center justify-center rounded-full border-2 border-white bg-gradient-to-br from-slate-800 
+                    to-blue-600 text-xs font-bold text-white shadow-[0_0_0_2px_#0f172a] transition hover:shadow-[0_0_0_3px_#1d4ed8]"
                   >
                     {initials}
-                  </div>
+                  </button>
+
                   {dropdownOpen && (
-                    <div className="hd-dropdown">
+                    <div className="absolute right-0 top-[calc(100%+8px)] z-50 min-w-[170px] rounded-xl border border-slate-300 bg-white p-1.5 shadow-lg">
                       {user.role === "candidate" && (
                         <Link href="/candidate/cv">
-                          <a className="hd-ditem">📄 CV Analyser</a>
+                          <a className="block w-full rounded-lg px-3.5 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-100 hover:text-blue-600">
+                            📄 CV Analyser
+                          </a>
                         </Link>
                       )}
+
                       <button
-                        className="hd-ditem"
-                        onClick={() => { setSettingsModalOpen(true); setDropdownOpen(false); }}
+                        type="button"
+                        onClick={() => {
+                          setSettingsModalOpen(true);
+                          setDropdownOpen(false);
+                        }}
+                        className="block w-full rounded-lg px-3.5 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-100 hover:text-blue-600"
                       >
                         ⚙️ Settings
                       </button>
-                      <div style={{ borderTop: "1px solid #dbeafe", margin: "4px 0" }} />
-                      <button className="hd-ditem danger" onClick={handleLogout}>
+
+                      <div className="my-1 border-t border-blue-100" />
+
+                      <button
+                        type="button"
+                        onClick={handleLogout}
+                        className="block w-full rounded-lg px-3.5 py-2 text-left text-sm text-slate-700 transition hover:bg-red-50 hover:text-rose-600"
+                      >
                         🚪 Sign Out
                       </button>
                     </div>
@@ -307,29 +263,30 @@ const Header = ({
             ) : (
               <>
                 <button
+                  type="button"
                   onClick={() =>
                     setGuestView(
                       guestView === "candidate" ? "company" : "candidate"
                     )
                   }
-                  className="hidden sm:inline-flex items-center px-3 py-2 rounded-lg border border-green-100 bg-green-50 text-sm font-medium text-green-700 hover:bg-green-100 hover:border-green-300 transition-all"
+                  className="hidden sm:inline-flex items-center rounded-lg border border-green-100 bg-green-50 px-3 py-2 text-sm font-medium text-green-700 transition hover:border-green-300 hover:bg-green-100"
                 >
                   {guestView === "candidate"
                     ? "🏢 Recruiting? Post a job"
                     : "👤 Apply for new job"}
                 </button>
 
-                <a
+                <button
+                  type="button"
                   onClick={() => setAuthModal({ isOpen: true, mode: "signin" })}
-                  className="cursor-pointer mx-2 sm:mx-4 transition-colors"
-                  style={{ color: "#475569" }}
-                  onMouseEnter={(e) => (e.currentTarget.style.color = "#1d4ed8")}
-                  onMouseLeave={(e) => (e.currentTarget.style.color = "#475569")}
+                  className="mx-2 cursor-pointer text-slate-600 transition hover:text-blue-600 sm:mx-4"
                 >
                   Sign In
-                </a>
+                </button>
 
-                <ButtonPrimary onClick={() => setAuthModal({ isOpen: true, mode: "signup" })}>
+                <ButtonPrimary
+                  onClick={() => setAuthModal({ isOpen: true, mode: "signup" })}
+                >
                   Sign Up
                 </ButtonPrimary>
               </>
@@ -338,47 +295,45 @@ const Header = ({
         </nav>
       </header>
 
-      {/* Mobile Nav */}
-      <nav className="fixed lg:hidden bottom-0 left-0 right-0 z-20 px-4 sm:px-8 shadow-t">
+      <nav className="fixed bottom-0 left-0 right-0 z-20 px-4 shadow-t lg:hidden sm:px-8">
         <div className="bg-white sm:px-3">
-          <ul className="flex w-full justify-between items-center text-slate-600">
-            {user ? (
-              navLinks.slice(0, 4).map((item) => {
-                const Icon = item.icon;
-                return (
-                  <Link key={item.href} href={item.href}>
-                    <a className="mx-1 sm:mx-2 px-3 sm:px-4 py-2 flex flex-col items-center text-xs border-t-2 border-transparent hover:border-blue-700 hover:text-blue-700 transition-all">
-                      <Icon className="w-6 h-6 mb-0.5 text-blue-900" />
-                      {item.label}
-                    </a>
-                  </Link>
-                );
-              })
-            ) : (
-              NAV_GUEST.map(({ id, label, icon: Icon }) => (
-                <LinkScroll
-                  key={id}
-                  activeClass="active"
-                  to={id}
-                  spy
-                  smooth
-                  duration={1000}
-                  onSetActive={() => setActiveLink(id)}
-                  className={
-                    "mx-1 sm:mx-2 px-3 sm:px-4 py-2 flex flex-col items-center text-xs border-t-2 transition-all " +
-                    (activeLink === id
-                      ? "border-blue-700 text-blue-700"
-                      : "border-transparent text-slate-600 hover:border-blue-700 hover:text-blue-700")
-                  }
-                >
-                  <Icon className="w-6 h-6 mb-0.5 text-blue-900" />
-                  {label}
-                </LinkScroll>
-              ))
-            )}
+          <ul className="flex w-full items-center justify-between text-slate-600">
+            {user
+              ? navLinks.slice(0, 4).map((item) => {
+                  const Icon = item.icon;
+
+                  return (
+                    <Link key={item.href} href={item.href}>
+                      <a className="mx-1 flex flex-col items-center border-t-2 border-transparent px-3 py-2 text-xs transition hover:border-blue-700 hover:text-blue-700 sm:mx-2 sm:px-4">
+                        <Icon className="mb-0.5 h-6 w-6 text-blue-900" />
+                        {item.label}
+                      </a>
+                    </Link>
+                  );
+                })
+              : NAV_GUEST.map(({ id, label, icon: Icon }) => (
+                  <LinkScroll
+                    key={id}
+                    activeClass="active"
+                    to={id}
+                    spy
+                    smooth
+                    duration={1000}
+                    onSetActive={() => setActiveLink(id)}
+                    className={`mx-1 flex cursor-pointer flex-col items-center border-t-2 px-3 py-2 text-xs transition sm:mx-2 sm:px-4 ${
+                      activeLink === id
+                        ? "border-blue-700 text-blue-700"
+                        : "border-transparent text-slate-600 hover:border-blue-700 hover:text-blue-700"
+                    }`}
+                  >
+                    <Icon className="mb-0.5 h-6 w-6 text-blue-900" />
+                    {label}
+                  </LinkScroll>
+                ))}
           </ul>
         </div>
       </nav>
+
       <AuthModal
         isOpen={authModal.isOpen}
         initialMode={authModal.mode}
@@ -386,32 +341,47 @@ const Header = ({
         onAuthSuccess={handleAuthSuccess}
         onOtpSent={handleOtpSent}
       />
+
       {otpModal.isOpen && (
-        <OtpModal
-          isOpen={otpModal.isOpen}
-          _id={otpModal._id}
-          email={otpModal.email}
-          onClose={() => setOtpModal({ isOpen: false, _id: "", email: "" })}
-          onVerified={(data) => {
-            if (data?.token) localStorage.setItem("token", data.token);
+       <OtpModal
+  isOpen={otpModal.isOpen}
+  _id={otpModal._id}
+  email={otpModal.email}
+  onClose={() => setOtpModal({ isOpen: false, _id: "", email: "" })}
+  onVerified={(data) => {
+    console.log("OTP verified data:", data);
 
-            handleAuthSuccess({
-              _id: data?.user?._id,
-              userId: data?.user?.userId,
-              firstName: data?.user?.firstName || "",
-              lastName: data?.user?.lastName || "",
-              name: data?.user?.name || "User",
-              email: data?.user?.email || "",
-              role: data?.user?.role,
-              phoneNumber: data?.user?.phoneNumber || "",
-              companyName: data?.user?.companyName || "",
-              companyDescription: data?.user?.companyDescription || "",
-              location: data?.user?.location || { city: "", country: "" },
-            });
+    if (data?.token) {
+      localStorage.setItem("token", data.token);
+    }
 
-            setOtpModal({ isOpen: false, _id: "", email: "" });
-          }}
-        />
+    handleAuthSuccess({
+      id: data?.user?._id,
+      userId: data?.user?.userId,
+      firstName: data?.user?.firstName || "",
+      lastName: data?.user?.lastName || "",
+      name:
+        data?.user?.name ||
+        `${data?.user?.firstName || ""} ${data?.user?.lastName || ""}`.trim(),
+      email: data?.user?.email || "",
+      role: data?.user?.role,
+      phoneNumber: data?.user?.phoneNumber || "",
+      companyName: data?.user?.companyName || "",
+      companyDescription: data?.user?.companyDescription || "",
+      location: data?.user?.location || { city: "", country: "" },
+    });
+
+    localStorage.removeItem("guest_session_id");
+
+    setOtpModal({ isOpen: false, _id: "", email: "" });
+
+    if (data?.user?.role === "company") {
+      router.push("/company/dashboard");
+    } else {
+      router.push("/candidate/dashboard");
+    }
+  }}
+/>
       )}
 
       {settingsModalOpen && (
@@ -425,7 +395,6 @@ const Header = ({
           }}
         />
       )}
-
     </>
   );
 };
