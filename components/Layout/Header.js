@@ -42,12 +42,14 @@ const NAV_COMPANY = [
 ];
 
 const Header = ({ guestView, setGuestView }) => {
+  const router = useRouter();
+
   const [activeLink, setActiveLink] = useState(null);
   const [scrollActive, setScrollActive] = useState(false);
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [user, setUser] = useState(null);
-const router = useRouter();
+
   const [authModal, setAuthModal] = useState({
     isOpen: false,
     mode: "signin",
@@ -220,17 +222,16 @@ const router = useRouter();
                       e.stopPropagation();
                       setDropdownOpen((prev) => !prev);
                     }}
-                    className="flex h-[34px] w-[34px] items-center justify-center rounded-full border-2 border-white bg-gradient-to-br from-slate-800 
-                    to-blue-600 text-xs font-bold text-white shadow-[0_0_0_2px_#0f172a] transition hover:shadow-[0_0_0_3px_#1d4ed8]"
+                    className="flex h-[34px] w-[34px] items-center justify-center rounded-full border-2 border-white bg-gradient-to-br from-slate-900 to-blue-700 text-xs font-bold text-white shadow-[0_0_0_2px_#0f172a] transition hover:shadow-[0_0_0_3px_#1d4ed8]"
                   >
                     {initials}
                   </button>
 
                   {dropdownOpen && (
-                    <div className="absolute right-0 top-[calc(100%+8px)] z-50 min-w-[170px] rounded-xl border border-slate-300 bg-white p-1.5 shadow-lg">
+                    <div className="absolute right-0 top-[calc(100%+8px)] z-50 min-w-[170px] rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg">
                       {user.role === "candidate" && (
-                        <Link href="/candidate/cv">
-                          <a className="block w-full rounded-lg px-3.5 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-100 hover:text-blue-600">
+                      <Link href="/candidate/cv">
+                      <a className="block w-full rounded-lg px-3.5 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-100 hover:text-blue-600">
                             📄 CV Analyser
                           </a>
                         </Link>
@@ -343,45 +344,43 @@ const router = useRouter();
       />
 
       {otpModal.isOpen && (
-       <OtpModal
-  isOpen={otpModal.isOpen}
-  _id={otpModal._id}
-  email={otpModal.email}
-  onClose={() => setOtpModal({ isOpen: false, _id: "", email: "" })}
-  onVerified={(data) => {
-    console.log("OTP verified data:", data);
+        <OtpModal
+          isOpen={otpModal.isOpen}
+          _id={otpModal._id}
+          email={otpModal.email}
+          onClose={() => setOtpModal({ isOpen: false, _id: "", email: "" })}
+          onVerified={(data) => {
+            if (data?.token) {
+              localStorage.setItem("token", data.token);
+            }
 
-    if (data?.token) {
-      localStorage.setItem("token", data.token);
-    }
+            localStorage.removeItem("guest_session_id");
 
-    handleAuthSuccess({
-      id: data?.user?._id,
-      userId: data?.user?.userId,
-      firstName: data?.user?.firstName || "",
-      lastName: data?.user?.lastName || "",
-      name:
-        data?.user?.name ||
-        `${data?.user?.firstName || ""} ${data?.user?.lastName || ""}`.trim(),
-      email: data?.user?.email || "",
-      role: data?.user?.role,
-      phoneNumber: data?.user?.phoneNumber || "",
-      companyName: data?.user?.companyName || "",
-      companyDescription: data?.user?.companyDescription || "",
-      location: data?.user?.location || { city: "", country: "" },
-    });
+            handleAuthSuccess({
+              id: data?.user?._id,
+              userId: data?.user?.userId,
+              firstName: data?.user?.firstName || "",
+              lastName: data?.user?.lastName || "",
+              name:
+                `${data?.user?.firstName || ""} ${data?.user?.lastName || ""}`.trim() ||
+                "User",
+              email: data?.user?.email || "",
+              role: data?.user?.role,
+              phoneNumber: data?.user?.phoneNumber || "",
+              companyName: data?.user?.companyName || "",
+              companyDescription: data?.user?.companyDescription || "",
+              location: data?.user?.location || { city: "", country: "" },
+            });
 
-    localStorage.removeItem("guest_session_id");
+            setOtpModal({ isOpen: false, _id: "", email: "" });
 
-    setOtpModal({ isOpen: false, _id: "", email: "" });
-
-    if (data?.user?.role === "company") {
-      router.push("/company/dashboard");
-    } else {
-      router.push("/candidate/dashboard");
-    }
-  }}
-/>
+            if (data?.user?.role === "company") {
+              router.push("/company/dashboard");
+            } else {
+              router.push("/candidate/dashboard");
+            }
+          }}
+        />
       )}
 
       {settingsModalOpen && (

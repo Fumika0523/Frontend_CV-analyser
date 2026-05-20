@@ -45,44 +45,45 @@ const heroContent = {
 
 const Hero = ({ guestView, setGuestView }) => {
   const scrollAnimation = useMemo(() => getScrollAnimation(), []);
-const router = useRouter();
+  const router = useRouter();
   const [otpModal, setOtpModal] = useState({
-  isOpen: false,
-  _id: "",
-  email: "",
-});
-const [authRole, setAuthRole] = useState("candidate");
+    isOpen: false,
+    _id: "",
+    email: "",
+  });
+  const [authRole, setAuthRole] = useState("candidate");
   const content = heroContent[guestView];
-const [authOpen, setAuthOpen] = useState(false);
-const [authMode, setAuthMode] = useState("signup");
+  const [authOpen, setAuthOpen] = useState(false);
+  const [authMode, setAuthMode] = useState("signup");
   const [guestUploadOpen, setGuestUploadOpen] = useState(false);
-const [guestPostJobOpen, setGuestPostJobOpen] = useState(false);
-  
-const handlePrimaryClick = () => {
+  const [guestPostJobOpen, setGuestPostJobOpen] = useState(false);
+
+  const handlePrimaryClick = () => {
     if (guestView === "candidate") {
       setGuestUploadOpen(true);
     } else {
-  setGuestPostJobOpen(true);    }
+      setGuestPostJobOpen(true);
+    }
   };
 
   const handleOtpSent = (data) => {
-  console.log("OTP SENT FROM HERO:", data);
+    console.log("OTP SENT FROM HERO:", data);
 
-  const mongoId = data?._id;
+    const mongoId = data?._id;
 
-  if (!mongoId) {
-    console.error("Missing _id for OTP modal:", data);
-    return;
-  }
+    if (!mongoId) {
+      console.error("Missing _id for OTP modal:", data);
+      return;
+    }
 
-  setAuthOpen(false);
+    setAuthOpen(false);
 
-  setOtpModal({
-    isOpen: true,
-    _id: mongoId,
-    email: data.email || "",
-  });
-};
+    setOtpModal({
+      isOpen: true,
+      _id: mongoId,
+      email: data.email || "",
+    });
+  };
   return (
     <>
       <div className="max-w-screen-xl mt-24 px-8 xl:px-16 mx-auto" id="about">
@@ -152,7 +153,7 @@ const handlePrimaryClick = () => {
         </div>
       </div>
 
-{/* CV upload modal */}
+      {/* CV upload modal */}
       {guestUploadOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-5 relative">
@@ -175,73 +176,74 @@ const handlePrimaryClick = () => {
           </div>
         </div>
       )}
-{/* jobpost modal */}
+
+      {/* jobpost modal */}
       {guestPostJobOpen && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-    <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 relative">
-      <button
-        onClick={() => setGuestPostJobOpen(false)}
-        className="absolute top-3 right-4 text-slate-400 hover:text-slate-700 text-xl"
-      >
-        ×
-      </button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 relative">
+            <button
+              onClick={() => setGuestPostJobOpen(false)}
+              className="absolute top-3 right-4 text-slate-400 hover:text-slate-700 text-xl"
+            >
+              ×
+            </button>
 
-      <h2 className="text-xl font-semibold text-slate-900 mb-2">
-        Post a Job
-      </h2>
+            <h2 className="text-xl font-semibold text-slate-900 mb-2">
+              Post a Job
+            </h2>
 
-      <p className="text-sm text-slate-500 mb-5">
-        To post and manage jobs, please create a company account or sign in.
-      </p>
+            <p className="text-sm text-slate-500 mb-5">
+              To post and manage jobs, please create a company account or sign in.
+            </p>
 
-      <button
-      onClick={() => {
-  setGuestPostJobOpen(false);
-  setAuthMode("signup");
-  setAuthRole("company");
-  setAuthOpen(true);
-}}
-        className="w-full py-2.5 rounded-xl text-sm font-semibold text-white"
-        style={{
-          background: "linear-gradient(135deg, #1d4ed8, #1e3a8a)",
-        }}
-      >
-        Create Company Account
-      </button>
-    </div>
-  </div>
-)}
+            <button
+              onClick={() => {
+                setGuestPostJobOpen(false);
+                setAuthMode("signup");
+                setAuthRole("company");
+                setAuthOpen(true);
+              }}
+              className="w-full py-2.5 rounded-xl text-sm font-semibold text-white"
+              style={{
+                background: "linear-gradient(135deg, #1d4ed8, #1e3a8a)",
+              }}
+            >
+              Create Company Account
+            </button>
+          </div>
+        </div>
+      )}
 
-<AuthModal
-  isOpen={authOpen}
-  initialMode={authMode}
-  initialRole={authRole}
-  onClose={() => setAuthOpen(false)}
-  onOtpSent={handleOtpSent}
-/>
-{otpModal.isOpen && (
-  <OtpModal
-    isOpen={otpModal.isOpen}
-    _id={otpModal._id}
-    email={otpModal.email}
-    onClose={() => setOtpModal({ isOpen: false, _id: "", email: "" })}
-   onVerified={(data) => {
-  if (data?.token) {
-    localStorage.setItem("token", data.token);
-  }
+      <AuthModal
+        isOpen={authOpen}
+        initialMode={authMode}
+        initialRole={authRole}
+        onClose={() => setAuthOpen(false)}
+        onOtpSent={handleOtpSent}
+      />
+      {otpModal.isOpen && (
+        <OtpModal
+          isOpen={otpModal.isOpen}
+          _id={otpModal._id}
+          email={otpModal.email}
+          onClose={() => setOtpModal({ isOpen: false, _id: "", email: "" })}
+          onVerified={(data) => {
+            if (data?.token) {
+              localStorage.setItem("token", data.token);
+            }
 
-  localStorage.removeItem("guest_session_id");
+            localStorage.removeItem("guest_session_id");
 
-  setOtpModal({ isOpen: false, _id: "", email: "" });
+            setOtpModal({ isOpen: false, _id: "", email: "" });
 
-  if (data?.user?.role === "company") {
-    router.push("/company/dashboard");
-  } else {
-    router.push("/candidate/dashboard");
-  }
-}}
-  />
-)}
+            if (data?.user?.role === "company") {
+              router.push("/company/dashboard");
+            } else {
+              router.push("/candidate/dashboard");
+            }
+          }}
+        />
+      )}
     </>
   );
 };
