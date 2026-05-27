@@ -31,7 +31,7 @@ const NAV_CANDIDATE = [
   { label: "Dashboard", href: "/candidate/dashboard", icon: FiGrid },
   { label: "Latest Jobs", href: "/candidate/Dashboard/LatestJobs", icon: FiBriefcase },
   { label: "My Application", href: "/candidate/Dashboard/MyApplication/MyApplicationPage", icon: FiFileText },
-  { label: "Search for job", href: "/candidate/search-job", icon: FiSearch },
+  { label: "Your skills", href: "/candidate/search-job", icon: FiSearch },
 ];
 
 const NAV_COMPANY = [
@@ -230,9 +230,10 @@ const Header = ({ guestView, setGuestView }) => {
                   {dropdownOpen && (
                     <div className="absolute right-0 top-[calc(100%+8px)] z-50 min-w-[170px] rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg">
                       {user.role === "candidate" && (
+                        // All the stored CV
                       <Link href="/candidate/cv">
                       <a className="block w-full rounded-lg px-3.5 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-100 hover:text-blue-600">
-                            📄 CV Analyser
+                            📄 Uploaded CV
                           </a>
                         </Link>
                       )}

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
+import ForgotPWModal from "./forgotPWModal";
 
 const COUNTRIES = [
   "Afghanistan","Albania","Algeria","Argentina","Australia","Austria","Bangladesh",
@@ -234,6 +235,7 @@ const EyeOpen = () => (
     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
   </svg>
 );
+
 const EyeClosed = () => (
   <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
     <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/>
@@ -288,7 +290,7 @@ const CloseBtn = ({ onClick }) => (
 );
 
 /* SIGN IN */
-const SignInModal = ({ isOpen, onClose, onAuthSuccess, onOtpSent, onSwitchToSignUp }) => {
+const SignInModal = ({ isOpen, onClose, onAuthSuccess, onOtpSent, onSwitchToSignUp , onForgotPassword,}) => {
   const [form,    setForm]    = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -398,9 +400,16 @@ const handleSubmit = async (e) => {
                 <PasswordField name="password" label="Password" required
                   placeholder="Your password" value={form.password} onChange={handleChange} />
                 <div style={{ textAlign: "right", marginTop: 5 }}>
-                  <a href="#" style={{ fontSize: 12.5, color: "grey", fontWeight: 600, textDecoration: "none", fontFamily: "'DM Sans',sans-serif" }}>
+                  <button
+                  type="button"
+                    onClick={onForgotPassword}
+
+                   style={{ fontSize: 12.5, color: "grey", fontWeight: 600, textDecoration: "none", fontFamily: "'DM Sans',sans-serif",    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    }}>
                     Forgot password?
-                  </a>
+                  </button>
                 </div>
               </div>
 
@@ -424,7 +433,10 @@ const handleSubmit = async (e) => {
         </div>
       </div>
     </div>
+    
   );
+  
+
 };
 
 /* SIGN UP  */
@@ -738,18 +750,21 @@ const AuthModal = ({
   initialMode = "signin",
   initialRole = "candidate",
 }) => {
+
   const [mode, setMode] = useState(initialMode);
   useEffect(() => { if (isOpen) setMode(initialMode); }, [isOpen, initialMode]);
-
+  const [forgotOpen, setForgotOpen] = useState(false)
+  console.log("forgotOpen", forgotOpen)
   return (
     <>
       <SignInModal
-        isOpen={isOpen && mode === "signin"}
-        onClose={onClose}
-        onAuthSuccess={onAuthSuccess}
-        onOtpSent={onOtpSent}
-        onSwitchToSignUp={() => setMode("signup")}
-      />
+      isOpen={isOpen && mode === "signin"}
+      onClose={onClose}
+      onAuthSuccess={onAuthSuccess}
+      onOtpSent={onOtpSent}
+      onSwitchToSignUp={() => setMode("signup")}
+      onForgotPassword={() => setForgotOpen(true)}
+    />
 
       <SignUpModal
         isOpen={isOpen && mode === "signup"}
@@ -758,6 +773,16 @@ const AuthModal = ({
         onSwitchToSignIn={() => setMode("signin")}
         initialRole={initialRole}
       />
+
+      {/* Password reset Modal */}
+<ForgotPWModal
+  isOpen={forgotOpen}
+  onClose={() => setForgotOpen(false)}
+  onSuccess={() => {
+    setForgotOpen(false);
+    setMode("signin");
+  }}
+/>
     </>
   );
 };
