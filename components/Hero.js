@@ -58,14 +58,20 @@ const Hero = ({ guestView, setGuestView }) => {
   const [guestUploadOpen, setGuestUploadOpen] = useState(false);
   const [guestPostJobOpen, setGuestPostJobOpen] = useState(false);
 
-  const handlePrimaryClick = () => {
-    if (guestView === "candidate") {
-      setGuestUploadOpen(true);
-    } else {
-      setGuestPostJobOpen(true);
-    }
-  };
+const handlePrimaryClick = () => {
+  if (guestView === "candidate") {
+    setGuestUploadOpen(true);
+    return;
+  }
 
+  const token = localStorage.getItem("token");
+
+  if (token) {
+    router.push("/company/Dashboard/postjob");
+  } else {
+    setGuestPostJobOpen(true);
+  }
+};
   const handleOtpSent = (data) => {
     console.log("OTP SENT FROM HERO:", data);
 

@@ -5,10 +5,14 @@ import { AiOutlineFileSearch } from "react-icons/ai";
 import { FiEye } from "react-icons/fi";
 import { url } from "../../../utils/constant";
 
+
 export default function CVUpload({ isGuest = false, onSignUpClick  }) {
+
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [uploadedCV, setUploadedCV] = useState(null);
+  const [uploadSuccess, setUploadSuccess] = useState(false)
+  const [analysisData, setAnalysysData] = useState(null)
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
@@ -17,8 +21,6 @@ export default function CVUpload({ isGuest = false, onSignUpClick  }) {
 
     const allowedTypes = [
       "application/pdf",
-      "application/msword",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     ];
 
     if (!allowedTypes.includes(selectedFile.type)) {
@@ -35,13 +37,15 @@ export default function CVUpload({ isGuest = false, onSignUpClick  }) {
   };
 
 const handleUpload = async () => {
-  if (!file) return toast.error("Please select a CV");
+  if (!file) 
+  return toast.error("Please select a CV");
 
   setLoading(true);
 
   try {
     const formData = new FormData();
     formData.append("cv", file);
+    console.log("formData",formData)
 
     const endpoint = isGuest
       ? `${url}/cv/guest-upload`
@@ -67,15 +71,17 @@ const handleUpload = async () => {
       const token = localStorage.getItem("token");
       headers.Authorization = `Bearer ${token}`;
     }
-console.log("isGuest:", isGuest);
-console.log("endpoint:", endpoint);
-console.log("file:", file);
-console.log("guest_session_id:", localStorage.getItem("guest_session_id"));
+  console.log("isGuest:", isGuest);
+  console.log("endpoint:", endpoint);
+  console.log("file:", file);
+  console.log("guest_session_id:", localStorage.getItem("guest_session_id"));
+   
     const res = await axios.post(endpoint, formData, { headers });
-
-    console.log("CV upload response:", res.data);
+    console.log("CV upload response:", res);
 
     setUploadedCV(res.data.cv || null);
+    setUploadSuccess(true);
+    setAnalysysData(res.data);
 
     toast.success(
       isGuest
@@ -89,6 +95,44 @@ console.log("guest_session_id:", localStorage.getItem("guest_session_id"));
     setLoading(false);
   }
 };
+
+if (isGuest && uploadSuccess) {
+  return (
+    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 text-center">
+      <div className="w-14 h-14 mx-auto rounded-full bg-green-50 flex items-center justify-center text-green-600 text-2xl mb-4">
+        ✅
+      </div>
+
+      <h2 className="text-xl font-bold text-slate-900 mb-2">
+        CV uploaded successfully!
+      </h2>
+
+      <p className="text-sm text-slate-500 mb-5">
+        We've analysed your CV and generated a preview report.
+        Continue as a guest to view limited insights, or create a free account
+        to unlock the full analysis and save your progress.
+      </p>
+
+      <button
+        type="button"
+        className="w-full py-2.5 rounded-xl text-sm font-semibold text-white mb-3"
+        style={{
+          background: "linear-gradient(135deg, #1d4ed8, #1e3a8a)",
+        }}
+      >
+         View Preview Report
+      </button>
+
+      <button
+        type="button"
+        onClick={onSignUpClick}
+        className="w-full py-2.5 rounded-xl text-sm font-semibold text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-100 transition"
+      >
+         Unlock Full Analysis
+      </button>
+    </div>
+  );
+}
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
+import { toast } from "react-toastify";
 
 const ForgotPWModal = ({ isOpen, onClose, onSuccess }) => {
   const [step, setStep] = useState("email"); // email | otp | reset
@@ -124,9 +125,9 @@ const ForgotPWModal = ({ isOpen, onClose, onSuccess }) => {
         otp,
         password,
       });
-
-      setMessage(res.data.message || "Password reset successful.");
-
+      // toast.success("Password reset successful!")
+      setMessage(res.data.message);
+      console.log("handleForgotPW",res.data)
       setTimeout(() => {
         onClose();
         onSuccess?.();

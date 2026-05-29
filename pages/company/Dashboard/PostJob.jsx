@@ -18,15 +18,21 @@ const salaryOptions = [
 const jobTypes = ["Full-time", "Part-time", "Contract", "Internship", "Remote"];
 
 export default function PostJob() {
-  const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    requirements: "",
-    location: "",
-    salary: "",
-    jobType: "Full-time",
-    skills: "",
-  });
+const [formData, setFormData] = useState({
+  title: "",
+  jobType: "Full-time",
+  // designation: "",
+  education: "",
+  keySkills: "",
+  experience: "",
+  location: "",
+  responsibility: "",
+  roleSummary: "",
+  compensationBenefits: "",
+  description: "",
+  applicationEndDate: "",
+  salary: "",
+});
 
   const [loading, setLoading] = useState(false);
   const [locationLoading, setLocationLoading] = useState(false);
@@ -89,17 +95,19 @@ export default function PostJob() {
 
       const token = localStorage.getItem("token");
 
-      const payload = {
-        ...formData,
-        requirements: formData.requirements
-          .split(",")
-          .map((item) => item.trim())
-          .filter(Boolean),
-        skills: formData.skills
-          .split(",")
-          .map((item) => item.trim())
-          .filter(Boolean),
-      };
+const payload = {
+  ...formData,
+
+  keySkills: formData.keySkills
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean),
+
+  responsibility: formData.responsibility
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean),
+};
 
       await axios.post("http://localhost:8002/create", payload, {
         headers: {
@@ -109,15 +117,22 @@ export default function PostJob() {
       console.log(formData)
       setMessage("success");
 
-      setFormData({
-        title: "",
-        description: "",
-        requirements: "",
-        location: "",
-        salary: "",
-        jobType: "",
-        skills: "",
-      });
+     setFormData({
+  title: "",
+  jobType: "Full-time",
+  // designation: "",
+  education: "",
+  keySkills: "",
+  experience: "",
+  location: "",
+  responsibility: "",
+  roleSummary: "",
+  compensationBenefits: "",
+  description: "",
+  applicationEndDate: "",
+  salary: "",
+});
+
     } catch (error) {
       console.error(error);
       setMessage(error.response?.data?.message || "Failed to post job");
@@ -256,58 +271,143 @@ export default function PostJob() {
               ))}
             </select>
           </div>
-
+        {/* Key skills */}
           <div>
-            <label className="text-xs font-semibold text-slate-700 mb-1 block">
-              Skills
-            </label>
+  <label className="text-xs font-semibold text-slate-700 mb-1 block">
+    Key Skills <span className="text-red-500">*</span>
+  </label>
 
-            <input
-              name="skills"
-              value={formData.skills}
-              onChange={handleChange}
-              placeholder="React, Node.js, MongoDB"
-              className="w-full border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-600"
-              style={{ borderColor: "#dbeafe" }}
-            />
-            <p className="text-xs mt-1" style={{ color: "#64748b" }}>
-              Separate skills with commas.
-            </p>
-          </div>
+  <input
+    name="keySkills"
+    value={formData.keySkills}
+    onChange={handleChange}
+    placeholder="React, Node.js, MongoDB"
+    className="w-full border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-600"
+    style={{ borderColor: "#dbeafe" }}
+    required
+  />
 
-          <div>
-            <label className="text-xs font-semibold text-slate-700 mb-1 block">
-              Requirements
-            </label>
+  <p className="text-xs mt-1" style={{ color: "#64748b" }}>
+    Separate skills with commas.
+  </p>
+</div>
+     {/* Designation */}
+              {/* <div>
+  <label className="text-xs font-semibold text-slate-700 mb-1 block">
+    Designation <span className="text-red-500">*</span>
+  </label>
 
-            <input
-              name="requirements"
-              value={formData.requirements}
-              onChange={handleChange}
-              placeholder="React experience, teamwork"
-              className="w-full border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-600"
-              style={{ borderColor: "#dbeafe" }}
-            />
-            <p className="text-xs mt-1" style={{ color: "#64748b" }}>
-              Separate requirements with commas.
-            </p>
-          </div>
+  <input
+    name="designation"
+    value={formData.designation}
+    onChange={handleChange}
+    placeholder="Software Engineer"
+    className="w-full border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-600"
+    style={{ borderColor: "#dbeafe" }}
+    required
+  />
+</div> */}
+{/* Education */}
+<div>
+  <label className="text-xs font-semibold text-slate-700 mb-1 block">
+    Education <span className="text-red-500">*</span>
+  </label>
 
-          <div className="md:col-span-2">
-            <label className="text-xs font-semibold text-slate-700 mb-1 block">
-              Job Description <span className="text-red-500">*</span>
-            </label>
+  <input
+    name="education"
+    value={formData.education}
+    onChange={handleChange}
+    placeholder="Bachelor's degree or equivalent"
+    className="w-full border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-600"
+    style={{ borderColor: "#dbeafe" }}
+    required
+  />
+</div>
 
-            <textarea
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              placeholder="Describe the role, responsibilities, and what kind of candidate you are looking for..."
-              className="w-full border rounded-lg px-4 py-3 text-sm min-h-[130px] resize-y focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-600"
-              style={{ borderColor: "#dbeafe" }}
-              required
-            />
-          </div>
+<div>
+  <label className="text-xs font-semibold text-slate-700 mb-1 block">
+    Experience <span className="text-red-500">*</span>
+  </label>
+
+  <input
+    name="experience"
+    value={formData.experience}
+    onChange={handleChange}
+    placeholder="1-2 years"
+    className="w-full border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-600"
+    style={{ borderColor: "#dbeafe" }}
+    required
+  />
+</div>
+
+<div className="md:col-span-2">
+  <label className="text-xs font-semibold text-slate-700 mb-1 block">
+    Responsibilities <span className="text-red-500">*</span>
+  </label>
+
+  <textarea
+    name="responsibility"
+    value={formData.responsibility}
+    onChange={handleChange}
+    placeholder="Develop features, fix bugs, collaborate with the team..."
+    className="w-full border rounded-lg px-4 py-3 text-sm min-h-[110px] resize-y focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-600"
+    style={{ borderColor: "#dbeafe" }}
+    required
+  />
+
+  <p className="text-xs mt-1" style={{ color: "#64748b" }}>
+    You can separate responsibilities with commas.
+  </p>
+</div>
+
+<div className="md:col-span-2">
+  <label className="text-xs font-semibold text-slate-700 mb-1 block">
+    Role Summary <span className="text-red-500">*</span>
+  </label>
+
+  <textarea
+    name="roleSummary"
+    value={formData.roleSummary}
+    onChange={handleChange}
+    placeholder="Briefly explain what this role is about..."
+    className="w-full border rounded-lg px-4 py-3 text-sm min-h-[100px] resize-y focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-600"
+    style={{ borderColor: "#dbeafe" }}
+    required
+  />
+</div>
+
+<div className="md:col-span-2">
+  <label className="text-xs font-semibold text-slate-700 mb-1 block">
+    Compensation & Benefits <span className="text-red-500">*</span>
+  </label>
+
+  <textarea
+    name="compensationBenefits"
+    value={formData.compensationBenefits}
+    onChange={handleChange}
+    placeholder="Pension, holidays, training, flexible working..."
+    className="w-full border rounded-lg px-4 py-3 text-sm min-h-[100px] resize-y focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-600"
+    style={{ borderColor: "#dbeafe" }}
+    required
+  />
+</div>
+
+<div>
+  <label className="text-xs font-semibold text-slate-700 mb-1 block">
+    Application End Date <span className="text-red-500">*</span>
+  </label>
+
+  <input
+    type="date"
+    name="applicationEndDate"
+    value={formData.applicationEndDate}
+    onChange={handleChange}
+    className="w-full border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-600"
+    style={{ borderColor: "#dbeafe" }}
+    required
+  />
+</div>
+
         </div>
 
         <div className="flex justify-end pt-2">

@@ -80,9 +80,15 @@ const Header = ({ guestView, setGuestView }) => {
     });
   };
 
-  const handleAuthSuccess = (userData) => {
-    setUser(userData);
-  };
+ const handleAuthSuccess = (userData) => {
+  setUser(userData);
+
+  if (userData.role === "company") {
+    setGuestView("company");
+  } else {
+    setGuestView("candidate");
+  }
+};
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -133,7 +139,11 @@ const Header = ({ guestView, setGuestView }) => {
         });
 
         const fetchedUser = res.data.user;
-
+        if (fetchedUser.role === "company") {
+  setGuestView("company");
+} else {
+  setGuestView("candidate");
+}
         setUser({
           id: fetchedUser._id,
           userId: fetchedUser.userId,
