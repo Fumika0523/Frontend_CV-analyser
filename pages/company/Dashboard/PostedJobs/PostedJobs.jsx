@@ -1,3 +1,4 @@
+import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 
@@ -14,8 +15,8 @@ const salaryOptions = [
   "Competitive",
 ];
 
-const jobTypes = ["Full-time", "Part-time", "Contract", "Internship", "Remote"];
-
+const jobTypes = ["Full-time", "Part-time", "Contract", "Internship"];
+const workModes = ["Office", "Hybrid", "Remote"];
 
 const EditIcon = () => (
   <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor">
@@ -24,11 +25,41 @@ const EditIcon = () => (
 );
 
 export default function PostedJobs() {
+  const router = useRouter();
+
   const [jobs, setJobs] = useState([]);
   const [selectedJob, setSelectedJob] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
+  const checkAuth = async () => {
+    try {
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        router.push("/");
+        return;
+      }
+
+      const res = await axios.get("http://localhost:8002/user-profile", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (res.data.user.role !== "company") {
+        router.push("/");
+        return;
+      }
+
+      setCheckingAuth(false);
+    } catch (error) {
+      console.error(error);
+      router.push("/");
+    }
+  };
 
   const fetchMyJobs = async () => {
     try {
@@ -45,21 +76,32 @@ export default function PostedJobs() {
   };
 
   useEffect(() => {
+    checkAuth();
     fetchMyJobs();
   }, []);
 
   const openModal = (job) => {
     setSelectedJob(job);
+
     setEditForm({
       title: job.title || "",
-      description: job.description || "",
-      requirements: job.requirements?.join(", ") || "",
       location: job.location || "",
       salary: job.salary || "",
       jobType: job.jobType || "Full-time",
-      skills: job.skills?.join(", ") || "",
+      workMode: job.workMode || "Office",
+      education: job.education || "",
+      experience: job.experience || "",
+      keySkills: job.keySkills?.join(", ") || "",
+      requirements: job.requirements?.join(", ") || "",
+      responsibilities: job.responsibilities?.join(", ") || "",
+      roleSummary: job.roleSummary || "",
+      compensationBenefits: job.compensationBenefits || "",
+      applicationEndDate: job.applicationEndDate
+        ? job.applicationEndDate.slice(0, 10)
+        : "",
       status: job.status || "Open",
     });
+
     setIsEditing(false);
   };
 
@@ -84,11 +126,15 @@ export default function PostedJobs() {
 
       const payload = {
         ...editForm,
+        keySkills: editForm.keySkills
+          .split(",")
+          .map((item) => item.trim())
+          .filter(Boolean),
         requirements: editForm.requirements
           .split(",")
           .map((item) => item.trim())
           .filter(Boolean),
-        skills: editForm.skills
+        responsibilities: editForm.responsibilities
           .split(",")
           .map((item) => item.trim())
           .filter(Boolean),
@@ -118,62 +164,68 @@ export default function PostedJobs() {
     }
   };
 
+  if (checkingAuth) {
+    return <p>Checking authentication...</p>;
+  }
+
   return (
     <>
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 mt-5">
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-6">
-        <h2 className="text-xl font-bold text-slate-900 mb-4">Posted Jobs</h2>
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 mt-5">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-6">
+          <h2 className="text-xl font-bold text-slate-900 mb-4">
+            Posted Jobs
+          </h2>
 
-        {jobs.length === 0 ? (
-          <p className="text-slate-500">No jobs posted yet.</p>
-        ) : (
-          <div className="space-y-4">
-            {jobs.map((job, index) => (
-              <div
-                key={job._id}
-                onClick={() => openModal(job)}
-                className="border border-slate-200 rounded-xl p-4 hover:shadow-md hover:border-blue-200 transition cursor-pointer bg-white"
-              >
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="text-xs text-slate-400 mb-1">
-                      Posted Job {index + 1}
-                    </p>
-                    <h3 className="font-bold text-slate-900">{job.title}</h3>
-                    <p className="text-sm text-slate-500">{job.location}</p>
+          {jobs.length === 0 ? (
+            <p className="text-slate-500">No jobs posted yet.</p>
+          ) : (
+            <div className="space-y-4">
+              {jobs.map((job, index) => (
+                <div
+                  key={job._id}
+                  onClick={() => openModal(job)}
+                  className="border border-slate-200 rounded-xl p-4 hover:shadow-md hover:border-blue-200 transition cursor-pointer bg-white"
+                >
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="text-xs text-slate-400 mb-1">
+                        Posted Job {index + 1}
+                      </p>
+                      <h3 className="font-bold text-slate-900">{job.title}</h3>
+                      <p className="text-sm text-slate-500">{job.location}</p>
+                    </div>
+
+                    <span className="text-xs bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full">
+                      {job.status}
+                    </span>
                   </div>
 
-                  <span className="text-xs bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full">
-                    {job.status}
-                  </span>
+                  <p className="text-sm text-slate-600 mt-3 line-clamp-2">
+                    {job.roleSummary}
+                  </p>
+
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {job.keySkills?.map((skill, index) => (
+                      <span
+                        key={index}
+                        className="text-xs bg-slate-100 text-slate-700 px-2 py-1 rounded-full"
+                      >
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+
+                  <p className="text-sm font-medium text-slate-700 mt-3">
+                    {job.salary || "Salary not specified"} · {job.jobType} ·{" "}
+                    {job.workMode}
+                  </p>
                 </div>
-
-                <p className="text-sm text-slate-600 mt-3 line-clamp-2">
-                  {job.description}
-                </p>
-
-                <div className="flex flex-wrap gap-2 mt-3">
-                  {job.skills?.map((skill, index) => (
-                    <span
-                      key={index}
-                      className="text-xs bg-slate-100 text-slate-700 px-2 py-1 rounded-full"
-                    >
-                      {skill}
-                    </span>
-                  ))}
-                </div>
-
-                <p className="text-sm font-medium text-slate-700 mt-3">
-                  {job.salary || "Salary not specified"} · {job.jobType}
-                </p>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+              ))}
+            </div>
+          )}
         </div>
-        {/* </div> */}
-      {/* </Layout> */}
+      </div>
+
       {selectedJob && editForm && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center px-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto border border-blue-100">
@@ -217,6 +269,9 @@ export default function PostedJobs() {
                     <span className="text-xs bg-blue-50 text-blue-700 px-3 py-1 rounded-full">
                       {selectedJob.jobType}
                     </span>
+                    <span className="text-xs bg-purple-50 text-purple-700 px-3 py-1 rounded-full">
+                      {selectedJob.workMode}
+                    </span>
                     <span className="text-xs bg-slate-100 text-slate-700 px-3 py-1 rounded-full">
                       {selectedJob.salary || "Salary not specified"}
                     </span>
@@ -226,16 +281,53 @@ export default function PostedJobs() {
                     <h3 className="text-sm font-bold text-slate-900 mb-1">
                       Location
                     </h3>
-                    <p className="text-sm text-slate-600">{selectedJob.location}</p>
+                    <p className="text-sm text-slate-600">
+                      {selectedJob.location}
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-900 mb-1">
+                        Education
+                      </h3>
+                      <p className="text-sm text-slate-600">
+                        {selectedJob.education}
+                      </p>
+                    </div>
+
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-900 mb-1">
+                        Experience
+                      </h3>
+                      <p className="text-sm text-slate-600">
+                        {selectedJob.experience}
+                      </p>
+                    </div>
                   </div>
 
                   <div>
                     <h3 className="text-sm font-bold text-slate-900 mb-1">
-                      Description
+                      Role Summary
                     </h3>
                     <p className="text-sm text-slate-600 leading-6 whitespace-pre-line">
-                      {selectedJob.description}
+                      {selectedJob.roleSummary}
                     </p>
+                  </div>
+
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900 mb-2">
+                      Responsibilities
+                    </h3>
+                    <ul className="list-disc pl-5 text-sm text-slate-600 space-y-1">
+                      {selectedJob.responsibilities?.length > 0 ? (
+                        selectedJob.responsibilities.map((item, index) => (
+                          <li key={index}>{item}</li>
+                        ))
+                      ) : (
+                        <li>No responsibilities added.</li>
+                      )}
+                    </ul>
                   </div>
 
                   <div>
@@ -255,11 +347,11 @@ export default function PostedJobs() {
 
                   <div>
                     <h3 className="text-sm font-bold text-slate-900 mb-2">
-                      Skills
+                      Key Skills
                     </h3>
                     <div className="flex flex-wrap gap-2">
-                      {selectedJob.skills?.length > 0 ? (
-                        selectedJob.skills.map((skill, index) => (
+                      {selectedJob.keySkills?.length > 0 ? (
+                        selectedJob.keySkills.map((skill, index) => (
                           <span
                             key={index}
                             className="text-xs bg-slate-100 text-slate-700 px-3 py-1 rounded-full"
@@ -268,182 +360,255 @@ export default function PostedJobs() {
                           </span>
                         ))
                       ) : (
-                        <p className="text-sm text-slate-500">No skills added.</p>
+                        <p className="text-sm text-slate-500">
+                          No skills added.
+                        </p>
                       )}
                     </div>
                   </div>
+
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900 mb-1">
+                      Compensation & Benefits
+                    </h3>
+                    <p className="text-sm text-slate-600 leading-6 whitespace-pre-line">
+                      {selectedJob.compensationBenefits}
+                    </p>
+                  </div>
                 </div>
-            ) : (
-  <div
-    className="bg-white rounded-lg shadow-md p-6"
-    style={{ border: "1px solid #dbeafe" }}
-  >
-    <div className="mb-5">
-      <h2 className="text-xl font-semibold text-slate-900">
-        ✏️ Edit Job Post
-      </h2>
-      <p className="text-sm mt-1 text-slate-500">
-        Update your job details and save changes.
-      </p>
-    </div>
+              ) : (
+                <div
+                  className="bg-white rounded-lg shadow-md p-6"
+                  style={{ border: "1px solid #dbeafe" }}
+                >
+                  <div className="mb-5">
+                    <h2 className="text-xl font-semibold text-slate-900">
+                      ✏️ Edit Job Post
+                    </h2>
+                    <p className="text-sm mt-1 text-slate-500">
+                      Update your job details and save changes.
+                    </p>
+                  </div>
 
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div className="md:col-span-2">
-        <label className="text-xs font-semibold text-slate-700 mb-1 block">
-          Job Title <span className="text-red-500">*</span>
-        </label>
-        <input
-          name="title"
-          value={editForm.title}
-          onChange={handleEditChange}
-          placeholder="Junior MERN Stack Developer"
-          className="w-full border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-600"
-          style={{ borderColor: "#dbeafe" }}
-        />
-      </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="md:col-span-2">
+                      <label className="text-xs font-semibold text-slate-700 mb-1 block">
+                        Job Title
+                      </label>
+                      <input
+                        name="title"
+                        value={editForm.title}
+                        onChange={handleEditChange}
+                        className="w-full border rounded-lg px-4 py-3 text-sm"
+                      />
+                    </div>
 
-      <div>
-        <label className="text-xs font-semibold text-slate-700 mb-1 block">
-          Location
-        </label>
-        <input
-          name="location"
-          value={editForm.location}
-          onChange={handleEditChange}
-          placeholder="London, United Kingdom"
-          className="w-full border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-600"
-          style={{ borderColor: "#dbeafe" }}
-        />
-      </div>
+                    <div>
+                      <label className="text-xs font-semibold text-slate-700 mb-1 block">
+                        Location
+                      </label>
+                      <input
+                        name="location"
+                        value={editForm.location}
+                        onChange={handleEditChange}
+                        className="w-full border rounded-lg px-4 py-3 text-sm"
+                      />
+                    </div>
 
-      <div>
-        <label className="text-xs font-semibold text-slate-700 mb-1 block">
-          Salary Range
-        </label>
-        <select
-          name="salary"
-          value={editForm.salary}
-          onChange={handleEditChange}
-          className="w-full border rounded-lg px-4 py-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-600"
-          style={{ borderColor: "#dbeafe" }}
-        >
-          <option value="">Select salary range</option>
-          {salaryOptions.map((salary) => (
-            <option key={salary} value={salary}>
-              {salary}
-            </option>
-          ))}
-        </select>
-      </div>
+                    <div>
+                      <label className="text-xs font-semibold text-slate-700 mb-1 block">
+                        Salary Range
+                      </label>
+                      <select
+                        name="salary"
+                        value={editForm.salary}
+                        onChange={handleEditChange}
+                        className="w-full border rounded-lg px-4 py-3 text-sm bg-white"
+                      >
+                        <option value="">Select salary range</option>
+                        {salaryOptions.map((salary) => (
+                          <option key={salary} value={salary}>
+                            {salary}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
 
-      <div>
-        <label className="text-xs font-semibold text-slate-700 mb-1 block">
-          Job Type
-        </label>
-        <select
-          name="jobType"
-          value={editForm.jobType}
-          onChange={handleEditChange}
-          className="w-full border rounded-lg px-4 py-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-600"
-          style={{ borderColor: "#dbeafe" }}
-        >
-          {jobTypes.map((type) => (
-            <option key={type} value={type}>
-              {type}
-            </option>
-          ))}
-        </select>
-      </div>
+                    <div>
+                      <label className="text-xs font-semibold text-slate-700 mb-1 block">
+                        Job Type
+                      </label>
+                      <select
+                        name="jobType"
+                        value={editForm.jobType}
+                        onChange={handleEditChange}
+                        className="w-full border rounded-lg px-4 py-3 text-sm bg-white"
+                      >
+                        {jobTypes.map((type) => (
+                          <option key={type} value={type}>
+                            {type}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
 
-      <div>
-        <label className="text-xs font-semibold text-slate-700 mb-1 block">
-          Status
-        </label>
-        <select
-          name="status"
-          value={editForm.status}
-          onChange={handleEditChange}
-          className="w-full border rounded-lg px-4 py-3 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-600"
-          style={{ borderColor: "#dbeafe" }}
-        >
-          <option value="Open">Open</option>
-          <option value="Closed">Closed</option>
-        </select>
-      </div>
+                    <div>
+                      <label className="text-xs font-semibold text-slate-700 mb-1 block">
+                        Work Mode
+                      </label>
+                      <select
+                        name="workMode"
+                        value={editForm.workMode}
+                        onChange={handleEditChange}
+                        className="w-full border rounded-lg px-4 py-3 text-sm bg-white"
+                      >
+                        {workModes.map((mode) => (
+                          <option key={mode} value={mode}>
+                            {mode}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
 
-      <div>
-        <label className="text-xs font-semibold text-slate-700 mb-1 block">
-          Skills
-        </label>
-        <input
-          name="skills"
-          value={editForm.skills}
-          onChange={handleEditChange}
-          placeholder="React, Node.js, MongoDB"
-          className="w-full border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-600"
-          style={{ borderColor: "#dbeafe" }}
-        />
-        <p className="text-xs mt-1 text-slate-500">
-          Separate skills with commas.
-        </p>
-      </div>
+                    <div>
+                      <label className="text-xs font-semibold text-slate-700 mb-1 block">
+                        Education
+                      </label>
+                      <input
+                        name="education"
+                        value={editForm.education}
+                        onChange={handleEditChange}
+                        className="w-full border rounded-lg px-4 py-3 text-sm"
+                      />
+                    </div>
 
-      <div>
-        <label className="text-xs font-semibold text-slate-700 mb-1 block">
-          Requirements
-        </label>
-        <input
-          name="requirements"
-          value={editForm.requirements}
-          onChange={handleEditChange}
-          placeholder="React experience, teamwork"
-          className="w-full border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-600"
-          style={{ borderColor: "#dbeafe" }}
-        />
-        <p className="text-xs mt-1 text-slate-500">
-          Separate requirements with commas.
-        </p>
-      </div>
+                    <div>
+                      <label className="text-xs font-semibold text-slate-700 mb-1 block">
+                        Experience
+                      </label>
+                      <input
+                        name="experience"
+                        value={editForm.experience}
+                        onChange={handleEditChange}
+                        className="w-full border rounded-lg px-4 py-3 text-sm"
+                      />
+                    </div>
 
-      <div className="md:col-span-2">
-        <label className="text-xs font-semibold text-slate-700 mb-1 block">
-          Job Description
-        </label>
-        <textarea
-          name="description"
-          value={editForm.description}
-          onChange={handleEditChange}
-          placeholder="Describe the role, responsibilities, and candidate..."
-          className="w-full border rounded-lg px-4 py-3 text-sm min-h-[130px] resize-y focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-600"
-          style={{ borderColor: "#dbeafe" }}
-        />
-      </div>
+                    <div>
+                      <label className="text-xs font-semibold text-slate-700 mb-1 block">
+                        Status
+                      </label>
+                      <select
+                        name="status"
+                        value={editForm.status}
+                        onChange={handleEditChange}
+                        className="w-full border rounded-lg px-4 py-3 text-sm bg-white"
+                      >
+                        <option value="Open">Open</option>
+                        <option value="Closed">Closed</option>
+                      </select>
+                    </div>
 
-      <div className="md:col-span-2 flex justify-end gap-3 pt-2">
-        <button
-          type="button"
-          onClick={() => setIsEditing(false)}
-          className="px-6 py-3 rounded-lg text-sm font-semibold border border-slate-200 text-slate-700 hover:bg-slate-50 transition"
-        >
-          Cancel
-        </button>
+                    <div>
+                      <label className="text-xs font-semibold text-slate-700 mb-1 block">
+                        Application End Date
+                      </label>
+                      <input
+                        type="date"
+                        name="applicationEndDate"
+                        value={editForm.applicationEndDate}
+                        onChange={handleEditChange}
+                        className="w-full border rounded-lg px-4 py-3 text-sm"
+                      />
+                    </div>
 
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={saving}
-          className="px-6 py-3 rounded-lg text-sm font-semibold text-white transition disabled:opacity-50"
-          style={{
-            background: "linear-gradient(135deg, #1d4ed8, #1e3a8a)",
-            boxShadow: "0 8px 18px rgba(29, 78, 216, 0.22)",
-          }}
-        >
-          {saving ? "Saving..." : "Save Changes"}
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+                    <div className="md:col-span-2">
+                      <label className="text-xs font-semibold text-slate-700 mb-1 block">
+                        Key Skills
+                      </label>
+                      <input
+                        name="keySkills"
+                        value={editForm.keySkills}
+                        onChange={handleEditChange}
+                        placeholder="React, Node.js, MongoDB"
+                        className="w-full border rounded-lg px-4 py-3 text-sm"
+                      />
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <label className="text-xs font-semibold text-slate-700 mb-1 block">
+                        Requirements
+                      </label>
+                      <input
+                        name="requirements"
+                        value={editForm.requirements}
+                        onChange={handleEditChange}
+                        placeholder="1 year experience, teamwork, communication"
+                        className="w-full border rounded-lg px-4 py-3 text-sm"
+                      />
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <label className="text-xs font-semibold text-slate-700 mb-1 block">
+                        Role Summary
+                      </label>
+                      <textarea
+                        name="roleSummary"
+                        value={editForm.roleSummary}
+                        onChange={handleEditChange}
+                        className="w-full border rounded-lg px-4 py-3 text-sm min-h-[100px]"
+                      />
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <label className="text-xs font-semibold text-slate-700 mb-1 block">
+                        Responsibilities
+                      </label>
+                      <textarea
+                        name="responsibilities"
+                        value={editForm.responsibilities}
+                        onChange={handleEditChange}
+                        className="w-full border rounded-lg px-4 py-3 text-sm min-h-[100px]"
+                      />
+                    </div>
+
+                    <div className="md:col-span-2">
+                      <label className="text-xs font-semibold text-slate-700 mb-1 block">
+                        Compensation & Benefits
+                      </label>
+                      <textarea
+                        name="compensationBenefits"
+                        value={editForm.compensationBenefits}
+                        onChange={handleEditChange}
+                        className="w-full border rounded-lg px-4 py-3 text-sm min-h-[100px]"
+                      />
+                    </div>
+
+                    <div className="md:col-span-2 flex justify-end gap-3 pt-2">
+                      <button
+                        type="button"
+                        onClick={() => setIsEditing(false)}
+                        className="px-6 py-3 rounded-lg text-sm font-semibold border border-slate-200 text-slate-700 hover:bg-slate-50 transition"
+                      >
+                        Cancel
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={handleSave}
+                        disabled={saving}
+                        className="px-6 py-3 rounded-lg text-sm font-semibold text-white transition disabled:opacity-50"
+                        style={{
+                          background:
+                            "linear-gradient(135deg, #1d4ed8, #1e3a8a)",
+                        }}
+                      >
+                        {saving ? "Saving..." : "Save Changes"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

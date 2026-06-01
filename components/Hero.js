@@ -9,6 +9,7 @@ import CVUpload from "../pages/candidate/Dashboard/CVUpload";
 import AuthModal from "./Auth/authModal";
 import OtpModal from "./Auth/otpModal";
 import { useRouter } from "next/router";
+import { FiZap } from "react-icons/fi";
 
 const listUser = [
   {
@@ -195,7 +196,8 @@ const handlePrimaryClick = () => {
             </button>
 
             <h2 className="text-xl font-semibold text-slate-900 mb-2">
-              Post a Job
+              {/* <FiZap/>  */}
+              Post a Job 
             </h2>
 
             <p className="text-sm text-slate-500 mb-5">

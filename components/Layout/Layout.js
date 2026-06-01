@@ -5,7 +5,8 @@ import Header from "./Header";
 const Layout = ({ children , guestView, setGuestView}) => {
   return (
     <>
-      <Header   guestView={guestView}
+      <Header   
+      guestView={guestView}
   setGuestView={setGuestView} />
       {children}
       <Footer />

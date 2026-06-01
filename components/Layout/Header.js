@@ -20,6 +20,10 @@ import {
   FiPlusCircle,
 } from "react-icons/fi";
 
+import {
+  FaSignInAlt,  FaUserPlus, FaBuilding, FaUser 
+} from "react-icons/fa";
+
 const NAV_GUEST = [
   { id: "about", label: "About", icon: FiInfo },
   { id: "feature", label: "Feature", icon: FiStar },
@@ -29,7 +33,7 @@ const NAV_GUEST = [
 
 const NAV_CANDIDATE = [
   { label: "Dashboard", href: "/candidate/dashboard", icon: FiGrid },
-  { label: "Latest Jobs", href: "/candidate/Dashboard/LatestJobs", icon: FiBriefcase },
+  { label: "Latest Jobs", href: "/candidate/dashboard/LatestJobs", icon: FiBriefcase },
   { label: "My Application", href: "/candidate/Dashboard/MyApplication/MyApplicationPage", icon: FiFileText },
   { label: "Your skills", href: "/candidate/search-job", icon: FiSearch },
 ];
@@ -41,9 +45,12 @@ const NAV_COMPANY = [
   { label: "Post a new job", href: "/company/Dashboard/postjob", icon: FiPlusCircle },
 ];
 
-const Header = ({ guestView, setGuestView }) => {
+const Header = ({   
+  guestView = "candidate",
+  setGuestView = () => {},
+ }) => {
   const router = useRouter();
-
+  console.log("guestView from Header",guestView)
   const [activeLink, setActiveLink] = useState(null);
   const [scrollActive, setScrollActive] = useState(false);
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
@@ -158,9 +165,22 @@ const Header = ({ guestView, setGuestView }) => {
           location: fetchedUser.location || { city: "", country: "" },
         });
       } catch (error) {
-        console.error("Failed to fetch user:", error);
-        localStorage.removeItem("token");
-        setUser(null);
+        
+        // localStorage.removeItem("token");
+         console.error("Failed to fetch user:", error.response?.data || error.message);
+
+  const status = error.response?.status;
+  const message = error.response?.data?.message;
+
+  if (
+    status === 401 &&
+    (message === "jwt expired" ||
+      message === "invalid token" ||
+      message === "Invalid token")
+  ) {
+    localStorage.removeItem("token");
+    setUser(null);
+  }
       }
     };
 
@@ -274,32 +294,51 @@ const Header = ({ guestView, setGuestView }) => {
               </div>
             ) : (
               <>
+              {/* Candidate/compamy */}
                 <button
-                  type="button"
-                  onClick={() =>
-                    setGuestView(
-                      guestView === "candidate" ? "company" : "candidate"
-                    )
-                  }
-                  className="hidden sm:inline-flex items-center rounded-lg border border-green-100 bg-green-50 px-3 py-2 text-sm font-medium text-green-700 transition hover:border-green-300 hover:bg-green-100"
-                >
-                  {guestView === "candidate"
-                    ? "🏢 Recruiting? Post a job"
-                    : "👤 Apply for new job"}
-                </button>
+  type="button"
+  onClick={() =>
+    setGuestView(
+      guestView === "candidate" ? "company" : "candidate"
+    )
+  }
+  className="inline-flex items-center rounded-lg border border-green-200 bg-green-100 px-3 py-2 text-sm font-medium text-green-800"
+>
+  <span className="md:hidden text-lg">
+    {guestView === "candidate" ? <FaBuilding  /> : <FaUser  />}
+  </span>
 
+  <span className="hidden md:flex items-center gap-2">
+    {guestView === "candidate" ? (
+      <>
+        <FaBuilding className="text-lg" />
+        Recruiting? Post a job
+      </>
+    ) : (
+      <>
+        <FaUser className="text-lg"/>
+        Apply for new job
+      </>
+    )}
+  </span>
+</button>
+
+                {/* Sign in button */}
                 <button
                   type="button"
                   onClick={() => setAuthModal({ isOpen: true, mode: "signin" })}
                   className="mx-2 cursor-pointer text-slate-600 transition hover:text-blue-600 sm:mx-4"
                 >
-                  Sign In
+                  <span className="inline md:hidden text-lg">  <FaSignInAlt /></span>
+                  <span className="hidden md:inline">Sign In</span>
                 </button>
-
+              
+              {/* Sign up button */}
                 <ButtonPrimary
                   onClick={() => setAuthModal({ isOpen: true, mode: "signup" })}
                 >
-                  Sign Up
+                   <span className="inline md:hidden text-lg">  <FaUserPlus /></span>
+                  <span className="hidden md:inline">Sign Up</span>
                 </ButtonPrimary>
               </>
             )}

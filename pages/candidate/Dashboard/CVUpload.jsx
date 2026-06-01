@@ -201,7 +201,7 @@ if (isGuest && uploadSuccess) {
 
         <div className="min-w-0">
           <p className="text-sm text-slate-600 truncate">
-            {file ? file.name : "Cliack to upload or drag & drop"}
+            {file ? file.name : "Click to upload or drag & drop"}
           </p>
           <p className="text-xs text-slate-400 mt-0.5">
             PDF — max 5MB

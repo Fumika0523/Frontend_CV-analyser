@@ -9,7 +9,7 @@ import { useState } from "react";
 export default function Home() {
 
   const [guestView, setGuestView] = useState("candidate");
-  
+  console.log("guestView from index",guestView)
   return (
     <>
       <SeoHead title='SkillfulJobs.ai' />
