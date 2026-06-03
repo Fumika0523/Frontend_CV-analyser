@@ -50,7 +50,6 @@ const Header = ({
   setGuestView = () => {},
  }) => {
   const router = useRouter();
-  console.log("guestView from Header",guestView)
   const [activeLink, setActiveLink] = useState(null);
   const [scrollActive, setScrollActive] = useState(false);
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);

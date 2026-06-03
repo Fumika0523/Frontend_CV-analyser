@@ -340,7 +340,7 @@ const handleSubmit = async (e) => {
 
     onClose();
   } catch (err) {
-    console.log("SIGNIN ERROR:", err.response?.data || err.message);
+    //console.log("SIGNIN ERROR:", err.response?.data || err.message);
 
     if (err?.response?.status === 403 && err?.response?.data?._id) {
       setMessage(err.response.data.message || "Please verify your email");
@@ -488,10 +488,8 @@ setRole(initialRole);
     
     setLoading(true);
     try {
-     
-
     const guestSessionId = localStorage.getItem("guest_session_id");
-      console.log("guestSessionId",guestSessionId)
+      //console.log("guestSessionId",guestSessionId)
 const payload = role === "candidate"
   ? {
       firstName: form.firstName,
@@ -522,22 +520,21 @@ const payload = role === "candidate"
         country: form.companyCountry,
       },
     };
-     
-      console.log("SIGNUP PAYLOAD:", payload);
+      //console.log("SIGNUP PAYLOAD:", payload);
       const res = await axios.post("http://localhost:8002/signup", payload);
-      console.log("SIGNUP RESPONSE:", res.data);
+      //console.log("SIGNUP RESPONSE:", res.data);
       setMessage(res.data.message);
       onOtpSent?.({ _id: res.data.mongoId, email: form.email });
     } catch (err) {
-      console.log("SIGNUP ERROR FULL:", err);
-      console.log("SIGNUP ERROR RESPONSE:", err.response);
-      console.log("SIGNUP ERROR DATA:", err.response?.data);
-      console.log("SIGNUP ERROR STATUS:", err.response?.status);
+      //console.log("SIGNUP ERROR FULL:", err);
+      //console.log("SIGNUP ERROR RESPONSE:", err.response);
+      //console.log("SIGNUP ERROR DATA:", err.response?.data);
+      //console.log("SIGNUP ERROR STATUS:", err.response?.status);
       if (err?.response?.status === 403 && err?.response?.data?._id) {
         setMessage(err.response.data.message || "Please verify your email");
         onOtpSent?.({ _id: err.response.data._id, email: form.email });
       } else {
-        console.log("error",err)
+        //console.log("error",err)
         setMessage(err?.response?.data?.message || "Signup failed. Please try again.");
       }
     }
@@ -754,7 +751,7 @@ const AuthModal = ({
   const [mode, setMode] = useState(initialMode);
   useEffect(() => { if (isOpen) setMode(initialMode); }, [isOpen, initialMode]);
   const [forgotOpen, setForgotOpen] = useState(false)
-  console.log("forgotOpen", forgotOpen)
+  //console.log("forgotOpen", forgotOpen)
   return (
     <>
       <SignInModal

@@ -47,6 +47,7 @@ const heroContent = {
 const Hero = ({ guestView, setGuestView }) => {
   const scrollAnimation = useMemo(() => getScrollAnimation(), []);
   const router = useRouter();
+  const [uploadIsGuest, setUploadIsGuest] = useState(true);
   const [otpModal, setOtpModal] = useState({
     isOpen: false,
     _id: "",
@@ -58,14 +59,16 @@ const Hero = ({ guestView, setGuestView }) => {
   const [authMode, setAuthMode] = useState("signup");
   const [guestUploadOpen, setGuestUploadOpen] = useState(false);
   const [guestPostJobOpen, setGuestPostJobOpen] = useState(false);
+  // console.log("guestView",guestView)
 
 const handlePrimaryClick = () => {
+  const token = localStorage.getItem("token");
+
   if (guestView === "candidate") {
+    setUploadIsGuest(!token); // no token = guest, token = candidate user
     setGuestUploadOpen(true);
     return;
   }
-
-  const token = localStorage.getItem("token");
 
   if (token) {
     router.push("/company/Dashboard/postjob");
@@ -73,16 +76,14 @@ const handlePrimaryClick = () => {
     setGuestPostJobOpen(true);
   }
 };
+
   const handleOtpSent = (data) => {
     console.log("OTP SENT FROM HERO:", data);
-
     const mongoId = data?._id;
-
     if (!mongoId) {
       console.error("Missing _id for OTP modal:", data);
       return;
     }
-
     setAuthOpen(false);
 
     setOtpModal({
@@ -91,6 +92,7 @@ const handlePrimaryClick = () => {
       email: data.email || "",
     });
   };
+
   return (
     <>
       <div className="max-w-screen-xl mt-24 px-8 xl:px-16 mx-auto" id="about">
@@ -172,7 +174,9 @@ const handlePrimaryClick = () => {
             </button>
 
             <CVUpload
-              isGuest={true}
+              isGuest={uploadIsGuest}
+              guestView={guestView}
+              setGuestView={setGuestView}
               onSignUpClick={() => {
                 setGuestUploadOpen(false);
                 setAuthMode("signup");

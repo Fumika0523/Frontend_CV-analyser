@@ -5,9 +5,9 @@ import { AiOutlineFileSearch } from "react-icons/ai";
 import { FiEye } from "react-icons/fi";
 import { url } from "../../../utils/constant";
 
-
-export default function CVUpload({ isGuest = false, onSignUpClick  }) {
-
+export default function CVUpload({ isGuest = false, onSignUpClick, guestView }) {
+ // console.log("isGuest:", isGuest);
+  console.log("guestView", guestView)
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [uploadedCV, setUploadedCV] = useState(null);
@@ -24,7 +24,7 @@ export default function CVUpload({ isGuest = false, onSignUpClick  }) {
     ];
 
     if (!allowedTypes.includes(selectedFile.type)) {
-      toast.error("Please upload a PDF or Word document");
+      toast.error("Please upload a PDF");
       return;
     }
 
@@ -32,7 +32,6 @@ export default function CVUpload({ isGuest = false, onSignUpClick  }) {
       toast.error("File size must be less than 5MB");
       return;
     }
-
     setFile(selectedFile);
   };
 
@@ -71,7 +70,6 @@ const handleUpload = async () => {
       const token = localStorage.getItem("token");
       headers.Authorization = `Bearer ${token}`;
     }
-  console.log("isGuest:", isGuest);
   console.log("endpoint:", endpoint);
   console.log("file:", file);
   console.log("guest_session_id:", localStorage.getItem("guest_session_id"));
@@ -84,7 +82,7 @@ const handleUpload = async () => {
     setAnalysysData(res.data);
 
     toast.success(
-      isGuest
+        isGuest
         ? "CV analysed temporarily! Sign up to save it."
         : "CV uploaded successfully!"
     );
@@ -96,7 +94,7 @@ const handleUpload = async () => {
   }
 };
 
-if (isGuest && uploadSuccess) {
+if (uploadSuccess) {
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 text-center">
       <div className="w-14 h-14 mx-auto rounded-full bg-green-50 flex items-center justify-center text-green-600 text-2xl mb-4">
@@ -107,29 +105,49 @@ if (isGuest && uploadSuccess) {
         CV uploaded successfully!
       </h2>
 
-      <p className="text-sm text-slate-500 mb-5">
-        We've analysed your CV and generated a preview report.
-        Continue as a guest to view limited insights, or create a free account
-        to unlock the full analysis and save your progress.
-      </p>
+      {isGuest ? (
+        <>
+          <p className="text-sm text-slate-500 mb-5">
+            We've analysed your CV and generated a preview report.
+            Continue as a guest to view limited insights, or create a free account
+            to unlock the full analysis and save your progress.
+          </p>
 
-      <button
-        type="button"
-        className="w-full py-2.5 rounded-xl text-sm font-semibold text-white mb-3"
-        style={{
-          background: "linear-gradient(135deg, #1d4ed8, #1e3a8a)",
-        }}
-      >
-         View Preview Report
-      </button>
+          <button
+            type="button"
+            className="w-full py-2.5 rounded-xl text-sm font-semibold text-white mb-3"
+            style={{
+              background: "linear-gradient(135deg, #1d4ed8, #1e3a8a)",
+            }}
+          >
+            View Preview Report
+          </button>
 
-      <button
-        type="button"
-        onClick={onSignUpClick}
-        className="w-full py-2.5 rounded-xl text-sm font-semibold text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-100 transition"
-      >
-         Unlock Full Analysis
-      </button>
+          <button
+            type="button"
+            onClick={onSignUpClick}
+            className="w-full py-2.5 rounded-xl text-sm font-semibold text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-100 transition"
+          >
+            Unlock Full Analysis
+          </button>
+        </>
+      ) : (
+        <>
+          <p className="text-sm text-slate-500 mb-5">
+            Your CV has been uploaded and analysed successfully.
+          </p>
+
+          <button
+            type="button"
+            className="w-full py-2.5 rounded-xl text-sm font-semibold text-white"
+            style={{
+              background: "linear-gradient(135deg, #1d4ed8, #1e3a8a)",
+            }}
+          >
+            View Full Analysis
+          </button>
+        </>
+      )}
     </div>
   );
 }
@@ -144,31 +162,30 @@ if (isGuest && uploadSuccess) {
 
           <div>
             <h2 className="text-base font-semibold text-slate-900">
-              {isGuest ? "Upload CV as Guest" : "Your CV"}
+             {isGuest ? "Upload CV as Guest" : "Your CV"}
             </h2>
-         <p className="text-xs text-slate-400 mt-0.5">
-  {isGuest ? (
-    <>
-      Temporary upload only.{" "}
-      <button
-        type="button"
-        onClick={onSignUpClick}
-        className="text-blue-600 font-semibold underline underline-offset-2 hover:text-blue-800"
-      >
-        Sign up
-      </button>{" "}
-      to save your CV.
-    </>
-  ) : 
-  (
-    "Upload your CV to apply for jobs instantly"
-  )
-  }
-</p>
+
+            <p className="text-xs text-slate-400 mt-0.5">
+            {isGuest ? (
+              <>
+                Temporary upload only.{" "}
+                <button
+                  type="button"
+                  onClick={onSignUpClick}
+                  className="text-blue-600 font-semibold underline underline-offset-2 hover:text-blue-800"
+                >
+                  Sign up
+                </button>{" "}
+                to save your CV.
+              </>
+            ) : (
+              "Upload your CV to apply for jobs instantly"
+            )} 
+          </p>
           </div>
         </div>
 
-        {!isGuest && uploadedCV && (
+       {isGuest && uploadedCV && (
           <a
             href={`${url}${uploadedCV.filePath}`}
             target="_blank"

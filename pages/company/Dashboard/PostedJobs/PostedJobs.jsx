@@ -15,6 +15,18 @@ const salaryOptions = [
   "Competitive",
 ];
 
+// Date Format
+const formatDate = (dateString)=>{
+  const date = new Date(dateString)
+
+  return date.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month:"short",
+    year:"numeric"
+  })
+
+}
+
 const jobTypes = ["Full-time", "Part-time", "Contract", "Internship"];
 const workModes = ["Office", "Hybrid", "Remote"];
 
@@ -24,9 +36,7 @@ const EditIcon = () => (
   </svg>
 );
 
-export default function PostedJobs() {
-  const router = useRouter();
-
+export default function PostedJobs({ onSelectJob }) {  const router = useRouter();
   const [jobs, setJobs] = useState([]);
   const [selectedJob, setSelectedJob] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -68,7 +78,7 @@ export default function PostedJobs() {
       const res = await axios.get("http://localhost:8002/my-jobs", {
         headers: { Authorization: `Bearer ${token}` },
       });
-
+      console.log("Get All posted jobs",res.data)
       setJobs(res.data);
     } catch (error) {
       console.error(error);
@@ -80,31 +90,34 @@ export default function PostedJobs() {
     fetchMyJobs();
   }, []);
 
-  const openModal = (job) => {
-    setSelectedJob(job);
+const handleSelectJob = (job) => {
+  onSelectJob?.(job);
+};
 
-    setEditForm({
-      title: job.title || "",
-      location: job.location || "",
-      salary: job.salary || "",
-      jobType: job.jobType || "Full-time",
-      workMode: job.workMode || "Office",
-      education: job.education || "",
-      experience: job.experience || "",
-      keySkills: job.keySkills?.join(", ") || "",
-      requirements: job.requirements?.join(", ") || "",
-      responsibilities: job.responsibilities?.join(", ") || "",
-      roleSummary: job.roleSummary || "",
-      compensationBenefits: job.compensationBenefits || "",
-      applicationEndDate: job.applicationEndDate
-        ? job.applicationEndDate.slice(0, 10)
-        : "",
-      status: job.status || "Open",
-    });
+const openModal = (job) => {
+  setSelectedJob(job);
 
-    setIsEditing(false);
-  };
+  setEditForm({
+    title: job.title || "",
+    location: job.location || "",
+    salary: job.salary || "",
+    jobType: job.jobType || "Full-time",
+    workMode: job.workMode || "Office",
+    education: job.education || "",
+    experience: job.experience || "",
+    keySkills: job.keySkills?.join(", ") || "",
+    requirements: job.requirements?.join(", ") || "",
+    responsibilities: job.responsibilities?.join(", ") || "",
+    roleSummary: job.roleSummary || "",
+    compensationBenefits: job.compensationBenefits || "",
+    applicationEndDate: job.applicationEndDate
+      ? job.applicationEndDate.slice(0, 10)
+      : "",
+    status: job.status || "Open",
+  });
 
+  setIsEditing(false);
+};
   const closeModal = () => {
     setSelectedJob(null);
     setEditForm(null);
@@ -173,7 +186,7 @@ export default function PostedJobs() {
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 mt-5">
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-6">
           <h2 className="text-xl font-bold text-slate-900 mb-4">
-            Posted Jobs
+            Posted Jobs            
           </h2>
 
           {jobs.length === 0 ? (
@@ -183,13 +196,14 @@ export default function PostedJobs() {
               {jobs.map((job, index) => (
                 <div
                   key={job._id}
-                  onClick={() => openModal(job)}
+                 onClick={() => handleSelectJob(job)}
                   className="border border-slate-200 rounded-xl p-4 hover:shadow-md hover:border-blue-200 transition cursor-pointer bg-white"
                 >
                   <div className="flex justify-between items-start">
                     <div>
                       <p className="text-xs text-slate-400 mb-1">
-                        Posted Job {index + 1}
+                        Posted Job on  {formatDate(job.createdAt)}
+                        {/* {index + 1} */}
                       </p>
                       <h3 className="font-bold text-slate-900">{job.title}</h3>
                       <p className="text-sm text-slate-500">{job.location}</p>
@@ -219,6 +233,19 @@ export default function PostedJobs() {
                     {job.salary || "Salary not specified"} · {job.jobType} ·{" "}
                     {job.workMode}
                   </p>
+
+                  <div className="flex justify-end mt-4">
+  <button
+    type="button"
+    onClick={(e) => {
+      e.stopPropagation();
+      openModal(job);
+    }}
+    className="text-sm font-semibold text-blue-700 hover:underline"
+  >
+    See full description
+  </button>
+</div>
                 </div>
               ))}
             </div>
