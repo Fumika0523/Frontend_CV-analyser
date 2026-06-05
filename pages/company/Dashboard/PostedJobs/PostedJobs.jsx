@@ -27,6 +27,16 @@ const formatDate = (dateString)=>{
 
 }
 
+const formatLocation = (location) => {
+  if (!location) return "";
+
+  if (typeof location === "string") {
+    return location;
+  }
+
+  return `${location.city || ""}, ${location.country || ""}`;
+};
+
 const jobTypes = ["Full-time", "Part-time", "Contract", "Internship"];
 const workModes = ["Office", "Hybrid", "Remote"];
 
@@ -43,6 +53,54 @@ export default function PostedJobs({ onSelectJob }) {  const router = useRouter(
   const [editForm, setEditForm] = useState(null);
   const [saving, setSaving] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
+  const [locationLoading, setLocationLoading] = useState(false);
+  const [locationResults, setLocationResults] = useState([]);
+
+  useEffect(() => {
+  if (!isEditing || !editForm?.location) {
+    setLocationResults([]);
+    return;
+  }
+
+  const city = editForm.location.trim();
+
+  if (city.length < 2) {
+    setLocationResults([]);
+    return;
+  }
+
+  const timer = setTimeout(async () => {
+    try {
+      setLocationLoading(true);
+
+      const res = await axios.get(
+        `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(
+          city
+        )}&count=6&language=en&format=json`
+      );
+      console.log("location res",res)
+
+      setLocationResults(res.data.results || []);
+    } catch (error) {
+      console.error("Location API error:", error);
+    } finally {
+      setLocationLoading(false);
+    }
+  }, 500);
+
+  return () => clearTimeout(timer);
+}, [editForm?.location, isEditing]);
+
+const selectEditLocation = (place) => {
+  const selected = `${place.name}, ${place.country}`;
+
+  setEditForm((prev) => ({
+    ...prev,
+    location: selected,
+  }));
+
+  setLocationResults([]);
+};
 
   const checkAuth = async () => {
     try {
@@ -99,7 +157,9 @@ const openModal = (job) => {
 
   setEditForm({
     title: job.title || "",
-    location: job.location || "",
+    location: job.location?.city
+    ? `${job.location.city}, ${job.location.country}`
+    : job.location || "",
     salary: job.salary || "",
     jobType: job.jobType || "Full-time",
     workMode: job.workMode || "Office",
@@ -160,7 +220,7 @@ const openModal = (job) => {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-
+      console.log("updated job",res.data)
       const updatedJob = res.data.jobPost || res.data.job || res.data;
 
       setJobs((prev) =>
@@ -193,7 +253,7 @@ const openModal = (job) => {
             <p className="text-slate-500">No jobs posted yet.</p>
           ) : (
             <div className="space-y-4">
-              {jobs.map((job, index) => (
+              {jobs?.map((job, index) => (
                 <div
                   key={job._id}
                  onClick={() => handleSelectJob(job)}
@@ -206,7 +266,7 @@ const openModal = (job) => {
                         {/* {index + 1} */}
                       </p>
                       <h3 className="font-bold text-slate-900">{job.title}</h3>
-                      <p className="text-sm text-slate-500">{job.location}</p>
+                      <p className="text-sm text-slate-500">{formatLocation(job.location)}</p>
                     </div>
 
                     <span className="text-xs bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full">
@@ -309,8 +369,8 @@ const openModal = (job) => {
                       Location
                     </h3>
                     <p className="text-sm text-slate-600">
-                      {selectedJob.location}
-                    </p>
+                    {formatLocation(selectedJob.location)}
+                  </p>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -429,19 +489,43 @@ const openModal = (job) => {
                         className="w-full border rounded-lg px-4 py-3 text-sm"
                       />
                     </div>
+                  {/* Location */}
+                <div className="relative">
+  <label className="text-xs font-semibold text-slate-700 mb-1 block">
+    Location
+  </label>
 
-                    <div>
-                      <label className="text-xs font-semibold text-slate-700 mb-1 block">
-                        Location
-                      </label>
-                      <input
-                        name="location"
-                        value={editForm.location}
-                        onChange={handleEditChange}
-                        className="w-full border rounded-lg px-4 py-3 text-sm"
-                      />
-                    </div>
+  <input
+    name="location"
+    value={editForm.location}
+    onChange={handleEditChange}
+    placeholder="Type city name, e.g. London"
+    autoComplete="off"
+    className="w-full border rounded-lg px-4 py-3 text-sm"
+  />
 
+  {locationLoading && (
+    <p className="text-xs mt-1 text-slate-500">Searching location...</p>
+  )}
+
+  {locationResults.length > 0 && (
+    <div className="absolute z-20 mt-1 w-full bg-white rounded-lg shadow-lg border border-blue-100 overflow-hidden">
+      {locationResults.map((place) => (
+        <button
+          type="button"
+          key={`${place.id}-${place.name}`}
+          onClick={() => selectEditLocation(place)}
+          className="w-full text-left px-4 py-2 text-sm hover:bg-blue-50"
+        >
+          {place.name}
+          {place.admin1 ? `, ${place.admin1}` : ""}, {place.country}
+        </button>
+      ))}
+    </div>
+  )}
+</div>
+
+                  {/* Salary */}
                     <div>
                       <label className="text-xs font-semibold text-slate-700 mb-1 block">
                         Salary Range
@@ -460,7 +544,8 @@ const openModal = (job) => {
                         ))}
                       </select>
                     </div>
-
+                  
+                  {/* Job Type */}
                     <div>
                       <label className="text-xs font-semibold text-slate-700 mb-1 block">
                         Job Type

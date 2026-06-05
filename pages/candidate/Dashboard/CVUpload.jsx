@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect  } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { AiOutlineFileSearch } from "react-icons/ai";
@@ -13,7 +13,7 @@ export default function CVUpload({ isGuest = false, onSignUpClick, guestView }) 
   const [uploadedCV, setUploadedCV] = useState(null);
   const [uploadSuccess, setUploadSuccess] = useState(false)
   const [analysisData, setAnalysysData] = useState(null)
-
+  const [myCVs, setMyCVs] = useState([]);
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
 
@@ -81,6 +81,8 @@ const handleUpload = async () => {
     setUploadSuccess(true);
     setAnalysysData(res.data);
 
+    await fetchMyCVs();
+
     toast.success(
         isGuest
         ? "CV analysed temporarily! Sign up to save it."
@@ -93,6 +95,7 @@ const handleUpload = async () => {
     setLoading(false);
   }
 };
+
 
 if (uploadSuccess) {
   return (
@@ -151,6 +154,29 @@ if (uploadSuccess) {
     </div>
   );
 }
+
+const getMyCVs = async () => {
+  try {
+    if (isGuest) return;
+
+    const token = localStorage.getItem("token");
+
+    const res = await axios.get(`${url}/cv/my-cvs`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    setMyCVs(res.data || []);
+  } catch (error) {
+    console.error("Fetch CVs error:", error);
+  }
+};
+
+useEffect(() => {
+  getMyCVs();
+}, []);
+
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
@@ -225,7 +251,8 @@ if (uploadSuccess) {
           </p>
         </div>
       </label>
-
+    
+    {/* Upload button */}
       <button
         onClick={handleUpload}
         disabled={!file || loading}
@@ -238,6 +265,42 @@ if (uploadSuccess) {
       >
         {loading ? "Uploading..." : isGuest ? "Analyse CV" : "Upload CV"}
       </button>
+
+
+      {!isGuest && myCVs.length > 0 && (
+  <div className="mt-6 border-t border-slate-200 pt-5">
+    <h3 className="text-sm font-semibold text-slate-900 mb-3">
+      My Uploaded CVs
+    </h3>
+
+    <div className="space-y-3">
+      {myCVs.map((cv) => (
+        <div
+          key={cv._id}
+          className="flex items-center justify-between border border-slate-200 rounded-xl px-4 py-3"
+        >
+          <div>
+            <p className="text-sm font-medium text-slate-800">
+              Version {cv.version} — {cv.fileName}
+            </p>
+            <p className="text-xs text-slate-400">
+              {new Date(cv.createdAt || cv.uploadedAt).toLocaleDateString("en-GB")}
+            </p>
+          </div>
+
+          <a
+            href={`${url}${cv.filePath}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm font-semibold text-blue-700 hover:underline"
+          >
+            View CV
+          </a>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
     </div>
   );
 }

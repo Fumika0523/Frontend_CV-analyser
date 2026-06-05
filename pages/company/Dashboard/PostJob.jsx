@@ -58,6 +58,7 @@ export default function PostJob() {
 
 const [formData, setFormData] = useState({
   title: "",
+  companyUrl: "",
   jobType: "Full-time",
   workMode: "Office",
   education: "",
@@ -160,8 +161,9 @@ const [formData, setFormData] = useState({
       console.log(formData)
       setMessage("success");
 
-    setFormData({
+      setFormData({
   title: "",
+  companyUrl: "",
   jobType: "Full-time",
   workMode: "Office",
   education: "",
@@ -241,6 +243,28 @@ const [formData, setFormData] = useState({
                       required
                     />
                   </div>
+            
+            {/* Company URL */}
+<div className="md:col-span-3">
+  <label className="text-xs font-semibold text-slate-700 mb-1 block">
+    Application URL <span className="text-red-500">*</span>
+  </label>
+
+  <input
+    type="url"
+    name="companyUrl"
+    value={formData.companyUrl}
+    onChange={handleChange}
+    placeholder="https://example.com/careers/job-post"
+    className="w-full border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-600"
+    style={{ borderColor: "#dbeafe" }}
+    required
+  />
+
+  <p className="text-xs mt-1" style={{ color: "#64748b" }}>
+  Candidates will be redirected to this URL to apply for the role.
+  </p>
+</div>
 
                   {/* Location */}
                   <div className="relative md:col-span-2">

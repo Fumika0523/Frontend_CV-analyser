@@ -60,6 +60,14 @@ const LatestJobs = () => {
     );
   });
 
+  const formatLocation = (location) => {
+  if (!location) return "";
+
+  if (typeof location === "string") return location;
+
+  return `${location.city || ""}, ${location.country || ""}`;
+};
+
   return (
     <Layout>
       <div className="min-h-screen bg-slate-50 py-10">
@@ -116,7 +124,7 @@ const LatestJobs = () => {
 
                     <div className="mt-4 space-y-1">
                       <p className="text-xs text-slate-500">
-                        📍 {job.location}
+                        📍 {formatLocation(job.location)}
                       </p>
                       <p className="text-xs text-slate-500">
                         💼 {job.jobType}
@@ -127,7 +135,7 @@ const LatestJobs = () => {
                     </div>
 
                     <div className="flex flex-wrap gap-2 mt-4">
-                      {job.skills?.slice(0, 4).map((skill, index) => (
+                      {job.skeySkills?.slice(0, 4).map((skill, index) => (
                         <span
                           key={index}
                           className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-full"
