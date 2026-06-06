@@ -128,16 +128,16 @@ const MatchingJobs = () => {
                 </a>
               )}
 
-              {job.companyUrl && (
+              {
                 <a
                   href={job.companyUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="px-4 py-2 rounded-lg bg-blue-700 text-white text-sm font-semibold hover:bg-blue-800"
                 >
-                  Apply
+                  Apply Now
                 </a>
-              )}
+              }
             </div>
           </div>
         ))}

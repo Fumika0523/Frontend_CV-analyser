@@ -14,6 +14,29 @@ export default function CVUpload({ isGuest = false, onSignUpClick, guestView }) 
   const [uploadSuccess, setUploadSuccess] = useState(false)
   const [analysisData, setAnalysysData] = useState(null)
   const [myCVs, setMyCVs] = useState([]);
+  
+  
+  const getMyCVs = async () => {
+  try {
+    if (isGuest) return;
+
+    const token = localStorage.getItem("token");
+
+    const res = await axios.get(`${url}/cv/my-cvs`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    setMyCVs(res.data || []);
+  } catch (error) {
+    console.error("Fetch CVs error:", error);
+  }
+};
+useEffect(() => {
+  getMyCVs();
+}, []);
+
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
 
@@ -35,66 +58,67 @@ export default function CVUpload({ isGuest = false, onSignUpClick, guestView }) 
     setFile(selectedFile);
   };
 
-const handleUpload = async () => {
-  if (!file) 
-  return toast.error("Please select a CV");
+  const handleUpload = async () => {
+    if (!file) 
+    return toast.error("Please select a CV");
 
-  setLoading(true);
+    setLoading(true);
 
-  try {
-    const formData = new FormData();
-    formData.append("cv", file);
-    console.log("formData",formData)
+    try {
+      const formData = new FormData();
+      formData.append("cv", file);
+      console.log("formData",formData)
 
-    const endpoint = isGuest
-      ? `${url}/cv/guest-upload`
-      : `${url}/cv/upload`;
+      const endpoint = isGuest
+        ? `${url}/cv/guest-upload`
+        : `${url}/cv/upload`;
 
-    const headers = {
-      "Content-Type": "multipart/form-data",
-    };
+      const headers = {
+        "Content-Type": "multipart/form-data",
+      };
 
-    if (isGuest) {
-      let guestSessionId = localStorage.getItem("guest_session_id");
+      if (isGuest) {
+        let guestSessionId = localStorage.getItem("guest_session_id");
 
-      if (!guestSessionId) {
-        guestSessionId = `guest_${Date.now()}_${Math.random()
-          .toString(36)
-          .substring(2, 10)}`;
+        if (!guestSessionId) {
+          guestSessionId = `guest_${Date.now()}_${Math.random()
+            .toString(36)
+            .substring(2, 10)}`;
 
-        localStorage.setItem("guest_session_id", guestSessionId);
+          localStorage.setItem("guest_session_id", guestSessionId);
+        }
+
+        formData.append("guestSessionId", guestSessionId);
+        
+      } else {
+        const token = localStorage.getItem("token");
+        headers.Authorization = `Bearer ${token}`;
       }
+    console.log("endpoint:", endpoint);
+    console.log("file:", file);
+    console.log("guest_session_id:", localStorage.getItem("guest_session_id"));
+    
+      const res = await axios.post(endpoint, formData, { headers });
+      console.log("CV upload response:", res);
 
-      formData.append("guestSessionId", guestSessionId);
-    } else {
-      const token = localStorage.getItem("token");
-      headers.Authorization = `Bearer ${token}`;
+      setUploadedCV(res.data.cv || null);
+      setUploadSuccess(true);
+      setAnalysysData(res.data);
+
+      await getMyCVs();
+
+      toast.success(
+          isGuest
+          ? "CV analysed temporarily! Sign up to save it."
+          : "CV uploaded successfully!"
+      );
+    } catch (err) {
+      console.error("Upload error:", err);
+      toast.error(err.response?.data?.message || "Upload failed");
+    } finally {
+      setLoading(false);
     }
-  console.log("endpoint:", endpoint);
-  console.log("file:", file);
-  console.log("guest_session_id:", localStorage.getItem("guest_session_id"));
-   
-    const res = await axios.post(endpoint, formData, { headers });
-    console.log("CV upload response:", res);
-
-    setUploadedCV(res.data.cv || null);
-    setUploadSuccess(true);
-    setAnalysysData(res.data);
-
-    await fetchMyCVs();
-
-    toast.success(
-        isGuest
-        ? "CV analysed temporarily! Sign up to save it."
-        : "CV uploaded successfully!"
-    );
-  } catch (err) {
-    console.error("Upload error:", err);
-    toast.error(err.response?.data?.message || "Upload failed");
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
 
 if (uploadSuccess) {
@@ -155,27 +179,6 @@ if (uploadSuccess) {
   );
 }
 
-const getMyCVs = async () => {
-  try {
-    if (isGuest) return;
-
-    const token = localStorage.getItem("token");
-
-    const res = await axios.get(`${url}/cv/my-cvs`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    setMyCVs(res.data || []);
-  } catch (error) {
-    console.error("Fetch CVs error:", error);
-  }
-};
-
-useEffect(() => {
-  getMyCVs();
-}, []);
 
 
   return (

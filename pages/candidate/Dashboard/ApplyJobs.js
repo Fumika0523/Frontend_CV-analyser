@@ -16,7 +16,7 @@ const ApplyJobs = () => {
         },
       };
 
-      const res = await axios.get(`${url}/alljobs`, config);
+      const res = await axios.get(`${url}/all-jobs`, config);
 
       console.log("jobs data", res.data);
 
