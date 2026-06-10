@@ -153,30 +153,16 @@ const [formData, setFormData] = useState({
     .filter(Boolean),
 };
 
-      await axios.post("http://localhost:8002/create", payload, {
+       const res = await axios.post("http://localhost:8002/create", payload, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      console.log(formData)
-      setMessage("success");
+ console.log("res", res);
 
-      setFormData({
-  title: "",
-  companyUrl: "",
-  jobType: "Full-time",
-  workMode: "Office",
-  education: "",
-  keySkills: "",
-  requirements: "",
-  experience: "",
-  location: "",
-  responsibilities: "",
-  roleSummary: "",
-  compensationBenefits: "",
-  applicationEndDate: "",
-  salary: "",
-});
+setMessage("success");
+
+router.push("/company/Dashboard/PostedJobs/PostedJobsPage");
 
     } catch (error) {
       console.error(error);

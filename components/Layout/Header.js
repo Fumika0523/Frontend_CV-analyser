@@ -40,9 +40,9 @@ const NAV_CANDIDATE = [
 
 const NAV_COMPANY = [
   { label: "Dashboard", href: "/company/dashboard", icon: FiGrid },
-  { label: "Posted Jobs", href: "/company/Dashboard/PostedJobs/PostedJobsPage", icon: FiBriefcase },
-  { label: "Selected Candidates", href: "/company/selected-candidates", icon: FiUsers },
   { label: "Post a new job", href: "/company/Dashboard/postjob", icon: FiPlusCircle },
+  { label: "Posted Jobs", href: "/company/Dashboard/PostedJobs/PostedJobsPage", icon: FiBriefcase },
+  { label: "Applicants", href: "/company/Dashboard/Applicants/ApplicantsPage", icon: FiUsers },
 ];
 
 const Header = ({   
