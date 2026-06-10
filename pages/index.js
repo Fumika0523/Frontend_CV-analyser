@@ -10,26 +10,26 @@ import axios from "axios";
 export default function Home() {
 
   const [guestView, setGuestView] = useState("candidate");
-  console.log("guestView from index",guestView)
+  //console.log("guestView from index",guestView)
   const [userData, setUserData] = useState(null);
 
-    useEffect(() => {
+  useEffect(() => {
     const getUserData = async () => {
       try {
-        const token = localStorage.getItem("token");  
+        const token = localStorage.getItem("token");
         //console.log("token",token)
         if (!token) return;
 
         const res = await axios.get("http://localhost:8002/user-profile", {
           headers: { Authorization: `Bearer ${token}` },
         });
-        console.log("getUserData response:",res.data.user)
+        console.log("getUserData response:", res.data.user)
         const fetchedUser = res.data.user;
         if (fetchedUser.role === "company") {
-  setGuestView("company");
-} else {
-  setGuestView("candidate");
-}
+          setGuestView("company");
+        } else {
+          setGuestView("candidate");
+        }
         setUserData({
           id: fetchedUser._id,
           userId: fetchedUser.userId,
@@ -44,22 +44,22 @@ export default function Home() {
           location: fetchedUser.location || { city: "", country: "" },
         });
       } catch (error) {
-        
+
         // localStorage.removeItem("token");
-         console.error("Failed to fetch user:", error.response?.data || error.message);
+        console.error("Failed to fetch user:", error.response?.data || error.message);
 
-  const status = error.response?.status;
-  const message = error.response?.data?.message;
+        const status = error.response?.status;
+        const message = error.response?.data?.message;
 
-  if (
-    status === 401 &&
-    (message === "jwt expired" ||
-      message === "invalid token" ||
-      message === "Invalid token")
-  ) {
-    localStorage.removeItem("token");
-    setUserData(null);
-  }
+        if (
+          status === 401 &&
+          (message === "jwt expired" ||
+            message === "invalid token" ||
+            message === "Invalid token")
+        ) {
+          localStorage.removeItem("token");
+          setUserData(null);
+        }
       }
     };
 
@@ -70,7 +70,7 @@ export default function Home() {
     <>
       <SeoHead title='SkillfulJobs.ai' />
       <Layout guestView={guestView} setGuestView={setGuestView}>
-        <Hero guestView={guestView} setGuestView={setGuestView} userData={userData}/>
+        <Hero guestView={guestView} setGuestView={setGuestView} userData={userData} />
         <Feature guestView={guestView} />
       </Layout>
     </>

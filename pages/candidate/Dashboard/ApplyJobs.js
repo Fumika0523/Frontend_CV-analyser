@@ -1,10 +1,17 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { url } from "../../../utils/constant";
+import { toast } from "react-toastify";
 
 const ApplyJobs = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [jobData, setJobData] = useState([]);
+  
+  const formatLocation = (location) => {
+  if (!location) return "";
+  if (typeof location === "string") return location;
+  return `${location.city || ""}, ${location.country || ""}`;
+};
 
   const getJobsData = async () => {
     try {
@@ -39,10 +46,31 @@ const ApplyJobs = () => {
       job.location?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleApply = (jobId) => {
-    console.log("Apply job:", jobId);
-  };
+  const handleApply = async (job) => {
+  try {
+    const token = localStorage.getItem("token");
 
+    const res = await axios.post(
+      `${url}/apply`,
+      {
+        jobId: job._id,
+        jobTitle: job.title,
+        companyName: job.companyId?.companyName || "Company",
+        companyId: job.companyId?.userId,
+        cvId: null,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    toast.success(res.data.message || "Application submitted successfully");
+  } catch (error) {
+    toast.error(error.response?.data?.message || "Failed to apply");
+  }
+};
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
       <h2 className="text-xl font-semibold text-gray-800 mb-4">
@@ -77,7 +105,7 @@ const ApplyJobs = () => {
 
             <div className="mt-2 space-y-1">
               <p className="text-xs text-gray-500">
-                📍 {job.location}
+                📍 {formatLocation(job.location)}
               </p>
 
               <p className="text-xs text-gray-500">
@@ -95,7 +123,7 @@ const ApplyJobs = () => {
             </div>
 
             <button
-              onClick={() => handleApply(job._id)}
+              onClick={() => handleApply(job)}
               className="mt-4 w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
             >
               Apply Now

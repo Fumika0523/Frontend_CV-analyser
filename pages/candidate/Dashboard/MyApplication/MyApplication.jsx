@@ -23,34 +23,33 @@ export default function MyApplication() {
         }
       );
 
-      console.log("Applications:", response.data);
-      setApplications(response.data);
-    } catch (error) {
+      console.log("Applications:", response.data.applications);
+setApplications(response.data.applications || []);    } catch (error) {
       console.error("Error fetching applications:", error);
 
-      setApplications([
-        {
-          _id: "1",
-          jobTitle: "Frontend Developer",
-          company: "Tech Corp",
-          appliedDate: "2026-04-20",
-          status: "pending",
-        },
-        {
-          _id: "2",
-          jobTitle: "React Developer",
-          company: "StartupXYZ",
-          appliedDate: "2026-04-18",
-          status: "interview",
-        },
-        {
-          _id: "3",
-          jobTitle: "Full Stack Engineer",
-          company: "BigTech Inc",
-          appliedDate: "2026-04-15",
-          status: "rejected",
-        },
-      ]);
+      // setApplications([
+      //   {
+      //     _id: "1",
+      //     jobTitle: "Frontend Developer",
+      //     company: "Tech Corp",
+      //     appliedDate: "2026-04-20",
+      //     status: "pending",
+      //   },
+      //   {
+      //     _id: "2",
+      //     jobTitle: "React Developer",
+      //     company: "StartupXYZ",
+      //     appliedDate: "2026-04-18",
+      //     status: "interview",
+      //   },
+      //   {
+      //     _id: "3",
+      //     jobTitle: "Full Stack Engineer",
+      //     company: "BigTech Inc",
+      //     appliedDate: "2026-04-15",
+      //     status: "rejected",
+      //   },
+      // ]);
     } finally {
       setApplicationsLoading(false);
     }
@@ -79,7 +78,7 @@ export default function MyApplication() {
 
   return (
     <div className="space-y-6">
-      <CVUpload isGuest={false} />
+      {/* <CVUpload isGuest={false} /> */}
 
       <div className="bg-white rounded-lg shadow-md p-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
@@ -120,7 +119,7 @@ export default function MyApplication() {
                     <h3 className="font-medium text-gray-900">
                       {app.jobTitle}
                     </h3>
-                    <p className="text-sm text-gray-600">{app.company}</p>
+                    <p className="text-sm text-gray-600">{app.companyName}</p>
                     <p className="text-xs text-gray-500 mt-1">
                       Applied: {new Date(app.appliedDate).toLocaleDateString()}
                     </p>

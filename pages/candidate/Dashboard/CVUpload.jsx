@@ -4,19 +4,22 @@ import { toast } from "react-toastify";
 import { AiOutlineFileSearch } from "react-icons/ai";
 import { FiEye } from "react-icons/fi";
 import { url } from "../../../utils/constant";
+import { useRouter } from "next/router";
 
 export default function CVUpload({ isGuest = false, onSignUpClick, guestView }) {
  // console.log("isGuest:", isGuest);
-  console.log("guestView", guestView)
+  //console.log("guestView", guestView)
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [uploadedCV, setUploadedCV] = useState(null);
   const [uploadSuccess, setUploadSuccess] = useState(false)
   const [analysisData, setAnalysysData] = useState(null)
   const [myCVs, setMyCVs] = useState([]);
-  
-  
-  const getMyCVs = async () => {
+  // 
+  const router = useRouter()
+
+   // Get CV
+  const getMyCVs =  async () => {
   try {
     if (isGuest) return;
 
@@ -32,10 +35,10 @@ export default function CVUpload({ isGuest = false, onSignUpClick, guestView }) 
   } catch (error) {
     console.error("Fetch CVs error:", error);
   }
-};
-useEffect(() => {
-  getMyCVs();
-}, []);
+    };
+    useEffect(() => {
+      getMyCVs();
+    }, []);
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
@@ -99,19 +102,18 @@ useEffect(() => {
     console.log("guest_session_id:", localStorage.getItem("guest_session_id"));
     
       const res = await axios.post(endpoint, formData, { headers });
-      console.log("CV upload response:", res);
-
+      console.log("CV upload response:", res.data.cv);
       setUploadedCV(res.data.cv || null);
       setUploadSuccess(true);
       setAnalysysData(res.data);
 
       await getMyCVs();
 
-      toast.success(
-          isGuest
-          ? "CV analysed temporarily! Sign up to save it."
-          : "CV uploaded successfully!"
-      );
+      // toast.success(
+      //     isGuest
+      //     ? "CV analysed temporarily! "
+      //     : "CV uploaded successfully!"
+      // );
     } catch (err) {
       console.error("Upload error:", err);
       toast.error(err.response?.data?.message || "Upload failed");
@@ -120,68 +122,68 @@ useEffect(() => {
     }
   };
 
+  if (uploadSuccess) {
+    return (
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 text-center">
+        <div className="w-14 h-14 mx-auto rounded-full bg-green-50 flex items-center justify-center text-green-600 text-2xl mb-4">
+          ✅
+        </div>
 
-if (uploadSuccess) {
-  return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 text-center">
-      <div className="w-14 h-14 mx-auto rounded-full bg-green-50 flex items-center justify-center text-green-600 text-2xl mb-4">
-        ✅
+        <h2 className="text-xl font-bold text-slate-900 mb-2">
+          CV uploaded successfully!
+        </h2>
+
+        {isGuest ? (
+          <>
+            <p className="text-sm text-slate-500 mb-5">
+              We've analysed your CV and generated a preview report.
+              Continue as a guest to view limited insights, or create a free account
+              to unlock the full analysis and save your progress.
+            </p>
+
+            <button
+              onClick={
+                ()=>router.push("/candidate/dashboard")
+              }
+              type="button"
+              className="w-full py-2.5 rounded-xl text-sm font-semibold text-white mb-3"
+              style={{
+                background: "linear-gradient(135deg, #1d4ed8, #1e3a8a)",
+              }}
+            >
+              View Preview Report
+            </button>
+
+            <button
+              type="button"
+              onClick={onSignUpClick}
+              className="w-full py-2.5 rounded-xl text-sm font-semibold text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-100 transition"
+            >
+              Unlock Full Analysis
+            </button>
+          </>
+        ) : (
+          <>
+            <p className="text-sm text-slate-500 mb-5">
+              Your CV has been uploaded and analysed successfully.
+            </p>
+
+            <button
+              type="button"
+              className="w-full py-2.5 rounded-xl text-sm font-semibold text-white"
+              style={{
+                background: "linear-gradient(135deg, #1d4ed8, #1e3a8a)",
+              }}
+            >
+              View Full Analysis
+            </button>
+          </>
+        )}
       </div>
+    );
+  }
 
-      <h2 className="text-xl font-bold text-slate-900 mb-2">
-        CV uploaded successfully!
-      </h2>
-
-      {isGuest ? (
-        <>
-          <p className="text-sm text-slate-500 mb-5">
-            We've analysed your CV and generated a preview report.
-            Continue as a guest to view limited insights, or create a free account
-            to unlock the full analysis and save your progress.
-          </p>
-
-          <button
-            type="button"
-            className="w-full py-2.5 rounded-xl text-sm font-semibold text-white mb-3"
-            style={{
-              background: "linear-gradient(135deg, #1d4ed8, #1e3a8a)",
-            }}
-          >
-            View Preview Report
-          </button>
-
-          <button
-            type="button"
-            onClick={onSignUpClick}
-            className="w-full py-2.5 rounded-xl text-sm font-semibold text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-100 transition"
-          >
-            Unlock Full Analysis
-          </button>
-        </>
-      ) : (
-        <>
-          <p className="text-sm text-slate-500 mb-5">
-            Your CV has been uploaded and analysed successfully.
-          </p>
-
-          <button
-            type="button"
-            className="w-full py-2.5 rounded-xl text-sm font-semibold text-white"
-            style={{
-              background: "linear-gradient(135deg, #1d4ed8, #1e3a8a)",
-            }}
-          >
-            View Full Analysis
-          </button>
-        </>
-      )}
-    </div>
-  );
-}
-
-
-
-  return (
+ return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
       <div className="flex items-center justify-between gap-4 mb-5">
         <div className="flex items-center gap-3">
