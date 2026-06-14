@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import LocationAutocomplete from "../common/LocationAutocomplete";
 
 // Pencil icon (inline SVG, no dependency)
 const PencilIcon = () => (
@@ -53,7 +54,7 @@ const EditableField = ({ label, name, value, onChange, isTextarea = false, disab
           <button
             type="button"
             onClick={() => { setDraft(value); setEditing(true); }}
-            className="flex items-center gap-1 text-xs text-orange-500 hover:text-orange-600 transition-colors"
+            className="flex items-center gap-1 text-xs text-blue-500 hover:text-blue-600 transition-colors"
             title={`Edit ${label}`}
           >
             <PencilIcon />
@@ -105,7 +106,7 @@ const EditableField = ({ label, name, value, onChange, isTextarea = false, disab
             value={draft}
             autoFocus
             onChange={(e) => setDraft(e.target.value)}
-            className="w-full border-[1.5px] border-orange-400 rounded-xl px-3 py-2.5 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-orange-200 resize-none transition"
+            className="w-full border-[1.5px] border-blue-400 rounded-xl px-3 py-2.5 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-blue-200 resize-none transition"
           />
         ) : (
           <input
@@ -113,9 +114,107 @@ const EditableField = ({ label, name, value, onChange, isTextarea = false, disab
             value={draft}
             autoFocus
             onChange={(e) => setDraft(e.target.value)}
-            className="w-full border-[1.5px] border-orange-400 rounded-xl px-3 py-2.5 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-orange-200 transition"
+            className="w-full border-[1.5px] border-blue-400 rounded-xl px-3 py-2.5 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-blue-200 transition"
           />
         )
+      )}
+    </div>
+  );
+};
+
+const EditableLocationField = ({ label, city, country, onLocationChange }) => {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+  const [selectedLocation, setSelectedLocation] = useState(null);
+
+  const displayValue =
+    city && country ? `${city}, ${country}` : city || country || "";
+
+  useEffect(() => {
+    setDraft(displayValue);
+    setSelectedLocation(null);
+    setEditing(false);
+  }, [city, country]);
+
+  const handleConfirm = () => {
+    if (selectedLocation) {
+      onLocationChange(selectedLocation);
+    }
+    setEditing(false);
+  };
+
+  const handleCancel = () => {
+    setDraft(displayValue);
+    setSelectedLocation(null);
+    setEditing(false);
+  };
+
+  return (
+    <div className="flex flex-col gap-1">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide font-['Sora',sans-serif]">
+          {label}
+        </span>
+
+        {!editing && (
+          <button
+            type="button"
+            onClick={() => {
+              setDraft(displayValue);
+              setEditing(true);
+            }}
+            className="flex items-center gap-1 text-xs text-blue-500 hover:text-blue-600 transition-colors"
+            title={`Edit ${label}`}
+          >
+            <PencilIcon />
+            <span>Edit</span>
+          </button>
+        )}
+
+        {editing && (
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={handleConfirm}
+              className="flex items-center gap-0.5 text-xs text-emerald-600 hover:text-emerald-700 font-semibold transition-colors"
+              title="Confirm"
+            >
+              <CheckIcon /> Done
+            </button>
+
+            <span className="text-gray-300">|</span>
+
+            <button
+              type="button"
+              onClick={handleCancel}
+              className="flex items-center gap-0.5 text-xs text-gray-400 hover:text-gray-600 transition-colors"
+              title="Cancel"
+            >
+              <XIcon /> Cancel
+            </button>
+          </div>
+        )}
+      </div>
+
+      {!editing && (
+        <div className="px-3 py-2.5 rounded-xl text-sm border bg-gray-50 text-gray-700 border-gray-100">
+          {displayValue || <span className="text-gray-300 italic">—</span>}
+        </div>
+      )}
+
+      {editing && (
+        <LocationAutocomplete
+          value={draft}
+          onChange={(location) => {
+            setSelectedLocation(location);
+            setDraft(
+              location.city && location.country
+                ? `${location.city}, ${location.country}`
+                : location.displayName
+            );
+          }}
+          placeholder="Search city or country"
+        />
       )}
     </div>
   );
@@ -234,7 +333,7 @@ const SettingsModal = ({ isOpen, onClose, user, onUserUpdated }) => {
           ⚙️ Profile Settings
         </h2>
         <p className="text-xs text-gray-400 mb-5">
-          Click the <span className="text-orange-500 font-semibold">Edit</span> button next to any field to update it. Email cannot be changed.
+          Click the <span className="text-blue-500 font-semibold">Edit</span> button next to any field to update it. Email cannot be changed.
         </p>
 
         <form onSubmit={handleSave}>
@@ -250,8 +349,23 @@ const SettingsModal = ({ isOpen, onClose, user, onUserUpdated }) => {
               <EditableField label="Phone Number" name="phoneNumber" value={form.phoneNumber} onChange={handleChange} />
             </div>
 
-            <EditableField label="City"    name="city"    value={form.city}    onChange={handleChange} />
-            <EditableField label="Country" name="country" value={form.country} onChange={handleChange} />
+            <div className="col-span-2 max-sm:col-span-1">
+  <EditableLocationField
+    label="Location"
+    city={form.city}
+    country={form.country}
+    onLocationChange={(location) => {
+      setForm((prev) => ({
+        ...prev,
+        city: location.city,
+        country: location.country,
+      }));
+    }}
+  />
+</div>
+
+            {/* <EditableField label="City"    name="city"    value={form.city}    onChange={handleChange} />
+            <EditableField label="Country" name="country" value={form.country} onChange={handleChange} /> */}
 
             {user?.role === "company" && (
               <>
@@ -288,7 +402,7 @@ const SettingsModal = ({ isOpen, onClose, user, onUserUpdated }) => {
             <button
               type="submit"
               disabled={loading}
-              className="bg-gradient-to-br from-orange-400 to-orange-600 text-white rounded-xl px-4 py-2.5 text-sm font-bold hover:from-orange-500 hover:to-orange-700 disabled:opacity-60 transition-all shadow-sm"
+              className="bg-gradient-to-br from-blue-400 to-blue-600 text-white rounded-xl px-4 py-2.5 text-sm font-bold hover:from-blue-500 hover:to-blue-700 disabled:opacity-60 transition-all shadow-sm"
             >
               {loading ? "Saving..." : "Save Changes"}
             </button>
@@ -300,3 +414,5 @@ const SettingsModal = ({ isOpen, onClose, user, onUserUpdated }) => {
 };
 
 export default SettingsModal;
+
+

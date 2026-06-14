@@ -194,9 +194,12 @@ const Header = ({
         }`}
       >
         <nav className="max-w-screen-xl mx-auto grid grid-flow-col items-center px-6 sm:px-8 lg:px-16 py-3 sm:py-4">
-          <div className="col-start-1 col-end-2 flex items-center text-lg font-bold tracking-tight text-blue-700">
+           <Link href="/">
+          <a 
+          className="col-start-1 col-end-2 flex items-center text-lg font-bold tracking-tight text-blue-700">
             SkillfulJobs.ai
-          </div>
+          </a>
+          </Link>
 
           <ul className="hidden lg:flex col-start-4 col-end-8 items-center text-blue-600">
             {user
@@ -260,7 +263,7 @@ const Header = ({
                     <div className="absolute right-0 top-[calc(100%+8px)] z-50 min-w-[170px] rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg">
                       {user.role === "candidate" && (
                         // All the stored CV
-                      <Link href="/candidate/cv">
+                      <Link href="/candidate/viewMyCVs">
                       <a className="block w-full rounded-lg px-3.5 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-100 hover:text-blue-600">
                             📄 Uploaded CV
                           </a>

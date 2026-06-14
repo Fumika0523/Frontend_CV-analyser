@@ -3,6 +3,7 @@ import axios from "axios";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 import ForgotPWModal from "./forgotPWModal";
+import LocationAutocomplete from "../common/LocationAutocomplete";
 
 const COUNTRIES = [
   "Afghanistan","Albania","Algeria","Argentina","Australia","Austria","Bangladesh",
@@ -453,9 +454,11 @@ const [role, setRole] = useState(initialRole);
   const [emailWarn, setEmailWarn] = useState("");
   const [form, setForm] = useState({
     firstName: "", lastName: "", email: "", password: "",
-    phoneNumber: "", city: "", country: "",
+    phoneNumber: "", city: "", country: "",   locationDisplay: "",
     companyName: "", companyDescription: "",
-    companyCity: "", companyCountry: "", companySize: "", companyType: "",
+    companyCity: "", companyCountry: "", 
+     companyLocationDisplay: "",
+     companySize: "", companyType: "",
   });
 
   const resetForm = () => {
@@ -625,7 +628,7 @@ const payload = role === "candidate"
                     placeholder="Min. 8 characters" value={form.password} onChange={handleChange}
                     hint="Minimum 8 characters recommended." />
 
-                  <TwoCol>
+                  {/* <TwoCol>
                     <Field label="City" required>
                       <input name="city" type="text" placeholder="London"
                         value={form.city} className="am-input" required onChange={handleChange} />
@@ -636,7 +639,22 @@ const payload = role === "candidate"
                         {COUNTRIES.map(c => <option key={c} value={c}>{c}</option>)}
                       </select>
                     </Field>
-                  </TwoCol>
+                  </TwoCol> */}
+
+                  <Field label="Location" required>
+ <LocationAutocomplete
+  value={form.locationDisplay}
+  onChange={(location) => {
+    setForm((prev) => ({
+      ...prev,
+      city: location.city,
+      country: location.country,
+      locationDisplay: location.displayName,
+    }));
+  }}
+  placeholder="Search your city or country"
+/>
+</Field>
                 </>
               )}
 
@@ -674,16 +692,33 @@ const payload = role === "candidate"
                     </Field>
                   </div>
 
-                  <Field label="City" required>
+                  {/* <Field label="City" required>
                     <input name="companyCity" value={form.companyCity} placeholder="London"
                       className="am-input" onChange={handleChange} />
                   </Field>
+
                   <Field label="Country" required>
                     <select name="companyCountry" value={form.companyCountry} className="am-input" onChange={handleChange}>
                       <option value="">Select country</option>
                       {COUNTRIES.map(c => <option key={c} value={c}>{c}</option>)}
                     </select>
-                  </Field>
+                  </Field> */}
+                <div className="am-grid-full">
+  <Field label="Company Location" required>
+   <LocationAutocomplete
+  value={form.companyLocationDisplay}
+  onChange={(location) => {
+    setForm((prev) => ({
+      ...prev,
+      companyCity: location.city,
+      companyCountry: location.country,
+      companyLocationDisplay: location.displayName,
+    }));
+  }}
+  placeholder="Search company city or country"
+/>
+  </Field>
+</div>
 
                   <Field label="Company Size" required>
                     <select name="companySize" value={form.companySize} className="am-input" onChange={handleChange}>

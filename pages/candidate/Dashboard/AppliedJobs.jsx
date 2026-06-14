@@ -40,7 +40,7 @@ const AppliedJobs = () => {
         className="text-xl font-semibold mb-4"
         style={{ color: "#0f172a" }}
       >
-        📋 Applied Jobs Status
+        📋 Applied Active Jobs Status
       </h2>
 
       <div className="space-y-4">

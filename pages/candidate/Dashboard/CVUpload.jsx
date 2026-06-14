@@ -169,6 +169,9 @@ export default function CVUpload({ isGuest = false, onSignUpClick, guestView }) 
             </p>
 
             <button
+               onClick={
+                ()=>router.push("/candidate/dashboard")
+              }
               type="button"
               className="w-full py-2.5 rounded-xl text-sm font-semibold text-white"
               style={{
@@ -188,15 +191,15 @@ export default function CVUpload({ isGuest = false, onSignUpClick, guestView }) 
       <div className="flex items-center justify-between gap-4 mb-5">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
-            <AiOutlineFileSearch className="text-xl" />
+            <AiOutlineFileSearch className="text-2xl" />
           </div>
 
           <div>
-            <h2 className="text-base font-semibold text-slate-900">
-             {isGuest ? "Upload CV as Guest" : "Your CV"}
-            </h2>
+            {/* <h2 className="text-base font-semibold text-slate-900">
+             {!isGuest ? "Upload CV as Guest" : "Your CV"}
+            </h2> */}
 
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="text-md text-slate-700 font-bold">
             {isGuest ? (
               <>
                 Temporary upload only.{" "}

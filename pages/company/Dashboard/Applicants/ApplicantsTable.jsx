@@ -13,6 +13,7 @@ const ApplicantsTable = ({ applicantsData }) => {
             <th className="py-3">Name</th>
             <th className="py-3">Job Title</th>
             <th className="py-3">Status</th>
+            <th className="py-3">Action</th>
           </tr>
         </thead>
 
@@ -29,6 +30,10 @@ const ApplicantsTable = ({ applicantsData }) => {
 
               <td className="py-3 capitalize">
                 {applicant.status}
+              </td>
+
+              <td className="py-3 capitalize">
+                Need to contact
               </td>
             </tr>
           ))}
