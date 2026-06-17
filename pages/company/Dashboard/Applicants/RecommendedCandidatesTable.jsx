@@ -24,7 +24,7 @@ const RecommendedCandidatesTable = ({ candidates }) => {
               <th className="py-3 px-3">Job Title</th>
               <th className="py-3 px-3">View CV</th>
               <th className="py-3 px-3">Matched Score</th>
-              <th className="py-3 px-3">Contact Status</th>
+              {/* <th className="py-3 px-3">Note</th> */}
             </tr>
           </thead>
 
@@ -40,7 +40,7 @@ const RecommendedCandidatesTable = ({ candidates }) => {
                 <td className="py-3 px-3">
                   {candidate.cvFilePath ? (
                     <a
-href={`${url}/${candidate.cvFilePath}`}                      target="_blank"
+            href={`${url}${candidate.cvFilePath}`}
                       rel="noreferrer"
                       className="text-blue-600 font-medium hover:underline"
                     >
@@ -60,11 +60,11 @@ href={`${url}/${candidate.cvFilePath}`}                      target="_blank"
                   </button>
                 </td>
 
-                <td className="py-3 px-3">
+                {/* <td className="py-3 px-3">
                   <span className="bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full text-xs">
                     {candidate.contactStatus}
                   </span>
-                </td>
+                </td> */}
               </tr>
             ))}
           </tbody>

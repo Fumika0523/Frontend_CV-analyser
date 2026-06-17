@@ -6,7 +6,8 @@ import { toast } from "react-toastify";
 const ApplyJobs = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [jobData, setJobData] = useState([]);
-  
+  const [selectedJob, setSelectedJob] = useState(null);
+
   const formatLocation = (location) => {
   if (!location) return "";
   if (typeof location === "string") return location;
@@ -37,14 +38,17 @@ const ApplyJobs = () => {
     getJobsData();
   }, []);
 
-  const filteredJobs = jobData.filter(
-    (job) =>
-      job.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      job.companyId?.companyName
-        ?.toLowerCase()
-        .includes(searchTerm.toLowerCase()) ||
-      job.location?.toLowerCase().includes(searchTerm.toLowerCase())
+ const filteredJobs = jobData.filter((job) => {
+  const locationText = formatLocation(job.location).toLowerCase();
+
+  return (
+    job.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    job.companyId?.companyName
+      ?.toLowerCase()
+      .includes(searchTerm.toLowerCase()) ||
+    locationText.includes(searchTerm.toLowerCase())
   );
+});
 
   const handleApply = async (job) => {
   try {
@@ -122,6 +126,13 @@ const ApplyJobs = () => {
               </p>
             </div>
 
+          <button
+  onClick={() => setSelectedJob(job)}
+  className="text-sm font-semibold text-blue-700 hover:underline"
+>
+  See full description
+</button>
+
             <button
               onClick={() => handleApply(job)}
               className="mt-4 w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
@@ -137,6 +148,75 @@ const ApplyJobs = () => {
           No jobs found matching your search.
         </p>
       )}
+      {selectedJob && (
+  <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4">
+    <div className="bg-white rounded-2xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6">
+      <div className="flex justify-between items-start mb-4">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-900">
+            {selectedJob.title}
+          </h2>
+          <p className="text-sm text-slate-500">
+            {formatLocation(selectedJob.location)}
+          </p>
+        </div>
+
+        <button
+          onClick={() => setSelectedJob(null)}
+          className="text-xl text-slate-500 hover:text-slate-800"
+        >
+          ×
+        </button>
+      </div>
+
+      <p className="text-sm text-slate-600 mb-3">
+        {selectedJob.salary} · {selectedJob.jobType} · {selectedJob.workMode}
+      </p>
+
+      {/* <p className="text-sm text-green-700 font-semibold mb-4">
+        Match Score: {selectedJob.matchScore}%
+      </p> */}
+
+      <h3 className="font-bold text-sm mb-1">Role Summary</h3>
+      <p className="text-sm text-slate-600 mb-4">{selectedJob.roleSummary}</p>
+
+      <h3 className="font-bold text-sm mb-1">Requirements</h3>
+      <ul className="list-disc pl-5 text-sm text-slate-600 mb-4">
+        {selectedJob.requirements?.map((item, index) => (
+          <li key={index}>{item}</li>
+        ))}
+      </ul>
+
+      <h3 className="font-bold text-sm mb-1">Responsibilities</h3>
+      <ul className="list-disc pl-5 text-sm text-slate-600 mb-4">
+        {selectedJob.responsibilities?.map((item, index) => (
+          <li key={index}>{item}</li>
+        ))}
+      </ul>
+
+      <div className="flex justify-end gap-3 mt-6">
+        {selectedJob.companyUrl && (
+          <a
+            href={selectedJob.companyUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-4 py-2 rounded-lg border text-sm font-semibold text-blue-700"
+          >
+            Company URL
+          </a>
+        )}
+
+     <button
+  onClick={() => handleApply(selectedJob)}
+  className="px-4 py-2 rounded-lg bg-blue-700 text-white text-sm font-semibold"
+>
+  Apply Now
+</button>
+
+      </div>
+    </div>
+  </div>
+)}
     </div>
   );
 };

@@ -49,6 +49,7 @@ const EditIcon = () => (
 export default function PostedJobs({ onSelectJob }) {  const router = useRouter();
   const [jobs, setJobs] = useState([]);
   const [selectedJob, setSelectedJob] = useState(null);
+    console.log(selectedJob)
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -155,26 +156,28 @@ const handleSelectJob = (job) => {
 const openModal = (job) => {
   setSelectedJob(job);
 
-  setEditForm({
-    title: job.title || "",
-    location: job.location?.city
+setEditForm({
+  title: job.title || "",
+  location: job.location?.city
     ? `${job.location.city}, ${job.location.country}`
     : job.location || "",
-    salary: job.salary || "",
-    jobType: job.jobType || "Full-time",
-    workMode: job.workMode || "Office",
-    education: job.education || "",
-    experience: job.experience || "",
-    keySkills: job.keySkills?.join(", ") || "",
-    requirements: job.requirements?.join(", ") || "",
-    responsibilities: job.responsibilities?.join(", ") || "",
-    roleSummary: job.roleSummary || "",
-    compensationBenefits: job.compensationBenefits || "",
-    applicationEndDate: job.applicationEndDate
-      ? job.applicationEndDate.slice(0, 10)
-      : "",
-    status: job.status || "Open",
-  });
+  salary: job.salary || "",
+  jobType: job.jobType || "Full-time",
+  workMode: job.workMode || "Office",
+  education: job.education || "",
+  experience: job.experience || "",
+  keySkills: job.keySkills?.join(", ") || "",
+  requirements: job.requirements?.join(", ") || "",
+  responsibilities: job.responsibilities?.join(", ") || "",
+  roleSummary: job.roleSummary || "",
+  compensationBenefits: job.compensationBenefits || "",
+  applicationEndDate: job.applicationEndDate
+    ? job.applicationEndDate.slice(0, 10)
+    : "",
+  vacancies: job.vacancies || 1,
+  filledPositions: job.filledPositions || 0,
+  status: job.status || "Open",
+});
 
   setIsEditing(false);
 };
@@ -197,21 +200,25 @@ const openModal = (job) => {
 
       const token = localStorage.getItem("token");
 
-      const payload = {
-        ...editForm,
-        keySkills: editForm.keySkills
-          .split(",")
-          .map((item) => item.trim())
-          .filter(Boolean),
-        requirements: editForm.requirements
-          .split(",")
-          .map((item) => item.trim())
-          .filter(Boolean),
-        responsibilities: editForm.responsibilities
-          .split(",")
-          .map((item) => item.trim())
-          .filter(Boolean),
-      };
+   const payload = {
+  ...editForm,
+  vacancies: Number(editForm.vacancies) || 1,
+
+  keySkills: editForm.keySkills
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean),
+
+  requirements: editForm.requirements
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean),
+
+  responsibilities: editForm.responsibilities
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean),
+};
 
       const res = await axios.put(
         `http://localhost:8002/jobs/${selectedJob._id}`,
@@ -228,6 +235,7 @@ const openModal = (job) => {
       );
 
       setSelectedJob(updatedJob);
+    
       setIsEditing(false);
     } catch (error) {
       console.error(error);
@@ -269,10 +277,19 @@ const openModal = (job) => {
                       <p className="text-sm text-slate-500">{formatLocation(job.location)}</p>
                     </div>
 
-                    <span className="text-xs bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full">
-                      {job.status}
-                    </span>
+                   <span
+  className={`text-xs px-3 py-1 rounded-full font-medium ${
+    job.status === "Open"
+      ? "bg-green-100 text-green-700"
+      : job.status === "Closed"
+      ? "bg-red-100 text-red-700"
+      : "bg-yellow-100 text-yellow-700"
+  }`}
+>
+  {job.status}
+</span>
                   </div>
+
 
                   <p className="text-sm text-slate-600 mt-3 line-clamp-2">
                     {job.roleSummary}
@@ -363,7 +380,42 @@ const openModal = (job) => {
                       {selectedJob.salary || "Salary not specified"}
                     </span>
                   </div>
+<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+  <div>
+    <h3 className="text-sm font-bold text-slate-900 mb-1">
+      Application End Date
+    </h3>
 
+    <p className="text-sm text-slate-600">
+      {selectedJob?.applicationEndDate
+        ? formatDate(selectedJob.applicationEndDate)
+        : "Not specified"}
+    </p>
+  </div>
+
+  <div>
+    <h3 className="text-sm font-bold text-slate-900 mb-1">
+      Vacancies
+    </h3>
+
+    <p className="text-sm text-slate-600">
+      {selectedJob.filledPositions || 0} / {selectedJob.vacancies || 1} filled
+    </p>
+  </div>
+
+  <div>
+    <h3 className="text-sm font-bold text-slate-900 mb-1">
+      Remaining
+    </h3>
+
+    <p className="text-sm text-slate-600">
+      {Math.max(
+        (selectedJob.vacancies || 1) - (selectedJob.filledPositions || 0),
+        0
+      )} position(s)
+    </p>
+  </div>
+</div>
                   <div>
                     <h3 className="text-sm font-bold text-slate-900 mb-1">
                       Location
@@ -620,6 +672,21 @@ const openModal = (job) => {
                         <option value="Closed">Closed</option>
                       </select>
                     </div>
+
+<div>
+  <label className="text-xs font-semibold text-slate-700 mb-1 block">
+    Number of Vacancies
+  </label>
+
+  <input
+    type="number"
+    name="vacancies"
+    min="1"
+    value={editForm.vacancies}
+    onChange={handleEditChange}
+    className="w-full border rounded-lg px-4 py-3 text-sm"
+  />
+</div>
 
                     <div>
                       <label className="text-xs font-semibold text-slate-700 mb-1 block">

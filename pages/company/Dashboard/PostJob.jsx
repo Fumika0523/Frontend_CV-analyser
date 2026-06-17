@@ -71,6 +71,7 @@ const [formData, setFormData] = useState({
   compensationBenefits: "",
   applicationEndDate: "",
   salary: "",
+    vacancies: 1,
 });
 
   const [loading, setLoading] = useState(false);
@@ -134,8 +135,10 @@ const [formData, setFormData] = useState({
 
       const token = localStorage.getItem("token");
 
-      const payload = {
+ const payload = {
   ...formData,
+
+  vacancies: Number(formData.vacancies) || 1,
 
   keySkills: formData.keySkills
     .split(",")
@@ -252,6 +255,8 @@ router.push("/company/Dashboard/PostedJobs/PostedJobsPage");
   </p>
 </div>
 
+
+
                   {/* Location */}
                   <div className="relative md:col-span-2">
                     <label className="text-xs font-semibold text-slate-700 mb-1 block">
@@ -292,6 +297,28 @@ router.push("/company/Dashboard/PostedJobs/PostedJobsPage");
                       </div>
                     )}
                   </div>
+
+                    {/* Vacancies */}
+  <div>
+    <label className="text-xs font-semibold text-slate-700 mb-1 block">
+      Number of Vacancies <span className="text-red-500">*</span>
+    </label>
+
+    <input
+      type="number"
+      name="vacancies"
+      min="1"
+      value={formData.vacancies}
+      onChange={handleChange}
+      className="w-full border rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-600"
+      style={{ borderColor: "#dbeafe" }}
+      required
+    />
+
+    <p className="text-xs mt-1 text-slate-500">
+      The job will close when all positions are filled.
+    </p>
+  </div>
 
                   {/* WorkMode */}
                   <div className="md:col-span-1" >

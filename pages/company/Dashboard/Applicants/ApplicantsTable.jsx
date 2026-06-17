@@ -84,9 +84,9 @@ const ApplicantsTable = ({ applicantsData, setApplicantsData }) => {
               >
                 <td className="py-3 px-3 font-medium text-slate-800">
                   {applicant.candidateName}
-                  <span className="ml-2 text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
+                  {/* <span className="ml-2 text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
                     Already applied
-                  </span>
+                  </span> */}
                 </td>
 
                 <td className="py-3 px-3">
