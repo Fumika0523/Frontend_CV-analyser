@@ -36,6 +36,7 @@ const ApplicantsTable = ({ applicantsData, setApplicantsData }) => {
           },
         }
       );
+      console.log("res",res)
 
       setApplicantsData((prev) =>
         prev.map((app) =>
@@ -136,7 +137,7 @@ const ApplicantsTable = ({ applicantsData, setApplicantsData }) => {
                     onClick={() => setSelectedApplicant(applicant)}
                     className="font-semibold text-indigo-600 hover:underline"
                   >
-                    {applicant.matchScore || 0}%
+                    {applicant.matchScore}%
                   </button>
                 </td>
 

@@ -17,8 +17,8 @@ export default function ApplicantsPage() {
       const res = await axios.get(`${url}/applications`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-
-      setApplicantsData(res.data.applications || []);
+      console.log("Applicants Data", res.data.applications)
+      setApplicantsData(res.data.applications);
     } catch (error) {
       console.error("Failed to get applicants", error);
     }
