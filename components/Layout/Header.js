@@ -27,11 +27,13 @@ import {
 const NAV_GUEST = [
   { id: "about", label: "About", icon: FiInfo },
   { id: "feature", label: "Feature", icon: FiStar },
-  { id: "pricing", label: "Pricing", icon: FiCreditCard },
+  { id: "pricing", label: "Pricing", href:"/candidate/Payment", icon: FiCreditCard },
   { id: "testimoni", label: "Testimonial", icon: FiMessageCircle },
 ];
 
 const NAV_CANDIDATE = [
+    { id: "pricing", label: "Pricing", href:"/candidate/Payment", icon: FiCreditCard },
+
   { label: "Dashboard", href: "/candidate/dashboard", icon: FiGrid },
   { label: "Latest Jobs", href: "/candidate/Dashboard/LatestJobs", icon: FiBriefcase },
   { label: "My Application", href: "/candidate/Dashboard/MyApplication/MyApplicationPage", icon: FiFileText },

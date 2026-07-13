@@ -1,13 +1,21 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { useRouter } from "next/router";
 import Layout from "../../../components/Layout/Layout";
 import { url } from "../../../utils/constant";
 
 const LatestJobs = () => {
+  const router = useRouter();
   const [jobs, setJobs] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
   const [applyingId, setApplyingId] = useState("");
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    setIsLoggedIn(!!token);
+  }, []);
 
   const fetchJobs = async () => {
     try {
@@ -26,6 +34,11 @@ const LatestJobs = () => {
   }, []);
 
   const handleApply = async (jobId) => {
+    if (!isLoggedIn) {
+      router.push("/signup");
+      return;
+    }
+
     try {
       setApplyingId(jobId);
 
@@ -61,12 +74,12 @@ const LatestJobs = () => {
   });
 
   const formatLocation = (location) => {
-  if (!location) return "";
+    if (!location) return "";
 
-  if (typeof location === "string") return location;
+    if (typeof location === "string") return location;
 
-  return `${location.city || ""}, ${location.country || ""}`;
-};
+    return `${location.city || ""}, ${location.country || ""}`;
+  };
 
   return (
     <Layout>
@@ -150,7 +163,11 @@ const LatestJobs = () => {
                       disabled={applyingId === job._id}
                       className="mt-5 w-full py-2.5 rounded-lg text-sm font-semibold text-white bg-blue-700 hover:bg-blue-800 disabled:opacity-50 transition"
                     >
-                      {applyingId === job._id ? "Applying..." : "Apply with CV"}
+                      {!isLoggedIn
+                        ? "Sign up to Apply"
+                        : applyingId === job._id
+                        ? "Applying..."
+                        : "Apply with CV"}
                     </button>
                   </div>
                 ))}
