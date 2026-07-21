@@ -24,28 +24,90 @@ import {
   FaSignInAlt,  FaUserPlus, FaBuilding, FaUser 
 } from "react-icons/fa";
 
+
 const NAV_GUEST = [
-  { id: "about", label: "About", icon: FiInfo },
-  { id: "feature", label: "Feature", icon: FiStar },
-  { id: "pricing", label: "Pricing", href:"/candidate/Payment", icon: FiCreditCard },
-  { id: "testimoni", label: "Testimonial", icon: FiMessageCircle },
+  {
+    id: "about",
+    label: "About",
+    icon: FiInfo,
+    type: "scroll",
+  },
+  {
+    id: "feature",
+    label: "Feature",
+    icon: FiStar,
+    type: "scroll",
+  },
+  {
+    id: "pricing",
+    label: "Pricing",
+    icon: FiCreditCard,
+    type: "page",
+  },
+  {
+    id: "testimoni",
+    label: "Testimonial",
+    icon: FiMessageCircle,
+    type: "scroll",
+  },
 ];
 
 const NAV_CANDIDATE = [
-    { id: "pricing", label: "Pricing", href:"/candidate/Payment", icon: FiCreditCard },
-
-  { label: "Dashboard", href: "/candidate/dashboard", icon: FiGrid },
-  { label: "Latest Jobs", href: "/candidate/Dashboard/LatestJobs", icon: FiBriefcase },
-  { label: "My Application", href: "/candidate/Dashboard/MyApplication/MyApplicationPage", icon: FiFileText },
-  { label: "Your skills", href: "/candidate/skills", icon: FiSearch },
+  {
+    label: "Dashboard",
+    href: "/candidate/dashboard",
+    icon: FiGrid,
+  },
+  {
+    label: "Latest Jobs",
+    href: "/candidate/Dashboard/LatestJobs",
+    icon: FiBriefcase,
+  },
+  {
+    label: "My Application",
+    href: "/candidate/Dashboard/MyApplication/MyApplicationPage",
+    icon: FiFileText,
+  },
+  {
+    label: "Your skills",
+    href: "/candidate/skills",
+    icon: FiSearch,
+  },
+  {
+    label: "Pricing",
+    href: "/candidate/Payment",
+    icon: FiCreditCard,
+  },
 ];
 
 const NAV_COMPANY = [
-  { label: "Dashboard", href: "/company/dashboard", icon: FiGrid },
-  { label: "Post a new job", href: "/company/Dashboard/postjob", icon: FiPlusCircle },
-  { label: "Posted Jobs", href: "/company/Dashboard/PostedJobs/PostedJobsPage", icon: FiBriefcase },
-  { label: "Applicants", href: "/company/Dashboard/Applicants/ApplicantsPage", icon: FiUsers },
+  {
+    label: "Dashboard",
+    href: "/company/dashboard",
+    icon: FiGrid,
+  },
+  {
+    label: "Post a new job",
+    href: "/company/Dashboard/postjob",
+    icon: FiPlusCircle,
+  },
+  {
+    label: "Posted Jobs",
+    href: "/company/Dashboard/PostedJobs/PostedJobsPage",
+    icon: FiBriefcase,
+  },
+  {
+    label: "Applicants",
+    href: "/company/Dashboard/Applicants/ApplicantsPage",
+    icon: FiUsers,
+  },
+  {
+    label: "Pricing",
+    href: "/company/Payment",
+    icon: FiCreditCard,
+  },
 ];
+
 
 const Header = ({   
   guestView = "candidate",
@@ -110,6 +172,11 @@ const Header = ({
       ? NAV_COMPANY
       : NAV_CANDIDATE
     : [];
+
+  const guestPricingHref =
+  guestView === "company"
+    ? "/company/Payment"
+    : "/candidate/Payment";
 
   const initials = user
     ? `${user.firstName?.[0] || ""}${user.lastName?.[0] || ""}`.toUpperCase() ||
@@ -203,38 +270,63 @@ const Header = ({
           </a>
           </Link>
 
-          <ul className="hidden lg:flex col-start-4 col-end-8 items-center text-blue-600">
-            {user
-              ? navLinks.map((item) => {
-                  const Icon = item.icon;
+{/* Desktop navigation */}
+        <ul className="hidden lg:flex col-start-4 col-end-8 items-center text-blue-600">
+  {user
+    ? navLinks.map((item) => {
+        const Icon = item.icon;
+        const isActive = router.pathname === item.href;
 
-                  return (
-                    <Link key={item.href} href={item.href}>
-                      <a className="group relative inline-flex items-center gap-2 px-4 py-2 mx-2 text-sm font-medium text-blue-900 transition-colors hover:text-blue-600">
-                        <Icon className="text-base text-blue-900 transition-colors group-hover:text-blue-600" />
-                        {item.label}
-                      </a>
-                    </Link>
-                  );
-                })
-              : NAV_GUEST.map(({ id, label, icon: Icon }) => (
-                  <LinkScroll
-                    key={id}
-                    activeClass="active"
-                    to={id}
-                    spy
-                    smooth
-                    duration={1000}
-                    onSetActive={() => setActiveLink(id)}
-                    className={`group relative inline-flex cursor-pointer items-center gap-2 px-4 py-2 mx-2 transition-colors hover:text-blue-600 ${
-                      activeLink === id ? "text-blue-600" : "text-blue-900"
-                    }`}
-                  >
-                    <Icon className="text-base text-blue-900 transition-colors group-hover:text-blue-600" />
-                    {label}
-                  </LinkScroll>
-                ))}
-          </ul>
+        return (
+          <Link key={item.href} href={item.href}>
+            <a
+              className={`group relative inline-flex items-center gap-2 px-3 py-2 mx-1 text-sm font-medium transition-colors ${
+                isActive
+                  ? "text-blue-600"
+                  : "text-blue-900 hover:text-blue-600"
+              }`}
+            >
+              <Icon className="text-base" />
+              {item.label}
+            </a>
+          </Link>
+        );
+      })
+    : NAV_GUEST.map((item) => {
+        const Icon = item.icon;
+
+        if (item.type === "page") {
+          return (
+            <Link key={item.id} href={guestPricingHref}>
+              <a className="group relative inline-flex items-center gap-2 px-3 py-2 mx-1 text-sm font-medium text-blue-900 transition-colors hover:text-blue-600">
+                <Icon className="text-base" />
+                {item.label}
+              </a>
+            </Link>
+          );
+        }
+
+        return (
+          <LinkScroll
+            key={item.id}
+            activeClass="active"
+            to={item.id}
+            spy
+            smooth
+            duration={700}
+            onSetActive={() => setActiveLink(item.id)}
+            className={`group relative inline-flex cursor-pointer items-center gap-2 px-3 py-2 mx-1 text-sm font-medium transition-colors ${
+              activeLink === item.id
+                ? "text-blue-600"
+                : "text-blue-900 hover:text-blue-600"
+            }`}
+          >
+            <Icon className="text-base" />
+            {item.label}
+          </LinkScroll>
+        );
+      })}
+</ul>
 
           <div className="col-start-10 col-end-12 flex justify-end items-center gap-3 font-medium">
             {user ? (
@@ -271,6 +363,19 @@ const Header = ({
                           </a>
                         </Link>
                       )}
+
+{/* Pricing */}
+<Link
+  href={
+    user.role === "company"
+      ? "/company/Payment"
+      : "/candidate/Payment"
+  }
+>
+  <a className="block w-full rounded-lg px-3.5 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-100 hover:text-blue-600">
+    💳 Pricing
+  </a>
+</Link>
 
                       <button
                         type="button"
@@ -350,44 +455,68 @@ const Header = ({
         </nav>
       </header>
 
-      <nav className="fixed bottom-0 left-0 right-0 z-20 px-4 shadow-t lg:hidden sm:px-8">
-        <div className="bg-white sm:px-3">
-          <ul className="flex w-full items-center justify-between text-slate-600">
-            {user
-              ? navLinks.slice(0, 4).map((item) => {
-                  const Icon = item.icon;
+   {/* Mobile navigation */}
 
-                  return (
-                    <Link key={item.href} href={item.href}>
-                      <a className="mx-1 flex flex-col items-center border-t-2 border-transparent px-3 py-2 text-xs transition hover:border-blue-700 hover:text-blue-700 sm:mx-2 sm:px-4">
-                        <Icon className="mb-0.5 h-6 w-6 text-blue-900" />
-                        {item.label}
-                      </a>
-                    </Link>
-                  );
-                })
-              : NAV_GUEST.map(({ id, label, icon: Icon }) => (
-                  <LinkScroll
-                    key={id}
-                    activeClass="active"
-                    to={id}
-                    spy
-                    smooth
-                    duration={1000}
-                    onSetActive={() => setActiveLink(id)}
-                    className={`mx-1 flex cursor-pointer flex-col items-center border-t-2 px-3 py-2 text-xs transition sm:mx-2 sm:px-4 ${
-                      activeLink === id
-                        ? "border-blue-700 text-blue-700"
-                        : "border-transparent text-slate-600 hover:border-blue-700 hover:text-blue-700"
-                    }`}
-                  >
-                    <Icon className="mb-0.5 h-6 w-6 text-blue-900" />
-                    {label}
-                  </LinkScroll>
-                ))}
-          </ul>
-        </div>
-      </nav>
+<nav className="fixed bottom-0 left-0 right-0 z-20 bg-white shadow-lg lg:hidden">
+  <div className="px-2 sm:px-6">
+    <ul className="flex w-full items-center justify-around text-slate-600">
+      {user
+        ? navLinks.slice(0, 4).map((item) => {
+            const Icon = item.icon;
+            const isActive = router.pathname === item.href;
+
+            return (
+              <Link key={item.href} href={item.href}>
+                <a
+                  className={`mx-1 flex flex-col items-center border-t-2 px-2 py-2 text-xs transition ${
+                    isActive
+                      ? "border-blue-700 text-blue-700"
+                      : "border-transparent hover:border-blue-700 hover:text-blue-700"
+                  }`}
+                >
+                  <Icon className="mb-0.5 h-5 w-5" />
+                  <span>{item.label}</span>
+                </a>
+              </Link>
+            );
+          })
+        : NAV_GUEST.map((item) => {
+            const Icon = item.icon;
+
+            if (item.type === "page") {
+              return (
+                <Link key={item.id} href={guestPricingHref}>
+                  <a className="mx-1 flex flex-col items-center border-t-2 border-transparent px-2 py-2 text-xs transition hover:border-blue-700 hover:text-blue-700">
+                    <Icon className="mb-0.5 h-5 w-5" />
+                    <span>{item.label}</span>
+                  </a>
+                </Link>
+              );
+            }
+
+            return (
+              <LinkScroll
+                key={item.id}
+                activeClass="active"
+                to={item.id}
+                spy
+                smooth
+                duration={700}
+                onSetActive={() => setActiveLink(item.id)}
+                className={`mx-1 flex cursor-pointer flex-col items-center border-t-2 px-2 py-2 text-xs transition ${
+                  activeLink === item.id
+                    ? "border-blue-700 text-blue-700"
+                    : "border-transparent hover:border-blue-700 hover:text-blue-700"
+                }`}
+              >
+                <Icon className="mb-0.5 h-5 w-5" />
+                <span>{item.label}</span>
+              </LinkScroll>
+            );
+          })}
+    </ul>
+  </div>
+</nav>
 
       <AuthModal
         isOpen={authModal.isOpen}

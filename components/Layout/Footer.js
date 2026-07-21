@@ -1,138 +1,211 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { FaFacebook, FaTwitter, FaLinkedin } from "react-icons/fa";
+import axios from "axios";
+import {
+  FaFacebook,
+  FaTwitter,
+  FaLinkedin,
+} from "react-icons/fa";
 
 const Footer = () => {
+  const [userRole, setUserRole] = useState(null);
+
   const linkClass =
-    "hover:text-blue-700 cursor-pointer transition-all block";
+    "block cursor-pointer transition-colors duration-200 hover:text-blue-700";
+
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      try {
+        const token = localStorage.getItem("token");
+
+        // No token means the visitor is a guest.
+        if (!token) {
+          setUserRole(null);
+          return;
+        }
+
+        const response = await axios.get(
+          "http://localhost:8002/user-profile",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        setUserRole(response.data.user?.role || null);
+      } catch (error) {
+        console.error(
+          "Failed to load footer user role:",
+          error.response?.data || error.message
+        );
+
+        // Treat the visitor as a guest if the profile request fails.
+        setUserRole(null);
+      }
+    };
+
+    fetchUserRole();
+  }, []);
+
+  // Guests see candidate links.
+  // Logged-in candidates also see candidate links.
+  const showCandidateLinks =
+    !userRole || userRole === "candidate";
+
+  // Guests see employer links.
+  // Logged-in companies also see employer links.
+  const showEmployerLinks =
+    !userRole || userRole === "company";
 
   return (
-    <footer className="bg-slate-50 border-t border-blue-100 py-10">
-      <div className="max-w-screen-xl w-full mx-auto px-6 sm:px-8 lg:px-16 grid grid-cols-12 lg:pb-0 pb-14 gap-10">
+    <footer className="border-t border-blue-100 bg-slate-50 py-9">
+      <div
+        className={`mx-auto grid w-full max-w-screen-xl gap-10 px-6 pb-14 sm:px-8 lg:px-16 lg:pb-0 ${
+          userRole
+            ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+            : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
+        }`}
+      >
         {/* Brand */}
-        <div className="col-span-12 lg:col-span-3 flex flex-col">
+        <div className="flex flex-col">
           <Link href="/">
-            <a className="flex items-center text-blue-800 font-bold text-xl tracking-tight">
+            <a className="text-xl font-bold tracking-tight text-blue-800 transition-colors hover:text-blue-600">
               SkillfulJobs.ai
             </a>
           </Link>
 
-          <p className="mt-3 text-slate-600 leading-5 max-w-md">
-            AI-powered platform for smarter hiring and career opportunities.
+          <p className="mt-3 max-w-sm text-sm leading-6 text-slate-600">
+            AI-powered platform for smarter hiring and career
+            opportunities.
           </p>
 
-          <div className="flex items-center gap-4 mt-3">
-            <a href="https://facebook.com" target="_blank" rel="noreferrer" className="w-11 h-11 rounded-full bg-white border border-slate-200 shadow-sm flex items-center justify-center text-blue-700 hover:bg-blue-700 hover:text-white hover:-translate-y-1 transition-all duration-200">
-              <FaFacebook fontSize={23} />
+          <div className="mt-5 flex items-center gap-3">
+            <a
+              href="https://facebook.com"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Visit our Facebook page"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-blue-700 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-blue-700 hover:bg-blue-700 hover:text-white"
+            >
+              <FaFacebook fontSize={19} />
             </a>
 
-            <a href="https://twitter.com" target="_blank" rel="noreferrer" className="w-11 h-11 rounded-full bg-white border border-slate-200 shadow-sm flex items-center justify-center text-blue-700 hover:bg-blue-700 hover:text-white hover:-translate-y-1 transition-all duration-200">
-              <FaTwitter fontSize={22} />
+            <a
+              href="https://twitter.com"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Visit our Twitter page"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-blue-700 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-blue-700 hover:bg-blue-700 hover:text-white"
+            >
+              <FaTwitter fontSize={18} />
             </a>
 
-            <a href="https://linkedin.com" target="_blank" rel="noreferrer" className="w-11 h-11 rounded-full bg-white border border-slate-200 shadow-sm flex items-center justify-center text-blue-700 hover:bg-blue-700 hover:text-white hover:-translate-y-1 transition-all duration-200">
-              <FaLinkedin fontSize={23} />
+            <a
+              href="https://linkedin.com"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Visit our LinkedIn page"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-blue-700 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-blue-700 hover:bg-blue-700 hover:text-white"
+            >
+              <FaLinkedin fontSize={19} />
             </a>
           </div>
 
-          <p className="text-slate-400 text-sm mt-4">
-            © {new Date().getFullYear()} SkillfulJobs.ai — All rights reserved.
+          <p className="mt-5 text-sm leading-5 text-slate-400">
+            © {new Date().getFullYear()} SkillfulJobs.ai.
+            <br />
+            All rights reserved.
           </p>
         </div>
 
-        {/* For Candidates */}
-        <div className="col-span-6 sm:col-span-4 lg:col-span-3 flex flex-col">
-          <p className="text-slate-900 mb-4 font-semibold text-lg">
-            For Candidates
-          </p>
+        {/* Candidate links */}
+        {showCandidateLinks && (
+          <div className="flex flex-col">
+            <p className="mb-4 text-lg font-semibold text-slate-900">
+              For Candidates
+            </p>
 
-          <ul className="text-slate-600 space-y-1">
-            <li>
-              <Link href="/candidate/Dashboard/LatestJobs">
-                <a className={linkClass}>Browse Jobs</a>
-              </Link>
-            </li>
+            <ul className="space-y-2.5 text-sm text-slate-600">
+              <li>
+                <Link href="/candidate/Dashboard/LatestJobs">
+                  <a className={linkClass}>Browse Jobs</a>
+                </Link>
+              </li>
 
-            <li>
-              <Link href="/candidate/dashboard">
-                <a className={linkClass}>Upload CV</a>
-              </Link>
-            </li>
+              <li>
+                <Link href="/candidate/viewMyCVs">
+                  <a className={linkClass}>Upload CV</a>
+                </Link>
+              </li>
 
-            <li>
-              <Link href="/candidate/Dashboard/MyApplication/MyApplicationPage">
-                <a className={linkClass}>Application Tracker</a>
-              </Link>
-            </li>
+              <li>
+                <Link href="/candidate/Dashboard/MyApplication/MyApplicationPage">
+                  <a className={linkClass}>
+                    Application Tracker
+                  </a>
+                </Link>
+              </li>
 
-            {/* <li>
-              <Link href="/#about">
-                <a className={linkClass}>Career Advice</a>
-              </Link>
-            </li> */}
+              <li>
+                <Link href="/candidate/Payment">
+                  <a className={linkClass}>Candidate Pricing</a>
+                </Link>
+              </li>
+            </ul>
+          </div>
+        )}
 
-            {/* <li>
-              <Link href="/candidate/skills">
-                <a className={linkClass}>AI CV Analysis</a>
-              </Link>
-            </li> */}
-          </ul>
-        </div>
+        {/* Employer links */}
+        {showEmployerLinks && (
+          <div className="flex flex-col">
+            <p className="mb-4 text-lg font-semibold text-slate-900">
+              For Employers
+            </p>
 
-        {/* For Employers */}
-        <div className="col-span-6 sm:col-span-4 lg:col-span-3 flex flex-col">
-          <p className="text-slate-900 mb-4 font-semibold text-lg">
-            For Employers
-          </p>
+            <ul className="space-y-2.5 text-sm text-slate-600">
+              <li>
+                <Link href="/company/Dashboard/postjob">
+                  <a className={linkClass}>Post a Job</a>
+                </Link>
+              </li>
 
-          <ul className="text-slate-600 space-y-1">
-            <li>
-              <Link href="/company/Dashboard/postjob">
-                <a className={linkClass}>Post a Job</a>
-              </Link>
-            </li>
+              <li>
+                <Link href="/company/Dashboard/Applicants/ApplicantsPage">
+                  <a className={linkClass}>
+                    Manage Candidates
+                  </a>
+                </Link>
+              </li>
 
-            <li>
-              <Link href="/company/Dashboard/Applicants/ApplicantsPage">
-                <a className={linkClass}>Manage Candidates</a>
-              </Link>
-            </li>
+              <li>
+                <Link href="/company/dashboard">
+                  <a className={linkClass}>
+                    Recruitment Dashboard
+                  </a>
+                </Link>
+              </li>
 
-            <li>
-              <Link href="/company/dashboard">
-                <a className={linkClass}>Recruitment Dashboard</a>
-              </Link>
-            </li>
-
-            {/* <li>
-              <Link href="/#feature">
-                <a className={linkClass}>Hiring Solutions</a>
-              </Link>
-            </li> */}
-{/* 
-            <li>
-              <Link href="/company/Dashboard/Applicants/ApplicantsPage">
-                <a className={linkClass}>Talent Search</a>
-              </Link>
-            </li> */}
-          </ul>
-        </div>
+              <li>
+                <Link href="/company/Payment">
+                  <a className={linkClass}>
+                    Recruiter Pricing
+                  </a>
+                </Link>
+              </li>
+            </ul>
+          </div>
+        )}
 
         {/* Support */}
-        <div className="col-span-12 sm:col-span-4 lg:col-span-3 flex flex-col">
-          <p className="text-slate-900 mb-4 font-semibold text-lg">
+        <div className="flex flex-col">
+          <p className="mb-4 text-lg font-semibold text-slate-900">
             Support
           </p>
 
-          <ul className="text-slate-600 space-y-1">
-            {/* <li>
-              <Link href="/#about">
-                <a className={linkClass}>Help Center</a>
-              </Link>
-            </li> */}
-
+          <ul className="space-y-2.5 text-sm text-slate-600">
             <li>
-              <Link href="/#testimoni">
+              <Link href="/contact">
                 <a className={linkClass}>Contact Us</a>
               </Link>
             </li>
@@ -145,12 +218,14 @@ const Footer = () => {
 
             <li>
               <Link href="/terms">
-                <a className={linkClass}>Terms & Conditions</a>
+                <a className={linkClass}>
+                  Terms & Conditions
+                </a>
               </Link>
             </li>
 
             <li>
-              <Link href="/#feature">
+              <Link href="/faq">
                 <a className={linkClass}>FAQ</a>
               </Link>
             </li>

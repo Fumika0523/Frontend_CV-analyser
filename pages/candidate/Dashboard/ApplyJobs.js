@@ -1,98 +1,224 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { url } from "../../../utils/constant";
 import { toast } from "react-toastify";
+
+const applicationStatusLabels = {
+  pending: "Application Submitted",
+  reviewing: "Application Under Review",
+  interview: "Interview Stage",
+  accepted: "Application Accepted",
+  rejected: "Application Unsuccessful",
+};
 
 const ApplyJobs = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [jobData, setJobData] = useState([]);
   const [selectedJob, setSelectedJob] = useState(null);
 
+  // Stores applications using the job ID:
+  // {
+  //   "jobId123": { status: "pending", ...applicationData }
+  // }
+  const [applicationsByJob, setApplicationsByJob] = useState({});
+
+  // Stores the job currently sending an application request.
+  const [applyingJobId, setApplyingJobId] = useState(null);
+
   const formatLocation = (location) => {
-  if (!location) return "";
-  if (typeof location === "string") return location;
-  return `${location.city || ""}, ${location.country || ""}`;
-};
+    if (!location) return "";
+
+    if (typeof location === "string") {
+      return location;
+    }
+
+    return [location.city, location.country]
+      .filter(Boolean)
+      .join(", ");
+  };
+
+  const getAuthConfig = () => {
+    const token = localStorage.getItem("token");
+
+    return {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    };
+  };
 
   const getJobsData = async () => {
     try {
-      const token = localStorage.getItem("token");
+      const response = await axios.get(
+        `${url}/all-jobs`,
+        getAuthConfig()
+      );
 
-      const config = {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      };
+      // Use this if the backend directly returns an array.
+      setJobData(response.data || []);
 
-      const res = await axios.get(`${url}/all-jobs`, config);
-
-      console.log("jobs data", res.data);
-
-      setJobData(res.data);
+      // If your backend returns { jobs: [...] }, use this instead:
+      // setJobData(response.data.jobs || []);
     } catch (error) {
-      console.error("Error fetching Jobs:", error);
+      console.error("Error fetching jobs:", error);
+      toast.error("Failed to load jobs");
+    }
+  };
+
+  const getApplicationsData = async () => {
+    try {
+      const response = await axios.get(
+        `${url}/applications`,
+        getAuthConfig()
+      );
+
+      const applications = response.data.applications || {};
+
+      const applicationMap = applications.reduce(
+        (result, application) => {
+          // jobId might be a string or a populated object.
+          const jobId =
+            typeof application.jobId === "object"
+              ? application.jobId?._id
+              : application.jobId;
+
+          if (jobId) {
+            result[jobId.toString()] = application;
+          }
+
+          return result;
+        },
+        {}
+      );
+
+      setApplicationsByJob(applicationMap);
+    } catch (error) {
+      console.error("Error fetching applications:", error);
     }
   };
 
   useEffect(() => {
     getJobsData();
+    getApplicationsData();
   }, []);
 
- const filteredJobs = jobData.filter((job) => {
-  const locationText = formatLocation(job.location).toLowerCase();
-
-  return (
-    job.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    job.companyId?.companyName
-      ?.toLowerCase()
-      .includes(searchTerm.toLowerCase()) ||
-    locationText.includes(searchTerm.toLowerCase())
-  );
-});
-
   const handleApply = async (job) => {
-  try {
-    const token = localStorage.getItem("token");
+    const existingApplication = applicationsByJob[job._id];
 
-    const res = await axios.post(
-      `${url}/apply`,
-      {
-        jobId: job._id,
-        jobTitle: job.title,
-        companyName: job.companyId?.companyName || "Company",
-        companyId: job.companyId?.userId,
-        cvId: null,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
+    // Extra frontend protection.
+    if (existingApplication) {
+      toast.info(
+        applicationStatusLabels[existingApplication.status] ||
+          "You have already applied for this job"
+      );
+      return;
+    }
+
+    try {
+      setApplyingJobId(job._id);
+
+      const response = await axios.post(
+        `${url}/apply`,
+        {
+          jobId: job._id,
+          cvId: null,
         },
-      }
-    );
+        getAuthConfig()
+      );
 
-    toast.success(res.data.message || "Application submitted successfully");
-  } catch (error) {
-    toast.error(error.response?.data?.message || "Failed to apply");
-  }
-};
+      const newApplication = response.data.application;
+
+      // Immediately update the button without fetching everything again.
+      setApplicationsByJob((previousApplications) => ({
+        ...previousApplications,
+        [job._id]: newApplication,
+      }));
+
+      toast.success(
+        response.data.message ||
+          "Application submitted successfully"
+      );
+    } catch (error) {
+      const message =
+        error.response?.data?.message || "Failed to apply";
+
+      toast.error(message);
+
+      // If the backend says the candidate already applied,
+      // reload applications so the UI is corrected.
+      if (message.toLowerCase().includes("already applied")) {
+        getApplicationsData();
+      }
+    } finally {
+      setApplyingJobId(null);
+    }
+  };
+
+  const getApplicationButton = (job, modalButton = false) => {
+    const application = applicationsByJob[job._id];
+    const isApplying = applyingJobId === job._id;
+    const hasApplied = Boolean(application);
+
+    let buttonLabel = "Apply Now";
+
+    if (isApplying) {
+      buttonLabel = "Submitting...";
+    } else if (hasApplied) {
+      buttonLabel =
+        applicationStatusLabels[application.status] ||
+        "Already Applied";
+    }
+
+    const baseClass = modalButton
+      ? "px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+      : "mt-4 w-full py-2 px-4 rounded-lg transition-colors";
+
+    const colourClass =
+      hasApplied || isApplying
+        ? "bg-gray-200 text-gray-600 cursor-not-allowed"
+        : "bg-blue-700 text-white hover:bg-blue-800";
+
+    return (
+      <button
+        type="button"
+        onClick={() => handleApply(job)}
+        disabled={hasApplied || isApplying}
+        className={`${baseClass} ${colourClass}`}
+      >
+        {buttonLabel}
+      </button>
+    );
+  };
+
+  const filteredJobs = jobData.filter((job) => {
+    const normalizedSearch = searchTerm.toLowerCase().trim();
+    const locationText = formatLocation(job.location).toLowerCase();
+
+    return (
+      job.title?.toLowerCase().includes(normalizedSearch) ||
+      job.companyId?.companyName
+        ?.toLowerCase()
+        .includes(normalizedSearch) ||
+      locationText.includes(normalizedSearch)
+    );
+  });
+
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
       <h2 className="text-xl font-semibold text-gray-800 mb-4">
         💼 Apply for New Jobs
       </h2>
 
-      {/* Search */}
       <div className="mb-6">
         <input
           type="text"
           placeholder="Search jobs..."
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={(event) => setSearchTerm(event.target.value)}
           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
 
-      {/* Job Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredJobs.map((job) => (
           <div
@@ -126,19 +252,15 @@ const ApplyJobs = () => {
               </p>
             </div>
 
-          <button
-  onClick={() => setSelectedJob(job)}
-  className="text-sm font-semibold text-blue-700 hover:underline"
->
-  See full description
-</button>
-
             <button
-              onClick={() => handleApply(job)}
-              className="mt-4 w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+              type="button"
+              onClick={() => setSelectedJob(job)}
+              className="mt-3 text-sm font-semibold text-blue-700 hover:underline"
             >
-              Apply Now
+              See full description
             </button>
+
+            {getApplicationButton(job)}
           </div>
         ))}
       </div>
@@ -148,75 +270,82 @@ const ApplyJobs = () => {
           No jobs found matching your search.
         </p>
       )}
+
       {selectedJob && (
-  <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4">
-    <div className="bg-white rounded-2xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6">
-      <div className="flex justify-between items-start mb-4">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-900">
-            {selectedJob.title}
-          </h2>
-          <p className="text-sm text-slate-500">
-            {formatLocation(selectedJob.location)}
-          </p>
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6">
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <h2 className="text-2xl font-bold text-slate-900">
+                  {selectedJob.title}
+                </h2>
+
+                <p className="text-sm text-slate-500">
+                  {formatLocation(selectedJob.location)}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setSelectedJob(null)}
+                className="text-xl text-slate-500 hover:text-slate-800"
+              >
+                ×
+              </button>
+            </div>
+
+            <p className="text-sm text-slate-600 mb-3">
+              {selectedJob.salary} · {selectedJob.jobType} ·{" "}
+              {selectedJob.workMode}
+            </p>
+
+            <h3 className="font-bold text-sm mb-1">
+              Role Summary
+            </h3>
+
+            <p className="text-sm text-slate-600 mb-4">
+              {selectedJob.roleSummary}
+            </p>
+
+            <h3 className="font-bold text-sm mb-1">
+              Requirements
+            </h3>
+
+            <ul className="list-disc pl-5 text-sm text-slate-600 mb-4">
+              {selectedJob.requirements?.map((item, index) => (
+                <li key={`${item}-${index}`}>{item}</li>
+              ))}
+            </ul>
+
+            <h3 className="font-bold text-sm mb-1">
+              Responsibilities
+            </h3>
+
+            <ul className="list-disc pl-5 text-sm text-slate-600 mb-4">
+              {selectedJob.responsibilities?.map(
+                (item, index) => (
+                  <li key={`${item}-${index}`}>{item}</li>
+                )
+              )}
+            </ul>
+
+            <div className="flex justify-end gap-3 mt-6">
+              {selectedJob.companyUrl && (
+                <a
+                  href={selectedJob.companyUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 rounded-lg border text-sm font-semibold text-blue-700"
+                >
+                  Company URL
+                </a>
+              )}
+
+              {getApplicationButton(selectedJob, true)}
+            </div>
+          </div>
         </div>
-
-        <button
-          onClick={() => setSelectedJob(null)}
-          className="text-xl text-slate-500 hover:text-slate-800"
-        >
-          ×
-        </button>
-      </div>
-
-      <p className="text-sm text-slate-600 mb-3">
-        {selectedJob.salary} · {selectedJob.jobType} · {selectedJob.workMode}
-      </p>
-
-      {/* <p className="text-sm text-green-700 font-semibold mb-4">
-        Match Score: {selectedJob.matchScore}%
-      </p> */}
-
-      <h3 className="font-bold text-sm mb-1">Role Summary</h3>
-      <p className="text-sm text-slate-600 mb-4">{selectedJob.roleSummary}</p>
-
-      <h3 className="font-bold text-sm mb-1">Requirements</h3>
-      <ul className="list-disc pl-5 text-sm text-slate-600 mb-4">
-        {selectedJob.requirements?.map((item, index) => (
-          <li key={index}>{item}</li>
-        ))}
-      </ul>
-
-      <h3 className="font-bold text-sm mb-1">Responsibilities</h3>
-      <ul className="list-disc pl-5 text-sm text-slate-600 mb-4">
-        {selectedJob.responsibilities?.map((item, index) => (
-          <li key={index}>{item}</li>
-        ))}
-      </ul>
-
-      <div className="flex justify-end gap-3 mt-6">
-        {selectedJob.companyUrl && (
-          <a
-            href={selectedJob.companyUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-4 py-2 rounded-lg border text-sm font-semibold text-blue-700"
-          >
-            Company URL
-          </a>
-        )}
-
-     <button
-  onClick={() => handleApply(selectedJob)}
-  className="px-4 py-2 rounded-lg bg-blue-700 text-white text-sm font-semibold"
->
-  Apply Now
-</button>
-
-      </div>
-    </div>
-  </div>
-)}
+      )}
     </div>
   );
 };

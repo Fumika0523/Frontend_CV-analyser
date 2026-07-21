@@ -1,11 +1,11 @@
 import Feature from "../components/Feature";
-import Pricing from "../components/Pricing";
+import Pricing from "../components/Pricing/PricingCard";
 import Hero from "../components/Hero";
 import Layout from "../components/Layout/Layout";
 import SeoHead from "../components/SeoHead";
 import { useState, useEffect } from "react";
 import axios from "axios";
-
+import Testimoni from '../components/Testimoni'
 
 export default function Home() {
 
@@ -72,6 +72,7 @@ export default function Home() {
       <Layout guestView={guestView} setGuestView={setGuestView}>
         <Hero guestView={guestView} setGuestView={setGuestView} userData={userData} />
         <Feature guestView={guestView} />
+        {/* <Testimoni  guestView={guestView} setGuestView={setGuestView} /> */}
       </Layout>
     </>
   );
