@@ -461,25 +461,27 @@ const Header = ({
   <div className="px-2 sm:px-6">
     <ul className="flex w-full items-center justify-around text-slate-600">
       {user
-        ? navLinks.slice(0, 4).map((item) => {
-            const Icon = item.icon;
-            const isActive = router.pathname === item.href;
+  ? navLinks.map((item) => {
+      const Icon = item.icon;
+      const isActive = router.pathname === item.href;
 
-            return (
-              <Link key={item.href} href={item.href}>
-                <a
-                  className={`mx-1 flex flex-col items-center border-t-2 px-2 py-2 text-xs transition ${
-                    isActive
-                      ? "border-blue-700 text-blue-700"
-                      : "border-transparent hover:border-blue-700 hover:text-blue-700"
-                  }`}
-                >
-                  <Icon className="mb-0.5 h-5 w-5" />
-                  <span>{item.label}</span>
-                </a>
-              </Link>
-            );
-          })
+      return (
+        <Link key={item.href} href={item.href}>
+          <a
+            className={`flex min-w-[78px] shrink-0 flex-col items-center border-t-2 px-2 py-2 text-xs transition ${
+              isActive
+                ? "border-blue-700 text-blue-700"
+                : "border-transparent text-slate-600 hover:border-blue-700 hover:text-blue-700"
+            }`}
+          >
+            <Icon className="mb-0.5 h-5 w-5 text-blue-900" />
+            <span className="whitespace-nowrap">
+              {item.label}
+            </span>
+          </a>
+        </Link>
+      );
+    })
         : NAV_GUEST.map((item) => {
             const Icon = item.icon;
 

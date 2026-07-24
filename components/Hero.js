@@ -240,6 +240,7 @@ const handlePrimaryClick = () => {
           email={otpModal.email}
           onClose={() => setOtpModal({ isOpen: false, _id: "", email: "" })}
           onVerified={(data) => {
+         //   console.log("data from Hero",data)
             if (data?.token) {
               localStorage.setItem("token", data.token);
             }

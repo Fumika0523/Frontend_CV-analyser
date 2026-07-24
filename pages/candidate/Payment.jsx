@@ -66,108 +66,82 @@ const CandidatePayment = () => {
 
   // Runs when the user clicks one of the pricing plan buttons.
   // planId tells us which plan the user selected.
-  const handleCheckout = async (planId) => {
-    // Check whether the selected plan is the free candidate plan.
-    if (planId === "candidate-free") {
-      // Redirect the user to the Latest Jobs page.
-      router.push("/candidate/Dashboard/LatestJobs");
+const handleCheckout = async (planId) => {
+  // The free plan does not need Stripe checkout.
+  if (planId === "candidate-free") {
+    router.push("/candidate/Dashboard/LatestJobs");
+    return;
+  }
 
-      // Stop the function here because the free plan does not need Stripe.
+  try {
+    // Show the loading label on the selected plan.
+    setLoadingPlan(planId);
+
+    // Read the user's JWT token.
+    const token = localStorage.getItem("token");
+
+    // Checkout is only available to logged-in users.
+    if (!token) {
+      toast.info("Please sign in before selecting a plan");
+      router.push("/");
       return;
     }
 
-    try {
-      // Save the selected plan ID in state.
-      // This allows the button text to change to "Opening checkout...".
-      setLoadingPlan(planId);
-
-      // Get the logged-in user's JWT token from localStorage.
-      const token = localStorage.getItem("token");
-
-      // Check whether the user is not logged in.
-      if (!token) {
-        // Show an informational message to the user.
-        toast.info("Please sign in before selecting a plan");
-
-        // Redirect the user to the homepage.
-        router.push("/");
-
-        // Stop the function because checkout requires authentication.
-        return;
-      }
-
-      console.log("Selected checkout plan:", {
+    console.log("Selected checkout plan:", {
       planId,
       customerType: "candidate",
     });
 
-      // Send a request to the backend to create a Stripe Checkout session.
-      // const response = await fetch(
-      //   // Build the complete backend endpoint URL.
-      //   `${url}/api/create-checkout-session`,
+    // Send the selected plan to the backend.
+    const response = await fetch(
+      `${url}/api/create-checkout-session`,
+      {
+        method: "POST",
 
-      //   // Configuration for the HTTP request.
-      //   {
-      //     // Use POST because we are creating a new checkout session.
-      //     method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
 
-      //     // Send information about the request in the headers.
-      //     headers: {
-      //       // Tell the backend that the request body contains JSON.
-      //       "Content-Type": "application/json",
-
-      //       // Send the JWT token so the backend can identify the user.
-      //       Authorization: `Bearer ${token}`,
-      //     },
-
-      //     // Convert the JavaScript object into a JSON string.
-      //     body: JSON.stringify({
-      //       // Send the selected pricing plan ID.
-      //       planId,
-
-      //       // Tell the backend that this checkout is for a candidate.
-      //       customerType: "candidate",
-      //     }),
-      //   }
-      // );
-
-      // Convert the backend JSON response into a JavaScript object.
-      const data = await response.json();
-
-      // Print the returned payment data in the browser console for testing.
-      console.log("data from payment", data);
-
-      // Check whether the backend returned an unsuccessful HTTP response.
-      if (!response.ok) {
-        // Stop the current process and send the error to the catch block.
-        throw new Error(
-          // Use the backend error message when available.
-          data.message || "Unable to start checkout"
-        );
+        body: JSON.stringify({
+          planId,
+          customerType: "candidate",
+        }),
       }
+    );
 
-      // Check whether the backend forgot to return the Stripe checkout URL.
-      if (!data.url) {
-        // Stop the process because the browser cannot redirect without a URL.
-        throw new Error("Checkout URL was not returned");
-      }
+    // Safely convert the backend response into JSON.
+    const data = await response.json();
 
-      // Redirect the browser to the Stripe-hosted checkout page.
-      window.location.href = data.url;
-    } catch (error) {
-      // Print the complete checkout error in the browser console.
-      console.error("Candidate checkout error:", error);
+    console.log("Data from payment:", data);
 
-      // Show the error message to the user.
-      toast.error(
-        // Use the actual error message when available.
-        error.message || "Payment could not be started"
+    // Handle unsuccessful backend responses.
+    if (!response.ok) {
+      throw new Error(
+        data.message ||
+          data.error ||
+          "Unable to start checkout"
       );
-    } finally {
-      // Clear the loading state whether checkout succeeds or fails.
-      setLoadingPlan(null);
     }
-  };
+
+    // Stripe must return a Checkout URL.
+    if (!data.url) {
+      throw new Error("Checkout URL was not returned");
+    }
+
+    // Send the user to the Stripe Checkout page.
+    window.location.href = data.url;
+  } catch (error) {
+    console.error("Candidate checkout error:", error);
+
+    toast.error(
+      error.message || "Payment could not be started"
+    );
+  } finally {
+    // Restore the normal button label after failure.
+    setLoadingPlan(null);
+  }
+};
 
   return (
     <Layout>
