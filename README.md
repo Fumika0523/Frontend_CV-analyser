@@ -87,3 +87,16 @@ Legal and Privacy
 	2. Explain what candidate data, uploaded CVs and extracted skills are stored.
 	3. Explain how long user data is retained and how users can request deletion.
 	4. Add consent where required for processing uploaded CV information.
+
+
+
+JD post:
+Upload JD PDF
+      ↓
+Backend/Gemini extracts jobData
+      ↓
+setFormData updates the parent state
+      ↓
+PostJobForm receives the new formData props
+      ↓
+The fields below are automatically populated

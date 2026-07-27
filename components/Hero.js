@@ -71,7 +71,7 @@ const handlePrimaryClick = () => {
   }
 
   if (token) {
-    router.push("/company/Dashboard/postjob");
+    router.push("/company/Dashboard/PostJob/postJobPage");
   } else {
     setGuestPostJobOpen(true);
   }

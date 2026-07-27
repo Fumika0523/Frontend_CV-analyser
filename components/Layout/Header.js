@@ -88,7 +88,7 @@ const NAV_COMPANY = [
   },
   {
     label: "Post a new job",
-    href: "/company/Dashboard/postjob",
+    href: "/company/Dashboard/PostJob/postJobPage",
     icon: FiPlusCircle,
   },
   {
@@ -364,18 +364,6 @@ const Header = ({
                         </Link>
                       )}
 
-{/* Pricing */}
-<Link
-  href={
-    user.role === "company"
-      ? "/company/Payment"
-      : "/candidate/Payment"
-  }
->
-  <a className="block w-full rounded-lg px-3.5 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-100 hover:text-blue-600">
-    💳 Pricing
-  </a>
-</Link>
 
                       <button
                         type="button"
