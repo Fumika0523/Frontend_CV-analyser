@@ -20,7 +20,7 @@ const PricingCard = ({
       }`}
     >
       {featured && (
-        <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-blue-700 px-4 py-1 text-sm font-semibold text-white">
+        <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-blue-700 px-4 py-1 text-sm font-semibold text-white text-nowrap">
           Most Popular
         </span>
       )}
@@ -47,11 +47,11 @@ const PricingCard = ({
         )}
       </div>
 
-      <ul className="mt-6 flex-1 space-y-3 ">
+      <ul className="mt-6 flex-1 space-y-3 text-center">
         {features.map((feature) => (
           <li
             key={feature}
-            className="flex items-start gap-2 text-sm text-slate-600"
+            className="flex justify-center gap-2 text-sm text-slate-600"
           >
             <FiCheck className="mt-0.5 shrink-0 text-green-600" />
             <span>{feature}</span>

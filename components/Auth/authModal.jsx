@@ -4,6 +4,10 @@ import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 import ForgotPWModal from "./forgotPWModal";
 import LocationAutocomplete from "../common/LocationAutocomplete";
+import { Link } from "react-scroll";
+import TermsAcceptanceModal from "../../pages/legal/TermsAcceptanceModal";
+TermsAcceptanceModal
+
 
 const COUNTRIES = [
   "Afghanistan","Albania","Algeria","Argentina","Australia","Austria","Bangladesh",
@@ -452,6 +456,8 @@ const [role, setRole] = useState(initialRole);
   const [loading,   setLoading]   = useState(false);
   const [message,   setMessage]   = useState("");
   const [emailWarn, setEmailWarn] = useState("");
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [termsModalOpen, setTermsModalOpen] = useState(false);
   const [form, setForm] = useState({
     firstName: "", lastName: "", email: "", password: "",
     phoneNumber: "", city: "", country: "",   locationDisplay: "",
@@ -462,10 +468,28 @@ const [role, setRole] = useState(initialRole);
   });
 
   const resetForm = () => {
-    setForm({ firstName:"",lastName:"",email:"",password:"",phoneNumber:"",city:"",country:"",
-      companyName:"",companyDescription:"",companyCity:"",companyCountry:"",companySize:"",companyType:"" });
-    setMessage(""); setEmailWarn(""); 
-setRole(initialRole);
+    setForm({
+      firstName: "",
+      lastName: "",
+      email: "",
+      password: "",
+      phoneNumber: "",
+      city: "",
+      country: "",
+      locationDisplay: "",
+      companyName: "",
+      companyDescription: "",
+      companyCity: "",
+      companyCountry: "",
+      companyLocationDisplay: "",
+      companySize: "",
+      companyType: "",
+    });
+    setMessage("");
+    setEmailWarn("");
+    setTermsAccepted(false);
+    setTermsModalOpen(false);
+    setRole(initialRole);
   };
 
  useEffect(() => {
@@ -481,8 +505,17 @@ setRole(initialRole);
   const handleChange = (e) => setForm(p => ({ ...p, [e.target.name]: e.target.value }));
 
   const handleSubmit = async (e) => {
-    e.preventDefault(); 
-    setMessage(""); 
+    e.preventDefault();
+    setMessage("");
+
+    // Frontend protection: do not submit until the current Terms have been accepted.
+    // The backend must validate these fields too.
+    if (!termsAccepted) {
+      setMessage("Please review and accept the Terms & Conditions before registering.");
+      setTermsModalOpen(true);
+      return;
+    }
+
 //     if (role === "company" && isPersonalEmail(form.email)) {
 //   setEmailWarn("Please use your official company email, not Gmail/Yahoo/etc.");
 //   setMessage("Company accounts cannot use personal email domains.");
@@ -506,6 +539,8 @@ const payload = role === "candidate"
         country: form.country,
       },
       guestSessionId,
+      termsAccepted: true,
+      termsVersion: TERMS_VERSION,
     }
   : {
       firstName: form.firstName,
@@ -522,6 +557,8 @@ const payload = role === "candidate"
         city: form.companyCity,
         country: form.companyCountry,
       },
+      termsAccepted: true,
+      termsVersion: TERMS_VERSION,
     };
       //console.log("SIGNUP PAYLOAD:", payload);
       const res = await axios.post("http://localhost:8002/signup", payload);
@@ -750,9 +787,85 @@ const payload = role === "candidate"
                 </div>
               )}
 
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  gap: 10,
+                  padding: 12,
+                  border: `1px solid ${termsAccepted ? "#bbf7d0" : "#cbd5e1"}`,
+                  borderRadius: 11,
+                  background: termsAccepted ? "#f0fdf4" : "#f8fafc",
+                }}
+              >
+                <input
+                  id="termsAccepted"
+                  type="checkbox"
+                  checked={termsAccepted}
+                  onChange={() => {
+                    if (termsAccepted) {
+                      setTermsAccepted(false);
+                    } else {
+                      setTermsModalOpen(true);
+                    }
+                  }}
+                  style={{ marginTop: 3, width: 16, height: 16, cursor: "pointer" }}
+                />
+
+                <div
+                  style={{
+                    color: "#334155",
+                    fontFamily: "'DM Sans', sans-serif",
+                    fontSize: 12.5,
+                    lineHeight: 1.55,
+                  }}
+                >
+                  <label htmlFor="termsAccepted" style={{ cursor: "pointer" }}>
+                    I agree to the{" "}
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setTermsModalOpen(true)}
+                    style={{
+                      padding: 0,
+                      border: 0,
+                      background: "transparent",
+                      color: "#1d4ed8",
+                      cursor: "pointer",
+                      font: "inherit",
+                      fontWeight: 700,
+                      textDecoration: "underline",
+                    }}
+                  >
+                    Terms & Conditions
+                  </button>{" "}
+                  and acknowledge the{" "}
+                  <Link href="/privacy">
+                    <a
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{ color: "#1d4ed8", fontWeight: 700 }}
+                    >
+                      Privacy Policy
+                    </a>
+                  </Link>
+                  .
+                  {termsAccepted && (
+                    <span style={{ display: "block", marginTop: 3, color: "#15803d", fontWeight: 700 }}>
+                      ✓ Accepted
+                    </span>
+                  )}
+                </div>
+              </div>
+
               <Banner msg={message} />
 
-              <button type="submit" className="am-submit" disabled={loading || !!emailWarn} style={{ marginTop: 4 }}>
+              <button
+                type="submit"
+                className="am-submit"
+                disabled={loading || !!emailWarn || !termsAccepted}
+                style={{ marginTop: 4 }}
+              >
                 {loading ? <><Spinner /> Creating account…</> : "Create Account →"}
               </button>
             </form>
@@ -769,6 +882,15 @@ const payload = role === "candidate"
           </div>
         </div>
       </div>
+
+      <TermsAcceptanceModal
+        isOpen={termsModalOpen}
+        onClose={() => setTermsModalOpen(false)}
+        onAccept={() => {
+          setTermsAccepted(true);
+          setMessage("");
+        }}
+      />
     </div>
   );
 };

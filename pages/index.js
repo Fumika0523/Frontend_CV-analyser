@@ -1,11 +1,11 @@
 import Feature from "../components/Feature";
-import Pricing from "../components/Pricing/PricingCard";
-import Hero from "../components/Hero";
+import PricingSection from "../components/Pricing/PricingSection";import Hero from "../components/Hero";
 import Layout from "../components/Layout/Layout";
 import SeoHead from "../components/SeoHead";
 import { useState, useEffect } from "react";
 import axios from "axios";
-import Testimoni from '../components/Testimoni'
+import Testimonial from "./legal/Testimonial";
+
 
 export default function Home() {
 
@@ -72,8 +72,9 @@ export default function Home() {
       <Layout guestView={guestView} setGuestView={setGuestView}>
         <Hero guestView={guestView} setGuestView={setGuestView} userData={userData} />
         <Feature guestView={guestView} />
-        {/* <Testimoni  guestView={guestView} setGuestView={setGuestView} /> */}
-      </Layout>
+        <PricingSection guestView={guestView} />
+           <Testimonial />
+        </Layout>
     </>
   );
 }

@@ -1,4 +1,4 @@
-import Layout from "../components/Layout/Layout";
+import Layout from "../../components/Layout/Layout";
 
 const sections = [
   { id: "intro", title: "1. Introduction" },
