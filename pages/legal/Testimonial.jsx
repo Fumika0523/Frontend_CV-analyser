@@ -32,7 +32,7 @@ const Testimonial = () => {
   return (
     <section
       id="testimonial"
-      className="scroll-mt-28 bg-white px-4 py-20 sm:px-6 lg:px-8"
+      className="scroll-mt-28 bg-blue-50 px-4 py-20 sm:px-6 lg:px-8"
     >
       <div className="mx-auto max-w-7xl">
         <div className="mx-auto max-w-3xl text-center">
@@ -41,7 +41,7 @@ const Testimonial = () => {
             Testimonials
           </span> */}
 
-          <h2 className="mt-5 text-3xl font-bold tracking-tight text-slate-900 sm:text-5xl">
+          <h2 className=" text-3xl font-bold tracking-tight text-slate-900 sm:text-5xl">
             What our users say
           </h2>
 
