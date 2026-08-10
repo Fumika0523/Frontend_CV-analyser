@@ -32,7 +32,7 @@ const Testimonial = () => {
   return (
     <section
       id="testimonial"
-      className="scroll-mt-28 bg-blue-50 px-4 py-20 sm:px-6 lg:px-8"
+      className="scroll-mt-28  px-4 py-20 sm:px-6 lg:px-8"
     >
       <div className="mx-auto max-w-7xl">
         <div className="mx-auto max-w-3xl text-center">
@@ -41,11 +41,11 @@ const Testimonial = () => {
             Testimonials
           </span> */}
 
-          <h2 className=" text-3xl font-bold tracking-tight text-slate-900 sm:text-5xl">
+          <h1 className=" text-3xl font-bold tracking-tight sm:text-5xl">
             What our users say
-          </h2>
+          </h1>
 
-          <p className="mt-5 text-base leading-7 text-slate-600 sm:text-lg">
+          <p className="mt-5 text-base text-slate-300 leading-7  sm:text-lg">
             See how candidates and employers use SkillfulJobs.ai
             to improve their job search and recruitment process.
           </p>
@@ -55,7 +55,7 @@ const Testimonial = () => {
           {testimonials.map((testimonial) => (
             <article
               key={testimonial.id}
-              className="rounded-2xl border border-slate-200 bg-slate-50 p-6 shadow-sm"
+              className="rounded-2xl border border-slate-200 bg-blue-50 p-6 shadow-sm"
             >
               <div className="flex gap-1 text-amber-500">
                 {[1, 2, 3, 4, 5].map((star) => (

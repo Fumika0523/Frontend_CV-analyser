@@ -102,13 +102,13 @@ export default function ViewMyCVs() {
 
   return (
     <Layout>
-      <div className="bg-slate-50 py-10 min-h-screen">
+      <div className=" py-10 min-h-screen">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 mt-16">
           <div className="mb-8">
-            <h1 className="text-2xl font-bold text-slate-900">
+            <h1 className="text-2xl font-bold ">
               My CVs
             </h1>
-            <p className="text-sm text-slate-500 mt-1">
+            <p className="text-sm text-slate-300 mt-1">
               Upload a new CV and view all CVs saved to your candidate account.
             </p>
           </div>

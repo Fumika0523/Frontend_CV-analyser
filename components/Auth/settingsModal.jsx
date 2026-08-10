@@ -220,38 +220,27 @@ const EditableLocationField = ({ label, city, country, onLocationChange }) => {
   );
 };
 
+const createInitialForm = (user) => ({
+  firstName: user?.firstName || "",
+  lastName: user?.lastName || "",
+  email: user?.email || "",
+  phoneNumber: user?.phoneNumber || "",
+  companyName: user?.companyName || "",
+  companyDescription:
+    user?.companyDescription || "",
+  city: user?.location?.city || "",
+  country: user?.location?.country || "",
+});
+
 const SettingsModal = ({ isOpen, onClose, user, onUserUpdated }) => {
-  const [form, setForm] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    phoneNumber: "",
-    companyName: "",
-    companyDescription: "",
-    city: "",
-    country: "",
-  });
+  console.log("user",user)
+const [form, setForm] = useState(() =>
+  createInitialForm(user)
+);
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [isError, setIsError] = useState(false);
-
-  useEffect(() => {
-    if (user && isOpen) {
-      setForm({
-        firstName: user.firstName || "",
-        lastName: user.lastName || "",
-        email: user.email || "",
-        phoneNumber: user.phoneNumber || "",
-        companyName: user.companyName || "",
-        companyDescription: user.companyDescription || "",
-        city: user.location?.city || "",
-        country: user.location?.country || "",
-      });
-      setMessage("");
-      setIsError(false);
-    }
-  }, [user, isOpen]);
 
   if (!isOpen) return null;
 
@@ -284,7 +273,7 @@ const SettingsModal = ({ isOpen, onClose, user, onUserUpdated }) => {
       const res = await axios.put("http://localhost:8002/user-profile", payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
-
+      console.log("response from settings", res.data)
       const updatedUser = res.data.user;
 
       onUserUpdated?.({

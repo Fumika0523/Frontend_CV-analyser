@@ -45,17 +45,17 @@ const Feature = () => {
             className="flex flex-col items-center text-center lg:items-start lg:text-left justify-center w-full max-w-[520px]"
             variants={scrollAnimation}
           >
-            <h3 className="text-3xl lg:text-4xl font-bold leading-relaxed text-slate-700">
+            <h1 className="text-3xl lg:text-4xl font-bold leading-relaxed ">
               Powerful Features for Smarter CV Analysis
-            </h3>
+            </h1>
 
-            <p className="my-2 text-black-500 max-w-[620px]">
+            <p className="my-2 max-w-[620px] text-slate-300">
               We help candidates improve resumes and helps companies
               review applicants faster with AI-powered CV insights and ATS
               compatibility.
             </p>
 
-            <ul className="text-slate-600 mt-5 space-y-3 text-left mx-auto lg:mx-0">
+            <ul className="text-slate-200 mt-5 space-y-3 text-left mx-auto lg:mx-0">
               {features.map((feature, index) => (
                 <motion.li
                   className="flex items-start gap-3"
@@ -70,7 +70,7 @@ const Feature = () => {
                   }}
                 >
                   <FiCheckCircle className="text-green-500 text-xl mt-1 flex-shrink-0" />
-                  <span>{feature}</span>
+                  <span >{feature}</span>
                 </motion.li>
               ))}
             </ul>

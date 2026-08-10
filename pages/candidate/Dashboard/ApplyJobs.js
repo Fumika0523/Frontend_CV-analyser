@@ -118,7 +118,7 @@ const ApplyJobs = () => {
       setApplyingJobId(job._id);
 
       const response = await axios.post(
-        `${url}/apply`,
+        `${url}/applications/apply`,
         {
           jobId: job._id,
           cvId: null,
@@ -133,23 +133,25 @@ const ApplyJobs = () => {
         ...previousApplications,
         [job._id]: newApplication,
       }));
-
+      console.log("response new application", response.data)
       toast.success(
         response.data.message ||
           "Application submitted successfully"
       );
-    } catch (error) {
-      const message =
-        error.response?.data?.message || "Failed to apply";
+     }
+     // catch (error) {
+    //   const message =
+    //     error.response?.data?.message || "Failed to apply";
+    //   console.log("error message",error.response?.data?.message)
+    //   toast.error(message);
 
-      toast.error(message);
-
-      // If the backend says the candidate already applied,
-      // reload applications so the UI is corrected.
-      if (message.toLowerCase().includes("already applied")) {
-        getApplicationsData();
-      }
-    } finally {
+    //   // If the backend says the candidate already applied,
+    //   // reload applications so the UI is corrected.
+    //   if (message.toLowerCase().includes("already applied")) {
+    //     getApplicationsData();
+    //   }
+    // } 
+    finally {
       setApplyingJobId(null);
     }
   };

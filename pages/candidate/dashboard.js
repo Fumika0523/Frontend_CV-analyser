@@ -63,7 +63,7 @@ export default function Dashboard() {
 
  return (
   <Layout>
-    <div className="bg-gray-50 py-8">
+    <div className="py-8">
       <div className="max-w-screen-xl mt-24 px-8 xl:px-16 mx-auto">
 
         {isGuest && (

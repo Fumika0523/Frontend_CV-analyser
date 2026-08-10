@@ -72,7 +72,10 @@ export default function Home() {
       <Layout guestView={guestView} setGuestView={setGuestView}>
         <Hero guestView={guestView} setGuestView={setGuestView} userData={userData} />
         <Feature guestView={guestView} />
-        <PricingSection guestView={guestView} />
+        <PricingSection
+          userData={userData}
+
+guestView={guestView} />
            <Testimonial />
         </Layout>
     </>

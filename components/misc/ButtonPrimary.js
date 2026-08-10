@@ -6,7 +6,7 @@ const ButtonPrimary = ({ children, addClass = "", onClick, type = "button" }) =>
       type={type}
       onClick={onClick}
       className={
-        "font-medium tracking-wide py-2 px-6 sm:px-8 rounded-full transition-all duration-200 shadow-sm hover:shadow-md outline-none bg-blue-500 text-white-500 " +
+        "font-medium tracking-wide py-2 px-6 sm:px-8 rounded-full transition-all duration-200 shadow-sm hover:shadow-md outline-none bg-green-500 text-white-500 " +
         addClass
       }
       style={{

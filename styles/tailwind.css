@@ -5,12 +5,46 @@
 html {
   font-family: "Rubik", sans-serif;
 }
-body {
-@apply bg-blue-50;
+header{
+/* @apply bg-blue-950; */
+
 }
 
+/* body {
+@apply bg-[#01195b];
+} */
+body {
+    @apply m-0 text-slate-900 antialiased;
+
+    background-color: #01195b;
+    background-image:
+      radial-gradient(
+        circle at 10% 0%,
+        rgba(37, 99, 235, 0.3),
+        transparent 32rem
+      ),
+      radial-gradient(
+        circle at 90% 15%,
+        rgba(16, 185, 129, 0.14),
+        transparent 28rem
+      ),
+      linear-gradient(
+        75deg,
+        #01195b 0%,
+        #05276d 58%,
+        #064e5b 100%
+      );
+
+    background-attachment: fixed;
+  }
+
+  
 p {
-  @apply text-slate-600;
+  @apply text-slate-800;
+}
+
+h1{
+    @apply text-slate-100;
 }
 
 .animation-hover:after {

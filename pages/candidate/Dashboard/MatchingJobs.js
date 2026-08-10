@@ -86,7 +86,7 @@ const MatchingJobs = ({ isGuest = false }) => {
     const token = localStorage.getItem("token");
 
     const res = await axios.post(
-      `${url}/apply`,
+      `${url}/applications/apply`,
        {
     jobId: job.jobId,
     cvId: null,

@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
+import TermsAcceptanceModal from "../../pages/legal/TermsAcceptanceModal";
+import { TERMS_VERSION } from "../../pages/legal/terms";
 import axios from "axios";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 import ForgotPWModal from "./forgotPWModal";
 import LocationAutocomplete from "../common/LocationAutocomplete";
 import { Link } from "react-scroll";
-import TermsAcceptanceModal from "../../pages/legal/TermsAcceptanceModal";
-TermsAcceptanceModal
+
 
 
 const COUNTRIES = [
@@ -287,9 +288,19 @@ const isPersonalEmail = (email) => {
 };
 
 const CloseBtn = ({ onClick }) => (
-  <button className="am-close" onClick={onClick} aria-label="Close">
+  <button
+    type="button"
+    className="am-close"
+    onClick={onClick}
+    aria-label="Close"
+  >
     <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-      <path d="M1 1l11 11M12 1L1 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+      <path
+        d="M1 1l11 11M12 1L1 12"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
     </svg>
   </button>
 );
@@ -560,16 +571,16 @@ const payload = role === "candidate"
       termsAccepted: true,
       termsVersion: TERMS_VERSION,
     };
-      //console.log("SIGNUP PAYLOAD:", payload);
+      console.log("SIGNUP PAYLOAD:", payload);
       const res = await axios.post("http://localhost:8002/signup", payload);
-      //console.log("SIGNUP RESPONSE:", res.data);
+      console.log("SIGNUP RESPONSE:", res.data);
       setMessage(res.data.message);
       onOtpSent?.({ _id: res.data.mongoId, email: form.email });
     } catch (err) {
-      //console.log("SIGNUP ERROR FULL:", err);
-      //console.log("SIGNUP ERROR RESPONSE:", err.response);
-      //console.log("SIGNUP ERROR DATA:", err.response?.data);
-      //console.log("SIGNUP ERROR STATUS:", err.response?.status);
+      console.log("SIGNUP ERROR FULL:", err);
+      console.log("SIGNUP ERROR RESPONSE:", err.response);
+      console.log("SIGNUP ERROR DATA:", err.response?.data);
+      console.log("SIGNUP ERROR STATUS:", err.response?.status);
       if (err?.response?.status === 403 && err?.response?.data?._id) {
         setMessage(err.response.data.message || "Please verify your email");
         onOtpSent?.({ _id: err.response.data._id, email: form.email });
@@ -584,7 +595,9 @@ const payload = role === "candidate"
   return (
     <div className="am-modal-root">
       <style>{STYLES}</style>
-      <div className="am-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="am-overlay" 
+      // onClick={(e) => e.target === e.currentTarget && onClose()}
+      >
         <div className="am-card am-card-signup">
           <div className="am-body">
             <CloseBtn onClick={onClose} />
@@ -840,15 +853,15 @@ const payload = role === "candidate"
                     Terms & Conditions
                   </button>{" "}
                   and acknowledge the{" "}
-                  <Link href="/privacy">
-                    <a
+                  {/* <Link href="/privacy"> */}
+                    {/* <span
                       target="_blank"
                       rel="noreferrer"
                       style={{ color: "#1d4ed8", fontWeight: 700 }}
-                    >
+                    > */}
                       Privacy Policy
-                    </a>
-                  </Link>
+                    {/* </span> */}
+                  {/* </Link> */}
                   .
                   {termsAccepted && (
                     <span style={{ display: "block", marginTop: 3, color: "#15803d", fontWeight: 700 }}>

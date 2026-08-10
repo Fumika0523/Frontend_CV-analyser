@@ -11,7 +11,7 @@ const Footer = () => {
   const [userRole, setUserRole] = useState(null);
 
   const linkClass =
-    "block cursor-pointer transition-colors duration-200 hover:text-blue-700";
+    "block cursor-pointer transition-colors duration-700 hover:text-blue-700";
 
   useEffect(() => {
     const fetchUserRole = async () => {
@@ -59,7 +59,7 @@ const Footer = () => {
     !userRole || userRole === "company";
 
   return (
-    <footer className="border-t border-blue-100 bg-slate-50 py-9">
+    <footer className="border-t border-blue-100  py-9">
       <div
         className={`mx-auto grid w-full max-w-screen-xl gap-10 px-6 pb-14 sm:px-8 lg:px-16 lg:pb-0 ${
           userRole
@@ -70,12 +70,12 @@ const Footer = () => {
         {/* Brand */}
         <div className="flex flex-col">
           <Link href="/">
-            <a className="text-xl font-bold tracking-tight text-blue-800 transition-colors hover:text-blue-600">
+            <a className="text-xl font-bold tracking-tight text-white transition-colors hover:text-blue-200">
               SkillfulJobs.ai
             </a>
           </Link>
 
-          <p className="mt-3 max-w-sm text-sm leading-6 text-slate-600">
+          <p className="mt-3 max-w-sm text-sm leading-6 text-slate-200">
             AI-powered platform for smarter hiring and career
             opportunities.
           </p>
@@ -86,7 +86,7 @@ const Footer = () => {
               target="_blank"
               rel="noreferrer"
               aria-label="Visit our Facebook page"
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-blue-700 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-blue-700 hover:bg-blue-700 hover:text-white"
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-blue-200 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-blue-200 hover:bg-blue-100 hover:text-white"
             >
               <FaFacebook fontSize={19} />
             </a>
@@ -122,11 +122,11 @@ const Footer = () => {
         {/* Candidate links */}
         {showCandidateLinks && (
           <div className="flex flex-col">
-            <p className="mb-4 text-lg font-semibold text-slate-900">
+            <p className="mb-4 text-lg font-semibold text-slate-200">
               For Candidates
             </p>
 
-            <ul className="space-y-2.5 text-sm text-slate-600">
+            <ul className="space-y-2.5 text-sm text-slate-200">
               <li>
                 <Link href="/candidate/Dashboard/LatestJobs">
                   <a className={linkClass}>Browse Jobs</a>
@@ -159,11 +159,11 @@ const Footer = () => {
         {/* Employer links */}
         {showEmployerLinks && (
           <div className="flex flex-col">
-            <p className="mb-4 text-lg font-semibold text-slate-900">
+            <p className="mb-4 text-lg font-semibold text-slate-200">
               For Employers
             </p>
 
-            <ul className="space-y-2.5 text-sm text-slate-600">
+            <ul className="space-y-2.5 text-sm text-slate-200">
               <li>
                 <Link href="/company/Dashboard/postjob">
                   <a className={linkClass}>Post a Job</a>
@@ -199,11 +199,11 @@ const Footer = () => {
 
         {/* Support */}
         <div className="flex flex-col">
-          <p className="mb-4 text-lg font-semibold text-slate-900">
+          <p className="mb-4 text-lg font-semibold text-slate-200">
             Support
           </p>
 
-          <ul className="space-y-2.5 text-sm text-slate-600">
+          <ul className="space-y-2.5 text-sm text-slate-200">
             <li>
               <Link href="/contact">
                 <a className={linkClass}>Contact Us</a>

@@ -152,7 +152,7 @@ const handleCheckout = async (planId) => {
               Find the right job while keeping your details private
             </h1>
 
-            <p className="mt-5 text-base leading-7 text-slate-600 sm:text-lg">
+            <p className="mt-5 text-base leading-7 text-slate-200 sm:text-lg">
               Start with three free applications. Upgrade when you need
               unlimited applications and advanced matching tools.
             </p>

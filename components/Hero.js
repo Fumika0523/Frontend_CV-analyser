@@ -102,11 +102,11 @@ const handlePrimaryClick = () => {
             variants={scrollAnimation}
           >
             <div className="flex flex-col justify-center items-center text-center lg:items-start lg:text-left order-2 lg:order-1">
-              <h1 className="text-2xl lg:text-3xl xl:text-4xl font-medium text-black-600 leading-normal">
+              <h1 className="text-2xl lg:text-3xl xl:text-4xl font-medium leading-normal">
                 {content.title}
               </h1>
 
-              <p className="text-black-500 mt-4 mb-6 max-w-[560px]">
+              <p className="text-slate-300 mt-4 mb-6 max-w-[560px]">
                 {content.description}
               </p>
 
@@ -131,7 +131,7 @@ const handlePrimaryClick = () => {
         </ScrollAnimationWrapper>
 
         <div className="relative w-full flex">
-          <ScrollAnimationWrapper className="rounded-xl w-full grid grid-cols-1 sm:grid-cols-3 py-9 divide-y-2 sm:divide-y-0 sm:divide-x-2 divide-gray-100 bg-white z-10 shadow-[0_30px_80px_rgba(13,16,37,0.08)]">
+          <ScrollAnimationWrapper className="rounded-xl w-full grid grid-cols-1 sm:grid-cols-3 py-9 divide-y-2 sm:divide-y-0 sm:divide-x-2 divide-gray-100 bg-blue-800/80 z-10 shadow-[0_30px_80px_rgba(13,16,37,0.08)]">
             {listUser.map((listUsers, index) => (
               <motion.div
                 className="flex items-center justify-center py-4 sm:py-6 px-4"
@@ -145,10 +145,10 @@ const handlePrimaryClick = () => {
                   </div>
 
                   <div className="flex flex-col">
-                    <p className="text-xl text-black-600 font-bold">
+                    <p className="text-xl text-slate-300 font-bold">
                       {listUsers.number}+
                     </p>
-                    <p className="text-lg text-black-500">{listUsers.name}</p>
+                    <p className="text-lg text-slate-300 ">{listUsers.name}</p>
                   </div>
                 </div>
               </motion.div>
@@ -199,12 +199,12 @@ const handlePrimaryClick = () => {
               ×
             </button>
 
-            <h2 className="text-xl font-semibold text-slate-900 mb-2">
+            <h2 className="text-xl font-semibold text-slate-200 mb-2">
               {/* <FiZap/>  */}
               Post a Job 
             </h2>
 
-            <p className="text-sm text-slate-500 mb-5">
+            <p className="text-sm text-slate-200 mb-5">
               To post and manage jobs, please create a company account or sign in.
             </p>
 

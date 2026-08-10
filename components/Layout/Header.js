@@ -28,6 +28,8 @@ import {
   FaUser,
 } from "react-icons/fa";
 
+const EMPTY_SET_GUEST_VIEW = () => {};
+
 /*
  * Guest navigation items all point to sections
  * rendered on the homepage.
@@ -130,7 +132,7 @@ const NAV_COMPANY = [
 
 const Header = ({
   guestView = "candidate",
-  setGuestView = () => {},
+  setGuestView = EMPTY_SET_GUEST_VIEW,
 }) => {
   const router = useRouter();
 
@@ -470,23 +472,23 @@ const Header = ({
   return (
     <>
       {/* Desktop header */}
-      <header
-        className={`fixed top-0 z-30 w-full bg-white/95 backdrop-blur-md transition-all duration-300 ${
-          scrollActive
-            ? "pt-0 shadow-sm"
-            : "pt-4"
-        }`}
-      >
+     <header
+  className={`fixed top-0 z-30 w-full border-b transition-all duration-400 ${
+    scrollActive
+      ? "border-white/10 bg-[#011b5d] shadow-lg backdrop-blur-md"
+      : "border-transparent bg-transparent shadow-none"
+  }`}
+>
         <nav className="mx-auto grid max-w-screen-xl grid-flow-col items-center px-6 py-3 sm:px-8 sm:py-4 lg:px-16">
           {/* Logo */}
           <Link href="/">
-            <a className="col-start-1 col-end-2 flex items-center text-lg font-bold tracking-tight text-blue-700">
+            <a className="col-start-1 col-end-2 flex items-center text-xl font-bold tracking-tight text-slate-200">
               SkillfulJobs.ai
             </a>
           </Link>
 
           {/* Desktop navigation */}
-          <ul className="col-start-4 col-end-8 hidden items-center text-blue-600 lg:flex">
+          <ul className="col-start-4 col-end-8 hidden items-center text-slate-200 lg:flex">
             {user
               ? navLinks.map((item) => {
                   const Icon = item.icon;
@@ -500,8 +502,8 @@ const Header = ({
                         <a
                           className={`group relative mx-1 inline-flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors ${
                             isActive
-                              ? "text-blue-600"
-                              : "text-blue-900 hover:text-blue-600"
+                              ? "text-blue-200"
+                              : "text-blue-200 hover:text-blue-100"
                           }`}
                         >
                           <Icon className="text-base" />
@@ -517,6 +519,7 @@ const Header = ({
                   return (
                     <li key={item.id}>
                       <button
+                    
                         type="button"
                         onClick={() =>
                           handleHomepageSectionClick(
@@ -525,11 +528,11 @@ const Header = ({
                         }
                         className={`group relative mx-1 inline-flex cursor-pointer items-center gap-2 bg-transparent px-3 py-2 text-sm font-medium transition-colors ${
                           activeLink === item.id
-                            ? "text-blue-600"
-                            : "text-blue-900 hover:text-blue-600"
+                            ? "text-blue-200"
+                            : "text-blue-200 hover:text-blue-100 "
                         }`}
                       >
-                        <Icon className="text-base" />
+                        <Icon className="size-5" />
                         {item.label}
                       </button>
                     </li>
@@ -657,7 +660,7 @@ const Header = ({
                       mode: "signin",
                     })
                   }
-                  className="mx-2 cursor-pointer text-slate-600 transition hover:text-blue-600 sm:mx-4"
+                  className="mx-2 cursor-pointer text-slate-300 transition hover:text-slate-100 sm:mx-4"
                 >
                   <span className="inline text-lg md:hidden">
                     <FaSignInAlt />
