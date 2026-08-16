@@ -4,12 +4,16 @@ import MyApplication from "../../Dashboard/MyApplication/MyApplication";
 
 export default function MyApplicationPage() {
   return (
-    <Layout>
-      <div className="bg-slate-50 py-10">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 mt-24">
+   <>
+        <Layout >
+          <main className="min-h-screen pb-12 pt-28">
+        <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
           <MyApplication />
         </div>
-      </div>
-    </Layout>
+        </main>
+        </Layout>
+   </>
+    
+    
   );
 }

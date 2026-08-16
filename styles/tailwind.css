@@ -10,37 +10,45 @@ header{
 
 }
 
-/* body {
-@apply bg-[#01195b];
-} */
-body {
-    @apply m-0 text-slate-900 antialiased;
+:root {
+  /* Click these colours to change the background */
+  --background-base: #011038;
+  --gradient-start: #011038;
+  --gradient-middle: #05276d;
+  --gradient-end: #064e5b;
 
-    background-color: #01195b;
-    background-image:
-      radial-gradient(
-        circle at 10% 0%,
-        rgba(37, 99, 235, 0.3),
-        transparent 32rem
-      ),
-      radial-gradient(
-        circle at 90% 15%,
-        rgba(16, 185, 129, 0.14),
-        transparent 28rem
-      ),
-      linear-gradient(
-        75deg,
-        #01195b 0%,
-        #05276d 58%,
-        #064e5b 100%
-      );
+  --blue-glow: rgba(37, 99, 235, 0.35);
+  --green-glow: rgba(16, 185, 129, 0.14);
+}
+
+body {
+  background-color: var(--background-base);
+
+    background-color: #050b1f;
+     background-image:
+    radial-gradient(
+      circle at 10% 0%,
+      var(--blue-glow),
+      transparent 32rem
+    ),
+    radial-gradient(
+      circle at 90% 15%,
+      var(--green-glow),
+      transparent 28rem
+    ),
+    linear-gradient(
+      75deg,
+      var(--gradient-start) 0%,
+      var(--gradient-middle) 58%,
+      var(--gradient-end) 100%
+    );
 
     background-attachment: fixed;
   }
 
   
 p {
-  @apply text-slate-800;
+  @apply text-slate-300;
 }
 
 h1{
@@ -103,6 +111,3 @@ li.check:before {
   @apply rounded-l-full rounded-r-full w-12;
   background-color: #1e3a8a; /* deep navy */
 }
-
-
-

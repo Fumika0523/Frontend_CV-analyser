@@ -482,11 +482,17 @@ const Header = ({
         <nav className="mx-auto grid max-w-screen-xl grid-flow-col items-center px-6 py-3 sm:px-8 sm:py-4 lg:px-16">
           {/* Logo */}
           <Link href="/">
-            <a className="col-start-1 col-end-2 flex items-center text-xl font-bold tracking-tight text-slate-200">
-              SkillfulJobs.ai
-            </a>
-          </Link>
+  <a className="col-start-1 col-end-2 flex items-center gap-2.5">
+    <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-cyan-400 text-white shadow-md">
+      <FiBriefcase aria-hidden="true" size={18} />
+    </span>
 
+    <span className="text-xl font-bold tracking-tight text-white">
+      SkillfulJobs
+      <span className="text-cyan-300">.ai</span>
+    </span>
+  </a>
+</Link>
           {/* Desktop navigation */}
           <ul className="col-start-4 col-end-8 hidden items-center text-slate-200 lg:flex">
             {user
@@ -499,16 +505,24 @@ const Header = ({
                   return (
                     <li key={item.href}>
                       <Link href={item.href}>
-                        <a
-                          className={`group relative mx-1 inline-flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors ${
-                            isActive
-                              ? "text-blue-200"
-                              : "text-blue-200 hover:text-blue-100"
-                          }`}
-                        >
-                          <Icon className="text-base" />
-                          {item.label}
-                        </a>
+                       <a
+  className={`group mx-1 inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 ${
+    isActive
+      ? "bg-white/10 text-white"
+      : "text-slate-300 hover:bg-white/5 hover:text-white"
+  }`}
+>
+  <Icon
+    aria-hidden="true"
+    className={`h-4 w-4 transition-colors ${
+      isActive
+        ? "text-emerald-300"
+        : "text-cyan-300 group-hover:text-cyan-200"
+    }`}
+  />
+
+  {item.label}
+</a>
                       </Link>
                     </li>
                   );
@@ -519,22 +533,27 @@ const Header = ({
                   return (
                     <li key={item.id}>
                       <button
-                    
-                        type="button"
-                        onClick={() =>
-                          handleHomepageSectionClick(
-                            item.id
-                          )
-                        }
-                        className={`group relative mx-1 inline-flex cursor-pointer items-center gap-2 bg-transparent px-3 py-2 text-sm font-medium transition-colors ${
-                          activeLink === item.id
-                            ? "text-blue-200"
-                            : "text-blue-200 hover:text-blue-100 "
-                        }`}
-                      >
-                        <Icon className="size-5" />
-                        {item.label}
-                      </button>
+  type="button"
+  onClick={() =>
+    handleHomepageSectionClick(item.id)
+  }
+  className={`group mx-1 inline-flex items-center gap-2 rounded-lg bg-transparent px-3 py-2 text-sm font-medium transition-all duration-200 ${
+    activeLink === item.id
+      ? "bg-white/10 text-white"
+      : "text-slate-300 hover:bg-white/5 hover:text-white"
+  }`}
+>
+  <Icon
+    aria-hidden="true"
+    className={`h-4 w-4 transition-colors ${
+      activeLink === item.id
+        ? "text-emerald-300"
+        : "text-cyan-300 group-hover:text-cyan-200"
+    }`}
+  />
+
+  {item.label}
+</button>
                     </li>
                   );
                 })}
