@@ -5,54 +5,39 @@
 html {
   font-family: "Rubik", sans-serif;
 }
-header{
-/* @apply bg-blue-950; */
-
-}
 
 :root {
   /* Click these colours to change the background */
-  --background-base: #011038;
-  --gradient-start: #011038;
-  --gradient-middle: #05276d;
-  --gradient-end: #064e5b;
-
-  --blue-glow: rgba(37, 99, 235, 0.35);
-  --green-glow: rgba(16, 185, 129, 0.14);
+  --background-base: #f8fafc;
+  --gradient-start: #ffffff;
+  --gradient-mid: #f1f5fb;
+  --gradient-end: #e7ecf7;
+  --accent-glow: rgba(30, 58, 138, 0.08);
 }
-
+ 
 body {
+  color: #334155;
   background-color: var(--background-base);
-
-    background-color: #050b1f;
-     background-image:
-    radial-gradient(
-      circle at 10% 0%,
-      var(--blue-glow),
-      transparent 32rem
-    ),
-    radial-gradient(
-      circle at 90% 15%,
-      var(--green-glow),
-      transparent 28rem
+  background-image: radial-gradient(
+      circle at 20% -10%,
+      var(--accent-glow),
+      transparent 42rem
     ),
     linear-gradient(
-      75deg,
+      170deg,
       var(--gradient-start) 0%,
-      var(--gradient-middle) 58%,
+      var(--gradient-mid) 55%,
       var(--gradient-end) 100%
     );
+  background-attachment: fixed;
+}
 
-    background-attachment: fixed;
-  }
-
-  
-p {
-  @apply text-slate-300;
+  p {
+  @apply text-slate-600;
 }
 
 h1{
-    @apply text-slate-100;
+    @apply text-slate-900;
 }
 
 .animation-hover:after {

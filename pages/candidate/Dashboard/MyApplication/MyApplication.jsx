@@ -5,7 +5,6 @@ import { url } from "../../../../utils/constant";
 import {
   FiAlertCircle,
   FiBriefcase,
-  
   FiCalendar,
   FiCheckCircle,
   FiClipboard,
@@ -137,6 +136,15 @@ export default function MyApplication() {
   const [applicationsError, setApplicationsError] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
+  const filteredApplications =
+  statusFilter === "all"
+    ? applications
+    : applications.filter(
+        (application) =>
+          normalizeStatus(application.status) === statusFilter
+      );
+
+      
   const fetchApplications = async () => {
     try {
       setApplicationsLoading(true);
@@ -144,23 +152,14 @@ export default function MyApplication() {
 
       const token = localStorage.getItem("token");
 
-      /*
-       * Do not send ?status=all because "all" is not an
-       * application status in the backend model.
-       */
-      const statusQuery =
-        statusFilter === "all"
-          ? ""
-          : `?status=${statusFilter}`;
-
       const response = await axios.get(
-        `${url}/applications${statusQuery}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+  `${url}/applications`,
+  {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  }
+);
 
       console.log("Applications response:", response.data);
 
@@ -190,9 +189,9 @@ export default function MyApplication() {
     }
   };
 
-  useEffect(() => {
-    fetchApplications();
-  }, [statusFilter]);
+useEffect(() => {
+  fetchApplications();
+}, []);
 
   return (
     <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-950/10">
@@ -223,8 +222,7 @@ export default function MyApplication() {
             />
 
             <span>
-              Showing {applications.length}
-            </span>
+Showing {filteredApplications.length}            </span>
           </div>
         </div>
       </div>
@@ -296,10 +294,10 @@ export default function MyApplication() {
               Try Again
             </button>
           </div>
-        ) : applications.length > 0 ? (
+        ) : filteredApplications.length > 0 ? (
           /* Application cards */
           <div className="space-y-4">
-            {applications.map((application) => {
+            {filteredApplications.map((application) => {
               const normalizedStatus = normalizeStatus(
                 application.status
               );

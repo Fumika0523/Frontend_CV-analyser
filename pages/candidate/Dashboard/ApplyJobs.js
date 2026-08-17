@@ -208,7 +208,7 @@ const ApplyJobs = () => {
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
       <h2 className="text-xl font-semibold text-gray-800 mb-4">
-        💼 Apply for New Jobs
+        💼 All jobs
       </h2>
 
       <div className="mb-6">

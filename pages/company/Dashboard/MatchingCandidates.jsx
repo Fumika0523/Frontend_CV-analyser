@@ -6,11 +6,10 @@ export default function MatchingCandidates({ jobId }) {
   const [jobTitle, setJobTitle] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-  console.log("MatchingCandidates jobId prop:", jobId);
 
   const fetchMatches = async () => {
     console.log("calling fetch matches function");
-    console.log("jobId before if:", jobId);
+    console.log("jobId ", jobId);
 
     if (!jobId) {
       console.log("No jobId yet, stopping fetchMatches");
@@ -34,7 +33,7 @@ export default function MatchingCandidates({ jobId }) {
 
       console.log("response from fetchMatches", res.data);
 
-      setJobTitle(res.data.jobTitle);
+      setJobTitle(res.data.title);
       setMatches(res.data.matchedCandidates || []);
     } catch (error) {
       console.error("fetchMatches error:", error);

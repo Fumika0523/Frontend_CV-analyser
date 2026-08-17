@@ -35,7 +35,7 @@ const PricingCard = ({
         </p>
       </div>
 
-      <div className="mt-3">
+      <div className="mt-2">
         <span className="text-4xl font-bold text-slate-900">
           {price}
         </span>
@@ -47,13 +47,13 @@ const PricingCard = ({
         )}
       </div>
 
-      <ul className="mt-6 flex-1 space-y-3 text-center">
+      <ul className="mt-6 flex-1 space-y-2 text-center">
         {features.map((feature) => (
           <li
             key={feature}
-            className="flex justify-center gap-2 text-sm text-slate-600"
+            className="flex justify-center gap-1 text-sm text-slate-600"
           >
-            <FiCheck className="mt-0.5 shrink-0 text-green-600" />
+            <FiCheck className="mt-0.5 shrink-0 h-5 w-5 text-green-600" />
             <span>{feature}</span>
           </li>
         ))}
@@ -62,7 +62,7 @@ const PricingCard = ({
       <button
         type="button"
         onClick={onSelect}
-        className={`mt-8 w-full rounded-xl px-4 py-3 text-sm font-semibold transition ${
+        className={`mt-5 w-full rounded-xl px-4 py-3 text-sm font-semibold transition ${
           featured
             ? "bg-blue-700 text-white hover:bg-blue-800"
             : "border border-blue-700 text-blue-700 hover:bg-blue-50"

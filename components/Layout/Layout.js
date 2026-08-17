@@ -1,11 +1,11 @@
 import React from "react";
 import Footer from "./Footer";
-import Header from "./Header";
+import ViewHeader from "./Header/viewHeader";
 
 const Layout = ({ children , guestView, setGuestView}) => {
   return (
     <>
-      <Header   
+      <ViewHeader  
       guestView={guestView}
   setGuestView={setGuestView} />
       {children}

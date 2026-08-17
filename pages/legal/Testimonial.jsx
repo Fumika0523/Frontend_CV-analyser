@@ -45,7 +45,7 @@ const Testimonial = () => {
             What our users say
           </h1>
 
-          <p className="mt-5 text-base text-slate-300 leading-7  sm:text-lg">
+          <p className="mt-5 text-base leading-7  sm:text-lg">
             See how candidates and employers use SkillfulJobs.ai
             to improve their job search and recruitment process.
           </p>

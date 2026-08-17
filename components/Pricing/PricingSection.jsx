@@ -210,7 +210,7 @@ const content = pricingContent[expectedRole];
               {content.title}
             </h1>
 
-            <p className="mt-5 text-base leading-7 text-slate-300 sm:text-lg">
+            <p className="mt-5 text-base leading-7  sm:text-lg">
               {content.description}
             </p>
           </div>

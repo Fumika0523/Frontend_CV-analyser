@@ -24,7 +24,7 @@ const Feature = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 py-8 my-5 items-center"
        //style={{border:"1px solid red"}}
 >
-        <ScrollAnimationWrapper className="flex w-full justify-center lg:justify-end">
+        {/* <ScrollAnimationWrapper className="flex w-full justify-center lg:justify-end">
           <motion.div
             className="w-full max-w-[508px] p-4"
             variants={scrollAnimation}
@@ -38,7 +38,42 @@ const Feature = () => {
               width={508}
             />
           </motion.div>
-        </ScrollAnimationWrapper>
+        </ScrollAnimationWrapper> */}
+        <ScrollAnimationWrapper className="flex w-full justify-center lg:justify-end">
+  <div className="relative w-full max-w-[560px]">
+    {/* Large soft blue glow */}
+    <div
+      aria-hidden="true"
+      className="pointer-events-none absolute left-1/2 top-1/2 h-[95%] w-[95%] -translate-x-1/2 -translate-y-1/2 rounded-full"
+      style={{
+        background:
+          "radial-gradient(ellipse at center, rgba(96, 165, 250, 0.32) 0%, rgba(191, 219, 254, 0.24) 46%, rgba(239, 246, 255, 0) 73%)",
+        filter: "blur(20px)",
+      }}
+    />
+
+    {/* Smaller cyan highlight */}
+    <div
+      aria-hidden="true"
+      className="pointer-events-none absolute bottom-[8%] left-[10%] h-32 w-48 rounded-full bg-sky-300/20 blur-3xl"
+    />
+
+    {/* Feature illustration */}
+    <motion.div
+      className="relative z-10 mx-auto w-full max-w-[508px] p-4 drop-shadow-[0_24px_35px_rgba(37,99,235,0.12)]"
+      variants={scrollAnimation}
+    >
+      <Image
+        src="/assets/Illustration2.png"
+        alt="CV Analysis Illustration"
+        layout="responsive"
+        quality={100}
+        height={414}
+        width={508}
+      />
+    </motion.div>
+  </div>
+</ScrollAnimationWrapper>
 
         <ScrollAnimationWrapper className="flex w-full justify-center lg:justify-end">
           <motion.div
@@ -49,13 +84,12 @@ const Feature = () => {
               Powerful Features for Smarter CV Analysis
             </h1>
 
-            <p className="my-2 max-w-[620px] text-slate-300">
-              We help candidates improve resumes and helps companies
-              review applicants faster with AI-powered CV insights and ATS
-              compatibility.
-            </p>
+           <p className="my-2 max-w-[620px] text-slate-600">
+            We help candidates improve their CVs and help companies review
+            applicants faster with AI-powered insights and ATS compatibility.
+          </p>
 
-            <ul className="text-slate-200 mt-5 space-y-3 text-left mx-auto lg:mx-0">
+            <ul className="mt-5 space-y-3 text-left mx-auto lg:mx-0">
               {features.map((feature, index) => (
                 <motion.li
                   className="flex items-start gap-3"
