@@ -56,15 +56,16 @@ export default function PostedJobs({
 
   return (
     <>
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 mt-5">
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-6">
-          <h2 className="text-xl font-bold text-slate-900 mb-4">Posted Jobs</h2>
 
-          {jobs?.length === 0 ? (
-            <p className="text-slate-500">No jobs posted yet.</p>
-          ) : (
-            <div className="space-y-4">
-              {jobs?.map((job) => (
+<div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-6">
+        <h2 className="text-xl font-bold text-slate-900 mb-4">Posted Jobs</h2>
+
+        {!jobs || jobs.length === 0 ? (
+          <p className="text-sm text-slate-500">No jobs posted yet.</p>
+        ) : (
+          <div className="space-y-4">
+            {jobs.map((job) => (
+
                 <div
                   key={job._id}
                   onClick={() => onSelectJob?.(job)}
@@ -121,7 +122,7 @@ export default function PostedJobs({
             </div>
           )}
         </div>
-      </div>
+  
 
       {selectedJob && editForm && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center px-4">

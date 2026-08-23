@@ -4,7 +4,7 @@ import ButtonPrimary from "./misc/ButtonPrimary";
 import { motion } from "framer-motion";
 import getScrollAnimation from "../utils/getScrollAnimation";
 import ScrollAnimationWrapper from "./Layout/ScrollAnimationWrapper";
-import { FaFileUpload, FaBrain, FaChartBar } from "react-icons/fa";
+import { FaFileUpload, FaBrain, FaChartBar, FaBriefcase } from "react-icons/fa";
 import CVUpload from "../pages/candidate/Dashboard/CVUpload";
 import AuthModal from "./Auth/authModal/authModal";
 import OtpModal from "./Auth/otpModal";
@@ -35,12 +35,47 @@ const heroContent = {
     description:
       "Upload your resume and get AI-powered insights including extracted skills, missing skills, job role recommendations, and improvement tips.",
     primaryButton: "Upload CV",
+    stats: [
+      {
+        name: "Resume Uploads",
+        number: "500",
+        icon: <FaFileUpload className="text-blue-700 text-2xl" />,
+      },
+      {
+        name: "Skills Analysed",
+        number: "120",
+        icon: <FaBrain className="text-blue-700 text-2xl" />,
+      },
+      {
+        name: "AI Reports",
+        number: "300",
+        icon: <FaChartBar className="text-blue-700 text-2xl" />,
+      },
+    ],
   },
+
   company: {
     title: "Hire smarter with SkillfulJobs",
     description:
       "Post jobs, manage applications, and use AI-powered CV insights to shortlist candidates faster.",
     primaryButton: "Post a Job",
+    stats: [
+      {
+        name: "Jobs Posted",
+        number: "100",
+        icon: <FaBriefcase className="text-blue-700 text-2xl" />,
+      },
+      {
+        name: "CVs Analysed",
+        number: "500",
+        icon: <FaFileUpload className="text-blue-700 text-2xl" />,
+      },
+      {
+        name: "Candidate Matches",
+        number: "300",
+        icon: <FaChartBar className="text-blue-700 text-2xl" />,
+      },
+    ],
   },
 };
 
@@ -61,21 +96,21 @@ const Hero = ({ guestView, setGuestView }) => {
   const [guestPostJobOpen, setGuestPostJobOpen] = useState(false);
   // console.log("guestView",guestView)
 
-const handlePrimaryClick = () => {
-  const token = localStorage.getItem("token");
+  const handlePrimaryClick = () => {
+    const token = localStorage.getItem("token");
 
-  if (guestView === "candidate") {
-    setUploadIsGuest(!token); // no token = guest, token = candidate user
-    setGuestUploadOpen(true);
-    return;
-  }
+    if (guestView === "candidate") {
+      setUploadIsGuest(!token); // no token = guest, token = candidate user
+      setGuestUploadOpen(true);
+      return;
+    }
 
-  if (token) {
-    router.push("/company/Dashboard/PostJob/postJobPage");
-  } else {
-    setGuestPostJobOpen(true);
-  }
-};
+    if (token) {
+      router.push("/company/Dashboard/PostJob/postJobPage");
+    } else {
+      setGuestPostJobOpen(true);
+    }
+  };
 
   const handleOtpSent = (data) => {
     console.log("OTP SENT FROM HERO:", data);
@@ -110,50 +145,66 @@ const handlePrimaryClick = () => {
                 {content.description}
               </p>
 
-              <ButtonPrimary addClass="group" onClick={handlePrimaryClick}>
-                {content.primaryButton}
+              <ButtonPrimary
+                addClass="group inline-flex items-center justify-center gap-2"
+                onClick={handlePrimaryClick}
+              >
+                {guestView === "candidate" ? (
+                  <FaFileUpload className="text-lg" aria-hidden="true" />
+                ) : (
+                  <FaBriefcase className="text-lg" aria-hidden="true" />
+                )}
+
+                <span>{content.primaryButton}</span>
               </ButtonPrimary>
             </div>
 
             <div className="relative order-1 flex w-full justify-center lg:order-2">
-  {/* Large soft blue glow */}
-  <div
-    aria-hidden="true"
-    className="pointer-events-none absolute left-1/2 top-1/2 h-[95%] w-[95%] -translate-x-1/2 -translate-y-1/2 rounded-full"
-    style={{
-      background:
-        "radial-gradient(ellipse at center, rgba(96, 165, 250, 0.35) 0%, rgba(191, 219, 254, 0.25) 46%, rgba(239, 246, 255, 0) 73%)",
-      filter: "blur(20px)",
-    }}
-  />
+              {/* Large soft blue glow */}
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute left-1/2 top-1/2 h-[95%] w-[95%] -translate-x-1/2 -translate-y-1/2 rounded-full"
+                style={{
+                  background:
+                    "radial-gradient(ellipse at center, rgba(96, 165, 250, 0.35) 0%, rgba(191, 219, 254, 0.25) 46%, rgba(239, 246, 255, 0) 73%)",
+                  filter: "blur(20px)",
+                }}
+              />
 
-  {/* Smaller cyan highlight */}
-  <div
-    aria-hidden="true"
-    className="pointer-events-none absolute bottom-[8%] right-[12%] h-32 w-48 rounded-full bg-sky-300/20 blur-3xl"
-  />
+              {/* Smaller cyan highlight */}
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute bottom-[8%] right-[12%] h-32 w-48 rounded-full bg-sky-300/20 blur-3xl"
+              />
 
-  {/* Illustration */}
-  <motion.div
-    className="relative z-10 w-full max-w-[612px] drop-shadow-[0_24px_35px_rgba(37,99,235,0.12)]"
-    variants={scrollAnimation}
-  >
-    <Image
-      src="/assets/Illustration1.png"
-      alt="CV Analyser Illustration"
-      quality={100}
-      width={612}
-      height={383}
-      layout="responsive"
-    />
-  </motion.div>
-</div>
+              {/* Illustration */}
+              <motion.div
+                className="relative z-10 w-full max-w-[612px] drop-shadow-[0_24px_35px_rgba(37,99,235,0.12)]"
+                variants={scrollAnimation}
+              >
+                <Image
+                  src="/assets/Illustration1.png"
+                  alt="CV Analyser Illustration"
+                  quality={100}
+                  width={612}
+                  height={383}
+                  layout="responsive"
+                />
+              </motion.div>
+            </div>
           </motion.div>
         </ScrollAnimationWrapper>
 
         <div className="relative w-full flex">
-          <ScrollAnimationWrapper className="rounded-xl w-full grid grid-cols-1 sm:grid-cols-3 py-9 divide-y-2 sm:divide-y-0 sm:divide-x-2 divide-gray-100 bg-blue-800 z-10 shadow-[0_30px_80px_rgba(13,16,37,0.08)]">
-            {listUser.map((listUsers, index) => (
+          <ScrollAnimationWrapper
+            className="
+              rounded-xl w-full grid grid-cols-1 sm:grid-cols-3 py-9
+              divide-y-2 sm:divide-y-0 sm:divide-x-2 divide-white/20
+              bg-gradient-to-br from-blue-700 to-blue-900
+              z-10 shadow-[0_30px_80px_rgba(13,16,37,0.08)]
+            "
+          >
+            {content.stats.map((listUsers, index) => (
               <motion.div
                 className="flex items-center justify-center py-4 sm:py-6 px-4"
                 key={index}
@@ -166,10 +217,13 @@ const handlePrimaryClick = () => {
                   </div>
 
                   <div className="flex flex-col">
-                    <p className="text-xl text-slate-200 font-bold">
+                    <p className="text-xl text-white font-bold">
                       {listUsers.number}+
                     </p>
-                    <p className="text-lg text-slate-200 ">{listUsers.name}</p>
+
+                    <p className="text-lg text-blue-100">
+                      {listUsers.name}
+                    </p>
                   </div>
                 </div>
               </motion.div>
@@ -222,7 +276,7 @@ const handlePrimaryClick = () => {
 
             <h2 className="text-xl font-semibold text-slate-200 mb-2">
               {/* <FiZap/>  */}
-              Post a Job 
+              Post a Job
             </h2>
 
             <p className="text-sm text-slate-200 mb-5">
@@ -261,7 +315,7 @@ const handlePrimaryClick = () => {
           email={otpModal.email}
           onClose={() => setOtpModal({ isOpen: false, _id: "", email: "" })}
           onVerified={(data) => {
-         //   console.log("data from Hero",data)
+            //   console.log("data from Hero",data)
             if (data?.token) {
               localStorage.setItem("token", data.token);
             }

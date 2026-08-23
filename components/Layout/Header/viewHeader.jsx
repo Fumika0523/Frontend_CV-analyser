@@ -63,13 +63,13 @@ const DesktopGuestButton = ({ item, activeLink, onSelect }) => {
         className={`group mx-1 inline-flex items-center gap-1 rounded-lg bg-transparent px-3 py-2 text-sm font-medium transition-all duration-200 ${
           isActive
             ? "bg-blue-50 text-blue-900"
-            : "text-slate-600 hover:bg-sky-100/40 hover:text-slate-900"
+            : "text-slate-600 hover:bg-blue-200/40 hover:text-slate-900"
         }`}
       >
         <Icon
           aria-hidden="true"
           className={`h-5 w-5 transition-colors ${
-            isActive ? "text-sky-600" : "text-blue-700 group-hover:text-blue-400"
+            isActive ? "text-sky-600" : "text-blue-700 group-hover:text-sky-500"
           }`}
         />
         {item.label}
