@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/router";
 import { toast } from "react-toastify";
-import AuthModal from "../Auth/authModal";
+import AuthModal from "../Auth//authModal/authModal";
 import OtpModal from "../Auth/otpModal";
 import {pricingPlans, pricingContent} from './pringData'
 import PricingCard from "./PricingCard";

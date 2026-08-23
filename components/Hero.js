@@ -6,7 +6,7 @@ import getScrollAnimation from "../utils/getScrollAnimation";
 import ScrollAnimationWrapper from "./Layout/ScrollAnimationWrapper";
 import { FaFileUpload, FaBrain, FaChartBar } from "react-icons/fa";
 import CVUpload from "../pages/candidate/Dashboard/CVUpload";
-import AuthModal from "./Auth/authModal";
+import AuthModal from "./Auth/authModal/authModal";
 import OtpModal from "./Auth/otpModal";
 import { useRouter } from "next/router";
 import { FiZap } from "react-icons/fi";

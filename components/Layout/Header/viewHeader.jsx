@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import axios from "axios";
 
-import AuthModal from "../../Auth/authModal";
+import AuthModal from "../../Auth/authModal/authModal";
 import OtpModal from "../../Auth/otpModal";
 import SettingsModal from "../../Auth/settingsModal";
 import ButtonPrimary from "../../misc/ButtonPrimary";

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/router";
 import { url } from "../../../utils/constant";
-import AuthModal from "../../../components/Auth/authModal";
+import AuthModal from "../../../components/Auth/authModal/authModal";
 import OtpModal from "../../../components/Auth/otpModal";
 import { toast } from "react-toastify";
 

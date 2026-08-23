@@ -12,6 +12,11 @@ const applicationStatusLabels = {
 };
 
 const ApplyJobs = () => {
+//Filter
+const [salaryRange, setSalaryRange] = useState('')
+const [workMode, setWorkMode]= useState('')
+const [location,setLocation] = useState('')
+const [jobTitle,setJobTitle] = useState('')
   const [searchTerm, setSearchTerm] = useState("");
   const [jobData, setJobData] = useState([]);
   const [selectedJob, setSelectedJob] = useState(null);
