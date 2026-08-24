@@ -7,6 +7,7 @@ import { url } from "../../../utils/constant";
 import {
   FiAlertCircle,
   FiBriefcase,
+    FiCalendar,
   FiCheckCircle,
   FiDollarSign,
   FiFileText,
@@ -32,9 +33,81 @@ const LatestJobs = () => {
   const [applicationStatuses, setApplicationStatuses] =
     useState({});
 
-  /**
-   * Convert a location object or string into readable text.
-   */
+    const [selectedJob, setSelectedJob] = useState(null);
+
+  const applicationStatusLabels = {
+    pending: "Application Submitted",
+    reviewing: "Application Under Review",
+    interview: "Interview Stage",
+    accepted: "Application Accepted",
+    rejected: "Application Unsuccessful",
+  };
+
+  // 1. New state, alongside your existing searchTerm state
+  const [minSalary, setMinSalary] = useState(0); // 0 = "any salary"
+
+  const salaryOptions = [
+    "£15,000 - £20,000", "£20,000 - £25,000", "£25,000 - £30,000",
+    "£30,000 - £35,000", "£35,000 - £40,000", "£40,000 - £50,000",
+    "£50,000 - £60,000", "£60,000 - £70,000", "£70,000+", "Competitive",
+  ];
+
+
+  const parseSalaryMin = (salaryString) => {
+    // Special case #1: "£70,000+" isn't a range, it's a single floor value.
+    // We check for it explicitly because it doesn't have the " - " separator
+    // the other brackets do, so the generic parsing logic below would break on it.
+    if (salaryString === "£70,000+") {
+      return 70000;
+    }
+
+    // Special case #2: "Competitive" has no number in it at all.
+    // We return null as a sentinel meaning "unknown salary" — the filter
+    // logic downstream checks for this null and treats it specially.
+    if (salaryString === "Competitive") {
+      return null;
+    }
+
+    // Everything else has the shape "£40,000 - £50,000".
+    // .split(" - ") cuts the string at that separator and gives back
+    // an array: ["£40,000", "£50,000"]
+    const parts = salaryString.split(" - ");
+
+    // parts[0] is the lower bound — "£40,000". We only want the number,
+    // so we strip out the "£" and "," characters.
+    // .replace() with a /g (global) regex flag replaces every match, not just the first —
+    // without /g, only the first comma would be removed, e.g. "40,000" → "40000" would fail
+    // on numbers with two commas.
+    const lowerBoundText = parts[0].replace(/[£,]/g, "");
+
+    // parseInt converts the cleaned string "40000" into the actual number 40000.
+    return parseInt(lowerBoundText, 10);
+    // the second argument, 10, means "parse as base 10" — always pass this,
+    // otherwise a string starting with "0" can get misread as octal in old JS engines.
+  };
+
+
+  const passesSalaryFilter = (job) => {
+    // If the candidate hasn't picked a minimum, every job passes — nothing to filter.
+    if (minSalary === 0) {
+      return true;
+    }
+
+    const jobMin = parseSalaryMin(job.salary);
+
+    // jobMin is null only when the salary was "Competitive" — we decided
+    // to always show those regardless of what minimum is selected.
+    if (jobMin === null) {
+      return true;
+    }
+
+    // Normal case: keep the job only if its floor meets or beats the candidate's minimum.
+    return jobMin >= minSalary;
+  };
+
+
+
+  /*** Convert a location object or string into readable text.*/
   const formatLocation = (location) => {
     if (!location) {
       return "";
@@ -49,9 +122,7 @@ const LatestJobs = () => {
       .join(", ");
   };
 
-  /**
-   * Retrieve all jobs.
-   */
+  /** * Retrieve all jobs. */
   const fetchJobs = async () => {
     try {
       setLoading(true);
@@ -79,16 +150,14 @@ const LatestJobs = () => {
 
       setJobsError(
         error.response?.data?.message ||
-          "We could not load the latest jobs."
+        "We could not load the latest jobs."
       );
     } finally {
       setLoading(false);
     }
   };
 
-  /**
-   * Retrieve the candidate's existing applications.
-   */
+  /*** Retrieve the candidate's existing applications.   */
   const fetchMyApplications = async (token) => {
     if (!token) {
       return;
@@ -147,9 +216,7 @@ const LatestJobs = () => {
     }
   };
 
-  /**
-   * Load jobs and application history when the page opens.
-   */
+  /** * Load jobs and application history when the page opens. */
   useEffect(() => {
     const token = localStorage.getItem("token");
 
@@ -162,9 +229,7 @@ const LatestJobs = () => {
     }
   }, []);
 
-  /**
-   * Apply for a job.
-   */
+  /*** Apply for a job.*/
   const handleApply = async (jobId) => {
     const token = localStorage.getItem("token");
 
@@ -200,7 +265,7 @@ const LatestJobs = () => {
 
       alert(
         response.data?.message ||
-          "Application submitted successfully with your latest CV!"
+        "Application submitted successfully with your latest CV!"
       );
     } catch (error) {
       const serverMessage =
@@ -244,9 +309,7 @@ const LatestJobs = () => {
     }
   };
 
-  /**
-   * Check whether the application deadline has passed.
-   */
+  /*** Check whether the application deadline has passed. */
   const isJobExpired = (job) => {
     if (!job.applicationEndDate) {
       return false;
@@ -257,35 +320,77 @@ const LatestJobs = () => {
     );
   };
 
+  // Check if its Recently added 
+  const isRecentJob = (job)=>{
+    if(!job.createdAt){
+      return false
+    }
+    //Take a job.
+
+// If the job doesn't have a created date:
+//     say false.
+
+// Convert the job's created date into a Date.
+
+// Create today's date.
+
+// Move today's date backwards 14 days.
+
+// Check:
+// Is the job's date on or after that date?
+
+// Yes → true
+// No  → false
+    //give you the created date and concert mongoDB' date into a JavaScript Date
+    // e.g job.createdAt = "2026-08-20T13:32:10.000Z";
+    const jobDate = new Date(job.createdAt);
+    // Today
+    const fourteenDaysAgo = new Date()
+    // setDate(10)
+    // change the date from 24 Aug to 10 Aug
+    fourteenDaysAgo.setDate(
+      //getDate() >> the day of the month
+      // eg >> 24 (24th Aug)
+      // 24 - 14 = 10
+      fourteenDaysAgo.getDate() - 14
+    )
+    // 20 Aug >= 10 Aug // true
+    return jobDate >= fourteenDaysAgo
+  }
+
   const searchValue = searchTerm.trim().toLowerCase();
 
-  /**
-   * Hide previously applied jobs and filter by search text.
-   */
+
   const filteredJobs = jobs.filter((job) => {
-    const hasAlreadyApplied = Boolean(
-      applicationStatuses[String(job._id)]
-    );
 
-    if (hasAlreadyApplied) {
-      return false;
-    }
-
-    const title = job.title || "";
+    const title = job.title;
 
     const companyName =
       job.companyId?.companyName ||
-      job.companyName ||
-      "";
+      job.companyName
 
     const locationText = formatLocation(job.location);
 
-    return (
+    const matchesSearch =
       title.toLowerCase().includes(searchValue) ||
       companyName.toLowerCase().includes(searchValue) ||
-      locationText.toLowerCase().includes(searchValue)
-    );
-  });
+      locationText.toLowerCase().includes(searchValue);
+
+      const isOpen =
+  String(job.status || "").toLowerCase() === "open";
+
+const isAvailable =
+  isOpen && !isJobExpired(job);
+return (
+   matchesSearch &&
+  passesSalaryFilter(job) &&
+  isRecentJob(job) &&
+  isAvailable
+);
+  })
+  .sort((a, b) => {
+  return new Date(b.createdAt) - new Date(a.createdAt);
+});
 
   return (
     <Layout>
@@ -432,6 +537,16 @@ const LatestJobs = () => {
                 /* Job cards */
                 <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
                   {filteredJobs.map((job) => {
+                    //For this particular job, find whether an application exists.
+                    const applicationStatus = applicationStatuses[String(job._id)]
+console.log(
+  "JOB:",
+  job.title,
+  "STATUS:",
+  applicationStatus
+);
+                    const hasAlreadyApplied = Boolean(applicationStatus)
+
                     const isOpen =
                       String(
                         job.status || ""
@@ -457,11 +572,10 @@ const LatestJobs = () => {
                     return (
                       <article
                         key={job._id}
-                        className={`group flex h-full flex-col rounded-xl border border-l-4 bg-white p-5 transition duration-200 hover:-translate-y-0.5 hover:shadow-lg ${
-                          unavailable
-                            ? "border-slate-200 border-l-red-400 hover:border-red-200"
-                            : "border-slate-200 border-l-blue-500 hover:border-blue-200"
-                        }`}
+                        className={`group flex h-full flex-col rounded-xl border border-l-4 bg-white p-5 transition duration-200 hover:-translate-y-0.5 hover:shadow-lg ${unavailable
+                          ? "border-slate-200 border-l-red-400 hover:border-red-200"
+                          : "border-slate-200 border-l-blue-500 hover:border-blue-200"
+                          }`}
                       >
                         {/* Job title and status */}
                         <div className="flex items-start justify-between gap-3">
@@ -473,30 +587,45 @@ const LatestJobs = () => {
                               />
                             </div>
 
-                            <div className="min-w-0">
-                              <h2 className="font-semibold text-slate-900">
-                                {job.title ||
-                                  "Untitled job"}
-                              </h2>
+                          <div className="min-w-0">
+  <h2 className="font-semibold text-slate-900">
+    {job.title || "Untitled job"}
+  </h2>
 
-                              <p className="mt-1 flex items-center gap-1.5 text-sm text-slate-600">
-                                <FiHome
-                                  aria-hidden="true"
-                                  className="shrink-0 text-slate-400"
-                                  size={14}
-                                />
+  <p className="mt-1 flex items-center gap-1.5 text-sm text-slate-600">
+    <FiHome
+      aria-hidden="true"
+      className="shrink-0 text-slate-400"
+      size={14}
+    />
 
-                                <span>{companyName}</span>
-                              </p>
-                            </div>
+    <span>{companyName}</span>
+  </p>
+
+  <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-500">
+    <FiCalendar
+      aria-hidden="true"
+      className="shrink-0 text-slate-400"
+      size={13}
+    />
+
+    <span>
+      Posted{" "}
+      {new Date(job.createdAt).toLocaleDateString("en-GB", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      })}
+    </span>
+  </p>
+</div>
                           </div>
 
                           <span
-                            className={`flex w-fit shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ${
-                              unavailable
-                                ? "bg-red-100 text-red-700"
-                                : "bg-emerald-100 text-emerald-700"
-                            }`}
+                            className={`flex w-fit shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ${unavailable
+                              ? "bg-red-100 text-red-700"
+                              : "bg-emerald-100 text-emerald-700"
+                              }`}
                           >
                             {unavailable ? (
                               <FiLock
@@ -580,6 +709,14 @@ const LatestJobs = () => {
                               ))}
                           </div>
                         )}
+{/* see full description */}
+<button
+  type="button"
+  onClick={() => setSelectedJob(job)}
+  className="mt-4 text-sm font-semibold text-blue-700 hover:underline"
+>
+  See full description
+</button>
 
                         {/* Apply button */}
                         <button
@@ -588,22 +725,23 @@ const LatestJobs = () => {
                             handleApply(job._id)
                           }
                           disabled={
-                            isApplying || unavailable
+                            isApplying ||
+                            unavailable ||
+                            hasAlreadyApplied
                           }
-                          className={`mt-auto flex w-full items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold text-white transition ${
-                            keySkills.length > 0
+                          className={`mt-2 flex w-full items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold text-white 
+                           transition ${keySkills.length > 0
                               ? "pt-2.5"
                               : ""
-                          } ${
-                            unavailable
+                            } ${unavailable
                               ? "mt-5 cursor-not-allowed bg-slate-400"
                               : "mt-5 bg-blue-700 hover:bg-blue-800 disabled:opacity-50"
-                          }`}
+                            }`}
                         >
+                          {/* If Applying >> Show Applying... , else if unavailable >> Show Application Closed, else if not logged in  >> show sign up to Apply, else if already applied >> show application submitted , else >> Show apply with CV*/}
                           {isApplying ? (
                             <>
                               <FiLoader
-                                aria-hidden="true"
                                 className="animate-spin"
                                 size={17}
                               />
@@ -611,26 +749,23 @@ const LatestJobs = () => {
                             </>
                           ) : unavailable ? (
                             <>
-                              <FiLock
-                                aria-hidden="true"
-                                size={17}
-                              />
+                              <FiLock size={17} />
                               Applications Closed
                             </>
                           ) : !isLoggedIn ? (
                             <>
-                              <FiLogIn
-                                aria-hidden="true"
-                                size={17}
-                              />
+                              <FiLogIn size={17} />
                               Sign up to Apply
+                            </>
+                          ) : hasAlreadyApplied ? (
+                            <>
+                              <FiCheckCircle size={17} />
+                              {applicationStatusLabels[applicationStatus] ||
+                                "Already Applied"}
                             </>
                           ) : (
                             <>
-                              <FiFileText
-                                aria-hidden="true"
-                                size={17}
-                              />
+                              <FiFileText size={17} />
                               Apply with CV
                             </>
                           )}
@@ -643,8 +778,83 @@ const LatestJobs = () => {
             </div>
           </section>
         </div>
+        {selectedJob && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+    <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
+      <div className="mb-4 flex items-start justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-900">
+            {selectedJob.title}
+          </h2>
+
+          <p className="mt-1 text-sm text-slate-500">
+            {formatLocation(selectedJob.location)}
+          </p>
+
+          <p className="mb-4 text-sm text-slate-600">
+  {selectedJob.salary} · {selectedJob.jobType} ·{" "}
+  {selectedJob.workMode}
+</p>
+
+<h3 className="mb-1 text-sm font-bold">
+  Role Summary
+</h3>
+
+<p className="mb-4 text-sm text-slate-600">
+  {selectedJob.roleSummary}
+</p>
+
+<h3 className="mb-1 text-sm font-bold">
+  Requirements
+</h3>
+
+<ul className="mb-4 list-disc pl-5 text-sm text-slate-600">
+  {selectedJob.requirements?.map((item, index) => (
+    <li key={`${item}-${index}`}>
+      {item}
+    </li>
+  ))}
+</ul>
+
+<h3 className="mb-1 text-sm font-bold">
+  Responsibilities
+</h3>
+
+<ul className="mb-4 list-disc pl-5 text-sm text-slate-600">
+  {selectedJob.responsibilities?.map((item, index) => (
+    <li key={`${item}-${index}`}>
+      {item}
+    </li>
+  ))}
+</ul>
+<div className="mt-6 flex justify-end gap-3">
+  {selectedJob.companyUrl && (
+    <a
+      href={selectedJob.companyUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-blue-700 transition hover:bg-slate-50"
+    >
+      Company Website
+    </a>
+  )}
+</div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setSelectedJob(null)}
+          className="text-xl text-slate-500 hover:text-slate-800"
+        >
+          ×
+        </button>
+      </div>
+    </div>
+  </div>
+)}
       </main>
     </Layout>
+    
   );
 };
 

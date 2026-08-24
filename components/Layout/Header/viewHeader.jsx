@@ -7,9 +7,22 @@ import AuthModal from "../../Auth/authModal/authModal";
 import OtpModal from "../../Auth/otpModal";
 import SettingsModal from "../../Auth/settingsModal";
 import ButtonPrimary from "../../misc/ButtonPrimary";
-
-import { FiBriefcase } from "react-icons/fi";
-import { FaSignInAlt, FaUserPlus, FaBuilding, FaUser } from "react-icons/fa";
+import {
+  FaHome,
+  FaBriefcase,
+  FaFileAlt,
+  FaSearch,
+  FaUsers,
+  FaBuilding,
+  FaSignInAlt ,
+  FaUserPlus ,
+  FaUser,
+  FaCog,
+  FaSignOutAlt ,
+  FaClipboardList,
+  FaTachometerAlt,
+  FaUserTie,
+} from "react-icons/fa";
 
 import { NAV_GUEST, NAV_CANDIDATE, NAV_COMPANY } from "./headerData";
 
@@ -63,13 +76,13 @@ const DesktopGuestButton = ({ item, activeLink, onSelect }) => {
         className={`group mx-1 inline-flex items-center gap-1 rounded-lg bg-transparent px-3 py-2 text-sm font-medium transition-all duration-200 ${
           isActive
             ? "bg-blue-50 text-blue-900"
-            : "text-slate-600 hover:bg-blue-200/40 hover:text-slate-900"
+            : "text-slate-600 hover:bg-sky-100/80 hover:text-slate-900"
         }`}
       >
         <Icon
           aria-hidden="true"
           className={`h-5 w-5 transition-colors ${
-            isActive ? "text-sky-600" : "text-blue-700 group-hover:text-sky-500"
+            isActive ? "text-sky-600" : "text-blue-700 group-hover:text-blue-400"
           }`}
         />
         {item.label}
@@ -337,7 +350,7 @@ const viewHeader = ({ guestView = "candidate", setGuestView = EMPTY_SET_GUEST_VI
           <Link href="/">
             <a className="col-start-1 col-end-2 flex items-center gap-2.5">
               <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-blue-700 to-sky-400 text-white shadow-sm">
-                <FiBriefcase aria-hidden="true" size={18} />
+                <FaBriefcase aria-hidden="true" size={17} />
               </span>
               <span className="text-xl font-bold tracking-tight text-[#0f2f68]">
                 SkillfulJobs<span className="text-blue-600">.ai</span>
@@ -395,46 +408,77 @@ const viewHeader = ({ guestView = "candidate", setGuestView = EMPTY_SET_GUEST_VI
                       event.stopPropagation();
                       setDropdownOpen((previous) => !previous);
                     }}
-                    className="flex h-[34px] w-[34px] items-center justify-center rounded-full border-2 border-white bg-gradient-to-br from-slate-900 to-blue-700 text-xs font-bold text-white shadow-[0_0_0_2px_#0f172a] transition hover:shadow-[0_0_0_3px_#1d4ed8]"
+                    className="flex h-[34px] w-[34px] items-center justify-center rounded-full border-2 border-white bg-gradient-to-br from-blue-900 to-sky-500 text-xs font-bold text-white shadow-[0_0_0_2px_#0f172a] transition hover:shadow-[0_0_0_3px_#1d4ed8]"
                   >
                     {initials}
                   </button>
 
-                  {dropdownOpen && (
-                    <div
-                      onClick={(event) => event.stopPropagation()}
-                      className="absolute right-0 top-[calc(100%+8px)] z-50 min-w-[180px] rounded-xl border border-slate-200 bg-white p-1.5 shadow-lg"
-                    >
-                      {user.role === "candidate" && (
-                        <Link href="/candidate/viewMyCVs">
-                          <a className="block w-full rounded-lg px-3.5 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-100 hover:text-blue-600">
-                            📄 My CV
-                          </a>
-                        </Link>
-                      )}
+              {dropdownOpen && (
+  <div
+    onClick={(event) => event.stopPropagation()}
+    className="
+      absolute right-0 top-[calc(100%+10px)] z-50
+      min-w-[190px]
+      rounded-xl
+      border border-blue-100
+      bg-white
+      p-2
+      shadow-[0_12px_30px_rgba(15,47,104,0.12)]
+    "
+  >
+    {user.role === "candidate" && (
+      <Link href="/candidate/viewMyCVs">
+        <a
+          className="
+            flex w-full items-center gap-3
+            rounded-lg px-3.5 py-2.5
+            text-left text-sm font-medium text-slate-700
+            transition-all duration-200
+            hover:bg-blue-50 hover:text-blue-700
+          "
+        >
+          <FaFileAlt className="text-blue-600" />
+          My CV
+        </a>
+      </Link>
+    )}
 
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSettingsModalOpen(true);
-                          setDropdownOpen(false);
-                        }}
-                        className="block w-full rounded-lg px-3.5 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-100 hover:text-blue-600"
-                      >
-                        ⚙️ Settings
-                      </button>
+    <button
+      type="button"
+      onClick={() => {
+        setSettingsModalOpen(true);
+        setDropdownOpen(false);
+      }}
+      className="
+        flex w-full items-center gap-3
+        rounded-lg px-3.5 py-2.5
+        text-left text-sm font-medium text-slate-700
+        transition-all duration-200
+        hover:bg-blue-50 hover:text-blue-700
+      "
+    >
+      <FaCog className="text-blue-600" />
+      Settings
+    </button>
 
-                      <div className="my-1 border-t border-blue-100" />
+    <div className="my-1.5 border-t border-blue-100" />
 
-                      <button
-                        type="button"
-                        onClick={handleLogout}
-                        className="block w-full rounded-lg px-3.5 py-2 text-left text-sm text-slate-700 transition hover:bg-red-50 hover:text-rose-600"
-                      >
-                        🚪 Sign Out
-                      </button>
-                    </div>
-                  )}
+    <button
+      type="button"
+      onClick={handleLogout}
+      className="
+        flex w-full items-center gap-3
+        rounded-lg px-3.5 py-2.5
+        text-left text-sm font-medium text-slate-700
+        transition-all duration-200
+        hover:bg-red-50 hover:text-red-600
+      "
+    >
+      <FaSignOutAlt className="text-red-500" />
+      Sign Out
+    </button>
+  </div>
+)}
                 </div>
               </div>
             ) : (
