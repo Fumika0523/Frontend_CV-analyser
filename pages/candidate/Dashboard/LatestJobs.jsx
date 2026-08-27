@@ -43,69 +43,66 @@ const LatestJobs = () => {
     rejected: "Application Unsuccessful",
   };
 
-  // 1. New state, alongside your existing searchTerm state
-  const [minSalary, setMinSalary] = useState(0); // 0 = "any salary"
+const [locationFilter, setLocationFilter] = useState("");
+const [minSalary, setMinSalary] = useState(0);
+const [workModeFilter, setWorkModeFilter] = useState("");
 
-  const salaryOptions = [
-    "£15,000 - £20,000", "£20,000 - £25,000", "£25,000 - £30,000",
-    "£30,000 - £35,000", "£35,000 - £40,000", "£40,000 - £50,000",
-    "£50,000 - £60,000", "£60,000 - £70,000", "£70,000+", "Competitive",
-  ];
+const salaryFilterOptions = [
+  { label: "Any salary", value: 0 },
+  { label: "£15,000+", value: 15000 },
+  { label: "£20,000+", value: 20000 },
+  { label: "£25,000+", value: 25000 },
+  { label: "£30,000+", value: 30000 },
+  { label: "£35,000+", value: 35000 },
+  { label: "£40,000+", value: 40000 },
+  { label: "£50,000+", value: 50000 },
+  { label: "£60,000+", value: 60000 },
+  { label: "£70,000+", value: 70000 },
+];
 
+const workModeOptions = [
+  "Office",
+  "Hybrid",
+  "Remote",
+];
 
-  const parseSalaryMin = (salaryString) => {
-    // Special case #1: "£70,000+" isn't a range, it's a single floor value.
-    // We check for it explicitly because it doesn't have the " - " separator
-    // the other brackets do, so the generic parsing logic below would break on it.
-    if (salaryString === "£70,000+") {
-      return 70000;
-    }
+const parseSalaryMin = (salaryString) => {
+  if (!salaryString || typeof salaryString !== "string") {
+    return null;
+  }
 
-    // Special case #2: "Competitive" has no number in it at all.
-    // We return null as a sentinel meaning "unknown salary" — the filter
-    // logic downstream checks for this null and treats it specially.
-    if (salaryString === "Competitive") {
-      return null;
-    }
+  const cleanedSalary = salaryString.replace(/,/g, "");
 
-    // Everything else has the shape "£40,000 - £50,000".
-    // .split(" - ") cuts the string at that separator and gives back
-    // an array: ["£40,000", "£50,000"]
-    const parts = salaryString.split(" - ");
+  const match = cleanedSalary.match(/\d+/);
 
-    // parts[0] is the lower bound — "£40,000". We only want the number,
-    // so we strip out the "£" and "," characters.
-    // .replace() with a /g (global) regex flag replaces every match, not just the first —
-    // without /g, only the first comma would be removed, e.g. "40,000" → "40000" would fail
-    // on numbers with two commas.
-    const lowerBoundText = parts[0].replace(/[£,]/g, "");
+  if (!match) {
+    return null;
+  }
 
-    // parseInt converts the cleaned string "40000" into the actual number 40000.
-    return parseInt(lowerBoundText, 10);
-    // the second argument, 10, means "parse as base 10" — always pass this,
-    // otherwise a string starting with "0" can get misread as octal in old JS engines.
-  };
+  return Number(match[0]);
+};
 
+const passesSalaryFilter = (job) => {
+  if (minSalary === 0) {
+    return true;
+  }
 
-  const passesSalaryFilter = (job) => {
-    // If the candidate hasn't picked a minimum, every job passes — nothing to filter.
-    if (minSalary === 0) {
-      return true;
-    }
+  const salaryText = String(job.salary || "")
+    .trim()
+    .toLowerCase();
 
-    const jobMin = parseSalaryMin(job.salary);
+  if (salaryText === "competitive") {
+    return true;
+  }
 
-    // jobMin is null only when the salary was "Competitive" — we decided
-    // to always show those regardless of what minimum is selected.
-    if (jobMin === null) {
-      return true;
-    }
+  const jobMinSalary = parseSalaryMin(job.salary);
 
-    // Normal case: keep the job only if its floor meets or beats the candidate's minimum.
-    return jobMin >= minSalary;
-  };
+  if (jobMinSalary === null) {
+    return false;
+  }
 
-
+  return jobMinSalary >= minSalary;
+};
 
   /*** Convert a location object or string into readable text.*/
   const formatLocation = (location) => {
@@ -359,38 +356,96 @@ const LatestJobs = () => {
   }
 
   const searchValue = searchTerm.trim().toLowerCase();
+const locationValue =
+  locationFilter.trim().toLowerCase();
 
+const hasActiveFilters =
+  Boolean(searchValue) ||
+  Boolean(locationValue) ||
+  Boolean(workModeFilter) ||
+  minSalary > 0;
 
-  const filteredJobs = jobs.filter((job) => {
+const clearFilters = () => {
+  setSearchTerm("");
+  setLocationFilter("");
+  setMinSalary(0);
+  setWorkModeFilter("");
+};
 
-    const title = job.title;
+const filteredJobs = jobs
+  .filter((job) => {
+    const title = String(job.title || "");
 
-    const companyName =
+    const companyName = String(
       job.companyId?.companyName ||
-      job.companyName
+      job.companyName ||
+      ""
+    );
 
-    const locationText = formatLocation(job.location);
+    const locationText =
+      formatLocation(job.location);
 
+    const skillsText = Array.isArray(job.keySkills)
+      ? job.keySkills.join(" ")
+      : "";
+
+    // Keyword search
     const matchesSearch =
+      !searchValue ||
       title.toLowerCase().includes(searchValue) ||
       companyName.toLowerCase().includes(searchValue) ||
-      locationText.toLowerCase().includes(searchValue);
+      skillsText.toLowerCase().includes(searchValue);
 
-      const isOpen =
-  String(job.status || "").toLowerCase() === "open";
+    // Location filter
+    const matchesLocation =
+      !locationValue ||
+      locationText
+        .toLowerCase()
+        .includes(locationValue);
 
-const isAvailable =
-  isOpen && !isJobExpired(job);
-return (
-   matchesSearch &&
-  passesSalaryFilter(job) &&
-  isRecentJob(job) &&
-  isAvailable
-);
+    // Work mode filter
+    const matchesWorkMode =
+      !workModeFilter ||
+      String(job.workMode || "")
+        .toLowerCase() ===
+        workModeFilter.toLowerCase();
+
+    // Job must still be open
+    const isOpen =
+      String(job.status || "")
+        .toLowerCase() === "open";
+
+    // And application deadline must not
+    // have passed
+    const isAvailable =
+      isOpen && !isJobExpired(job);
+
+    return (
+      matchesSearch &&
+      matchesLocation &&
+      matchesWorkMode &&
+      passesSalaryFilter(job) &&
+      isRecentJob(job) &&
+      isAvailable
+    );
   })
   .sort((a, b) => {
-  return new Date(b.createdAt) - new Date(a.createdAt);
-});
+    return (
+      new Date(b.createdAt) -
+      new Date(a.createdAt)
+    );
+  });
+
+const selectedJobApplicationStatus = selectedJob
+  ? applicationStatuses[String(selectedJob._id)]
+  : null;
+
+const selectedJobHasApplied =
+  Boolean(selectedJobApplicationStatus);
+
+const selectedJobIsApplying =
+  selectedJob &&
+  applyingId === selectedJob._id;
 
   return (
     <Layout>
@@ -438,33 +493,166 @@ return (
             </div>
 
             {/* Search area */}
-            <div className="border-b border-slate-200 bg-white px-6 py-5">
-              {/* <label
-                htmlFor="job-search"
-                className="text-sm font-semibold text-slate-700"
-              >
-                Search available jobs
-              </label> */}
+         {/* Search and filters */}
+<div className="border-b border-slate-200 bg-white px-6 py-5">
 
-              <div className="relative mt-2">
-                <FiSearch
-                  aria-hidden="true"
-                  className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-                  size={18}
-                />
+  <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
 
-                <input
-                  id="job-search"
-                  type="text"
-                  placeholder="Search by title, company, or location..."
-                  value={searchTerm}
-                  onChange={(event) =>
-                    setSearchTerm(event.target.value)
-                  }
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm text-slate-900 placeholder:text-slate-400 transition focus:border-blue-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100"
-                />
-              </div>
-            </div>
+    {/* Keyword */}
+    <div>
+      <label
+        htmlFor="job-search"
+        className="mb-2 block text-sm font-semibold text-slate-700"
+      >
+        Keyword
+      </label>
+
+      <div className="relative">
+        <FiSearch
+          aria-hidden="true"
+          className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+          size={18}
+        />
+
+        <input
+          id="job-search"
+          type="text"
+          placeholder="Title, company or skill..."
+          value={searchTerm}
+          onChange={(event) =>
+            setSearchTerm(event.target.value)
+          }
+          className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm text-slate-900 placeholder:text-slate-400 transition focus:border-blue-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100"
+        />
+      </div>
+    </div>
+
+    {/* Location */}
+    <div>
+      <label
+        htmlFor="location-filter"
+        className="mb-2 block text-sm font-semibold text-slate-700"
+      >
+        Location
+      </label>
+
+      <div className="relative">
+        <FiMapPin
+          aria-hidden="true"
+          className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+          size={18}
+        />
+
+      <input
+  id="location-filter"
+  type="text"
+  placeholder="e.g. London or United Kingdom"
+  value={locationFilter}
+  onChange={(event) =>
+    setLocationFilter(event.target.value)
+  }
+  className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm text-slate-900 placeholder:text-slate-400 transition focus:border-blue-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100"
+/>
+      </div>
+    </div>
+
+    {/* Minimum salary */}
+    <div>
+      <label
+        htmlFor="salary-filter"
+        className="mb-2 block text-sm font-semibold text-slate-700"
+      >
+        Minimum Salary
+      </label>
+
+      <div className="relative">
+        <FiDollarSign
+          aria-hidden="true"
+          className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+          size={18}
+        />
+
+        <select
+          id="salary-filter"
+          value={minSalary}
+          onChange={(event) =>
+            setMinSalary(
+              Number(event.target.value)
+            )
+          }
+          className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm text-slate-900 transition focus:border-blue-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100"
+        >
+          {salaryFilterOptions.map((option) => (
+            <option
+              key={option.value}
+              value={option.value}
+            >
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </div>
+    </div>
+
+    {/* Work mode */}
+    <div>
+      <label
+        htmlFor="work-mode-filter"
+        className="mb-2 block text-sm font-semibold text-slate-700"
+      >
+        Work Mode
+      </label>
+
+      <div className="relative">
+        <FiHome
+          aria-hidden="true"
+          className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+          size={18}
+        />
+
+        <select
+          id="work-mode-filter"
+          value={workModeFilter}
+          onChange={(event) =>
+            setWorkModeFilter(
+              event.target.value
+            )
+          }
+          className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm text-slate-900 transition focus:border-blue-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100"
+        >
+          <option value="">
+            All work modes
+          </option>
+
+          {workModeOptions.map((mode) => (
+            <option key={mode} value={mode}>
+              {mode}
+            </option>
+          ))}
+        </select>
+      </div>
+    </div>
+
+  </div>
+
+  {/* Filter footer */}
+  <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <p className="text-xs text-slate-500">
+      Latest Jobs shows available jobs posted
+      within the last 14 days.
+    </p>
+
+    <button
+      type="button"
+      onClick={clearFilters}
+      disabled={!hasActiveFilters}
+      className="w-fit text-sm font-semibold text-blue-700 transition hover:text-blue-900 disabled:cursor-not-allowed disabled:text-slate-400"
+    >
+      Clear filters
+    </button>
+  </div>
+
+</div>
 
             {/* Page content */}
             <div className="p-6">
@@ -528,25 +716,20 @@ return (
                   </h2>
 
                   <p className="mt-1 max-w-md text-sm text-slate-500">
-                    {searchValue
-                      ? `No jobs match “${searchTerm.trim()}”. Try a different title, company, or location.`
-                      : "There are currently no new jobs available. Jobs you have already applied for can be found in Application History."}
-                  </p>
+  {hasActiveFilters
+    ? "No recent jobs match your selected filters. Try changing or clearing one of the filters."
+    : "There are currently no available jobs posted within the last 14 days."}
+</p>
                 </div>
               ) : (
                 /* Job cards */
                 <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
                   {filteredJobs.map((job) => {
-                    //For this particular job, find whether an application exists.
-                    const applicationStatus = applicationStatuses[String(job._id)]
-console.log(
-  "JOB:",
-  job.title,
-  "STATUS:",
-  applicationStatus
-);
-                    const hasAlreadyApplied = Boolean(applicationStatus)
+const applicationStatus =
+  applicationStatuses[String(job._id)];
 
+const hasAlreadyApplied =
+  Boolean(applicationStatus);
                     const isOpen =
                       String(
                         job.status || ""
@@ -680,6 +863,18 @@ console.log(
                             </span>
                           </p>
 
+<p className="flex items-center gap-2 text-xs text-slate-600">
+  <FiHome
+    aria-hidden="true"
+    className="shrink-0 text-blue-600"
+    size={15}
+  />
+
+  <span>
+    {job.workMode ||
+      "Work mode not specified"}
+  </span>
+</p>
                           <p className="flex items-center gap-2 text-xs text-slate-600">
                             <FiDollarSign
                               aria-hidden="true"
@@ -839,6 +1034,57 @@ console.log(
     </a>
   )}
 </div>
+
+<button
+  type="button"
+  onClick={() => handleApply(selectedJob._id)}
+  disabled={
+    selectedJobIsApplying ||
+    selectedJobHasApplied
+  }
+  className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
+    selectedJobHasApplied
+      ? "cursor-not-allowed bg-slate-200 text-slate-600"
+      : "bg-blue-700 text-white hover:bg-blue-800 disabled:opacity-50"
+  }`}
+>
+  {selectedJobIsApplying ? (
+    <>
+      <FiLoader
+        className="mr-2 inline animate-spin"
+        size={16}
+      />
+      Applying...
+    </>
+  ) : !isLoggedIn ? (
+    <>
+      <FiLogIn
+        className="mr-2 inline"
+        size={16}
+      />
+      Sign up to Apply
+    </>
+  ) : selectedJobHasApplied ? (
+    <>
+      <FiCheckCircle
+        className="mr-2 inline"
+        size={16}
+      />
+
+      {applicationStatusLabels[
+        selectedJobApplicationStatus
+      ] || "Already Applied"}
+    </>
+  ) : (
+    <>
+      <FiFileText
+        className="mr-2 inline"
+        size={16}
+      />
+      Apply with CV
+    </>
+  )}
+</button>
         </div>
 
         <button
