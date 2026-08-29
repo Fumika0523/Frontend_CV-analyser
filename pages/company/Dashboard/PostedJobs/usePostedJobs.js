@@ -1,291 +1,679 @@
-// This custom hook owns the state, API requests, and event handlers for
-// the Posted Jobs feature.
-//
-// Keeping this logic here allows:
-//   - PostedJobsPage.jsx to remain a small route component.
-//   - PostedJobs.jsx to focus mainly on rendering.
-//   - Other components in this Next.js web application to reuse the logic.
-//
-// It is not framework-independent because it uses next/router and
-// browser localStorage.
-
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import axios from "axios";
 
-// NEXT_PUBLIC_ is required because this value is used in browser code.
-// The localhost fallback should only be used during development.
+/*
+ * Backend URL.
+ *
+ * Later during deployment we should move this
+ * to your shared environment/config value.
+ */
 const API_BASE = "http://localhost:8002";
-// Builds the auth header fresh on every call, so it always reflects
-// whatever token is currently in localStorage.
+
+/*
+ * Build Authorization header whenever
+ * an authenticated API request is made.
+ */
 const authHeader = () => ({
-  headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+  headers: {
+    Authorization:
+      `Bearer ${localStorage.getItem("token")}`,
+  },
 });
 
 export default function usePostedJobs() {
   const router = useRouter();
 
+  // ======================================================
+  // STATE
+  // ======================================================
+
   const [jobs, setJobs] = useState([]);
-  const [selectedJob, setSelectedJob] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editForm, setEditForm] = useState(null);
-  const [saving, setSaving] = useState(false);
-  const [isClosing, setIsClosing] = useState(false);
-const [jobToClose, setJobToClose] = useState(null);
-const [closeError, setCloseError] = useState("");
-  const [checkingAuth, setCheckingAuth] = useState(true);
-  const [locationLoading, setLocationLoading] = useState(false);
-  const [locationResults, setLocationResults] = useState([]);
 
-  // Only logged-in company accounts may view this page.
-useEffect(() => {
-  let componentIsMounted = true;
+  /*
+   * selectedJob is the job shown inside
+   * the full Job Details modal.
+   */
+  const [selectedJob, setSelectedJob] =
+    useState(null);
 
-  const initialisePostedJobs = async () => {
-    const token = localStorage.getItem("token");
+  const [isEditing, setIsEditing] =
+    useState(false);
 
-    if (!token) {
-      router.replace("/");
-      return;
-    }
+  const [editForm, setEditForm] =
+    useState(null);
 
-    try {
-      // First confirm that the user is an authenticated company.
-      const profileResponse = await axios.get(
-        `${API_BASE}/user-profile`,
-        authHeader()
-      );
+  const [saving, setSaving] =
+    useState(false);
 
-      if (profileResponse.data.user.role !== "company") {
+  // Close job confirmation
+  const [isClosing, setIsClosing] =
+    useState(false);
+
+  const [jobToClose, setJobToClose] =
+    useState(null);
+
+  const [closeError, setCloseError] =
+    useState("");
+
+  // Authentication
+  const [checkingAuth, setCheckingAuth] =
+    useState(true);
+
+  // Location autocomplete
+  const [locationLoading, setLocationLoading] =
+    useState(false);
+
+  const [locationResults, setLocationResults] =
+    useState([]);
+
+  // ======================================================
+  // LOAD COMPANY JOBS
+  // ======================================================
+
+  useEffect(() => {
+    let componentIsMounted = true;
+
+    const initialisePostedJobs = async () => {
+      const token =
+        localStorage.getItem("token");
+
+      if (!token) {
         router.replace("/");
         return;
       }
 
-      // Only request the jobs after authentication succeeds.
-      const jobsResponse = await axios.get(
-        `${API_BASE}/my-jobs`,
-        authHeader()
-      );
+      try {
+        /*
+         * First check the logged-in profile.
+         *
+         * IMPORTANT:
+         * We do NOT send companyId from the frontend.
+         *
+         * Backend flow:
+         *
+         * JWT
+         * ↓
+         * User._id
+         * ↓
+         * User.companyId
+         * ↓
+         * Company._id
+         */
+        const profileResponse =
+          await axios.get(
+            `${API_BASE}/user-profile`,
+            authHeader()
+          );
 
-      if (componentIsMounted) {
-        setJobs(jobsResponse.data);
+        const user =
+          profileResponse.data.user;
+
+        if (user.role !== "company") {
+          router.replace("/");
+          return;
+        }
+
+        /*
+         * Backend now uses:
+         *
+         * user.companyId
+         *
+         * to determine which jobs this
+         * company can access.
+         */
+        const jobsResponse =
+          await axios.get(
+            `${API_BASE}/my-jobs`,
+            authHeader()
+          );
+
+        if (componentIsMounted) {
+          /*
+           * Your current backend returns
+           * the jobs array directly.
+           */
+          setJobs(
+            Array.isArray(jobsResponse.data)
+              ? jobsResponse.data
+              : []
+          );
+        }
+      } catch (error) {
+        console.error(
+          "Failed to initialise Posted Jobs:",
+          error.response?.data?.message ||
+            error.message
+        );
+
+        router.replace("/");
+      } finally {
+        if (componentIsMounted) {
+          setCheckingAuth(false);
+        }
       }
-    } catch (error) {
-      console.error(
-        "Failed to initialise Posted Jobs:",
-        error.response?.data?.message || error.message
-      );
+    };
 
-      router.replace("/");
-    } finally {
-      if (componentIsMounted) {
-        setCheckingAuth(false);
-      }
-    }
-  };
+    initialisePostedJobs();
 
-  initialisePostedJobs();
+    return () => {
+      componentIsMounted = false;
+    };
+  }, [router]);
 
-  return () => {
-    componentIsMounted = false;
-  };
-}, [router]);
+  // ======================================================
+  // LOCATION SEARCH
+  // ======================================================
 
-  // Debounced city search while the location field is being edited.
   useEffect(() => {
-    if (!isEditing || !editForm?.location) {
+    /*
+     * Only search while editing.
+     */
+    if (
+      !isEditing ||
+      !editForm?.location
+    ) {
       setLocationResults([]);
       return;
     }
 
-    const city = editForm.location.trim();
+    const city =
+      editForm.location.trim();
+
     if (city.length < 2) {
       setLocationResults([]);
       return;
     }
 
-    const timer = setTimeout(async () => {
-      try {
-        setLocationLoading(true);
-        const res = await axios.get(
-          `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(
-            city
-          )}&count=6&language=en&format=json`
-        );
-        setLocationResults(res.data.results || []);
-      } catch (error) {
-        console.error("Location search failed:", error);
-      } finally {
-        setLocationLoading(false);
-      }
-    }, 500);
+    /*
+     * Debounce:
+     * wait 500ms after typing before
+     * calling the location API.
+     */
+    const timer = setTimeout(
+      async () => {
+        try {
+          setLocationLoading(true);
 
-    return () => clearTimeout(timer);
-  }, [editForm?.location, isEditing]);
+          const response =
+            await axios.get(
+              `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(
+                city
+              )}&count=6&language=en&format=json`
+            );
+
+          setLocationResults(
+            response.data.results || []
+          );
+        } catch (error) {
+          console.error(
+            "Location search failed:",
+            error
+          );
+
+          setLocationResults([]);
+        } finally {
+          setLocationLoading(false);
+        }
+      },
+      500
+    );
+
+    return () =>
+      clearTimeout(timer);
+  }, [
+    editForm?.location,
+    isEditing,
+  ]);
+
+  // ======================================================
+  // SELECT LOCATION
+  // ======================================================
 
   const selectEditLocation = (place) => {
-    setEditForm((prev) => ({
-      ...prev,
-      location: `${place.name}, ${place.country}`,
+    setEditForm((previousForm) => ({
+      ...previousForm,
+
+      /*
+       * Backend accepts this string and
+       * converts it back into:
+       *
+       * {
+       *   city,
+       *   country
+       * }
+       */
+      location:
+        `${place.name}, ${place.country}`,
     }));
+
     setLocationResults([]);
   };
 
+  // ======================================================
+  // OPEN JOB DETAILS
+  // ======================================================
+
   const openModal = (job) => {
     setSelectedJob(job);
+
+    /*
+     * Convert the database Job object
+     * into editable form values.
+     */
     setEditForm({
-      title: job.title || "",
-      location: job.location?.city
-        ? `${job.location.city}, ${job.location.country}`
-        : job.location || "",
-      salary: job.salary || "",
-      jobType: job.jobType || "Full-time",
-      workMode: job.workMode || "Office",
-      education: job.education || "",
-      experience: job.experience || "",
-      keySkills: job.keySkills?.join(", ") || "",
-      requirements: job.requirements?.join(", ") || "",
-      responsibilities: job.responsibilities?.join(", ") || "",
-      roleSummary: job.roleSummary || "",
-      compensationBenefits: job.compensationBenefits || "",
-      applicationEndDate: job.applicationEndDate
-        ? job.applicationEndDate.slice(0, 10)
-        : "",
-      vacancies: job.vacancies || 1,
-      filledPositions: job.filledPositions || 0,
-      status: job.status || "Open",
+      title:
+        job.title || "",
+
+      location:
+        job.location?.city
+          ? `${job.location.city}, ${job.location.country}`
+          : job.location || "",
+
+      salary:
+        job.salary || "",
+
+      jobType:
+        job.jobType || "Full-time",
+
+      workMode:
+        job.workMode || "Office",
+
+      education:
+        job.education || "",
+
+      experience:
+        job.experience || "",
+
+      /*
+       * NEW:
+       * These fields exist in JobModel
+       * and should also be editable.
+       */
+      category:
+        job.category || "",
+
+      industry:
+        job.industry || "",
+
+      keySkills:
+        job.keySkills?.join(", ") ||
+        "",
+
+      requirements:
+        job.requirements?.join(", ") ||
+        "",
+
+      responsibilities:
+        job.responsibilities?.join(
+          ", "
+        ) || "",
+
+      roleSummary:
+        job.roleSummary || "",
+
+      compensationBenefits:
+        job.compensationBenefits || "",
+
+      applicationEndDate:
+        job.applicationEndDate
+          ? job.applicationEndDate.slice(
+              0,
+              10
+            )
+          : "",
+
+      vacancies:
+        job.vacancies || 1,
+
+      /*
+       * This is DISPLAY information.
+       *
+       * We will NOT send it when updating
+       * the job.
+       */
+      filledPositions:
+        job.filledPositions || 0,
+
+      status:
+        job.status || "Open",
     });
+
     setIsEditing(false);
   };
+
+  // ======================================================
+  // CLOSE DETAILS MODAL
+  // ======================================================
 
   const closeModal = () => {
     setSelectedJob(null);
     setEditForm(null);
     setIsEditing(false);
+    setLocationResults([]);
   };
 
-  const handleEditChange = (e) => {
-    setEditForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  // ======================================================
+  // HANDLE FORM INPUT
+  // ======================================================
+
+  const handleEditChange = (event) => {
+    const {
+      name,
+      value,
+    } = event.target;
+
+    setEditForm(
+      (previousForm) => ({
+        ...previousForm,
+        [name]: value,
+      })
+    );
   };
+
+  // ======================================================
+  // SAVE UPDATED JOB
+  // ======================================================
 
   const handleSave = async () => {
+    if (!selectedJob || !editForm) {
+      return;
+    }
+
     try {
       setSaving(true);
 
+      /*
+       * IMPORTANT SECURITY / ARCHITECTURE CHANGE:
+       *
+       * Build the payload explicitly.
+       *
+       * Do NOT send:
+       *
+       * companyId
+       * createdBy
+       * filledPositions
+       *
+       * The backend controls those fields.
+       */
       const payload = {
-        ...editForm,
-        vacancies: Number(editForm.vacancies) || 1,
-        keySkills: editForm.keySkills.split(",").map((s) => s.trim()).filter(Boolean),
-        requirements: editForm.requirements.split(",").map((s) => s.trim()).filter(Boolean),
-        responsibilities: editForm.responsibilities.split(",").map((s) => s.trim()).filter(Boolean),
+        title:
+          editForm.title,
+
+        location:
+          editForm.location,
+
+        salary:
+          editForm.salary,
+
+        jobType:
+          editForm.jobType,
+
+        workMode:
+          editForm.workMode,
+
+        education:
+          editForm.education,
+
+        experience:
+          editForm.experience,
+
+        category:
+          editForm.category,
+
+        industry:
+          editForm.industry,
+
+        roleSummary:
+          editForm.roleSummary,
+
+        compensationBenefits:
+          editForm.compensationBenefits,
+
+        applicationEndDate:
+          editForm.applicationEndDate,
+
+        vacancies:
+          Number(
+            editForm.vacancies
+          ) || 1,
+
+        status:
+          editForm.status,
+
+        /*
+         * Convert comma-separated strings
+         * back into arrays.
+         *
+         * Example:
+         *
+         * "React, Node.js"
+         *
+         * becomes:
+         *
+         * ["React", "Node.js"]
+         */
+        keySkills:
+          editForm.keySkills
+            .split(",")
+            .map((skill) =>
+              skill.trim()
+            )
+            .filter(Boolean),
+
+        requirements:
+          editForm.requirements
+            .split(",")
+            .map((item) =>
+              item.trim()
+            )
+            .filter(Boolean),
+
+        responsibilities:
+          editForm.responsibilities
+            .split(",")
+            .map((item) =>
+              item.trim()
+            )
+            .filter(Boolean),
       };
 
-      const res = await axios.put(`${API_BASE}/jobs/${selectedJob._id}`, payload, authHeader());
-      const updatedJob = res.data.jobPost || res.data.job || res.data;
+      const response =
+        await axios.put(
+          `${API_BASE}/jobs/${selectedJob._id}`,
+          payload,
+          authHeader()
+        );
 
-      setJobs((prev) => prev.map((job) => (job._id === selectedJob._id ? updatedJob : job)));
+      /*
+       * Backend currently returns:
+       *
+       * {
+       *   message,
+       *   job
+       * }
+       */
+      const updatedJob =
+        response.data.job ||
+        response.data.jobPost ||
+        response.data;
+
+      /*
+       * Replace only the changed job
+       * inside the existing jobs array.
+       */
+      setJobs((previousJobs) =>
+        previousJobs.map((job) =>
+          job._id ===
+          selectedJob._id
+            ? updatedJob
+            : job
+        )
+      );
+
+      /*
+       * Also update the currently-open
+       * Job Details modal.
+       */
       setSelectedJob(updatedJob);
+
       setIsEditing(false);
     } catch (error) {
-      console.error("Failed to save job:", error);
-      alert(error.response?.data?.message || "Failed to update job");
+      console.error(
+        "Failed to save job:",
+        error
+      );
+
+      alert(
+        error.response?.data?.message ||
+          "Failed to update job"
+      );
     } finally {
       setSaving(false);
     }
   };
-// The backend DELETE endpoint performs a soft close:
-// it changes the status to "Closed" instead of removing the document.
-// This preserves existing applications and job history.
-const requestCloseJob = (job) => {
-  if (!job || job.status === "Closed") return;
 
-  setCloseError("");
-  setJobToClose(job);
-};
+  // ======================================================
+  // REQUEST JOB CLOSURE
+  // ======================================================
 
-// Close the confirmation dialog without making an API request.
-const cancelCloseJob = () => {
-  if (isClosing) return;
+  /*
+   * Backend DELETE does NOT delete the job.
+   *
+   * It performs a soft close:
+   *
+   * Job.status = "Closed"
+   *
+   * This preserves applications and history.
+   */
+  const requestCloseJob = (job) => {
+    if (
+      !job ||
+      job.status === "Closed"
+    ) {
+      return;
+    }
 
-  setJobToClose(null);
-  setCloseError("");
-};
-
-// Close the job only after the user confirms inside the dialog.
-const confirmCloseJob = async () => {
-  if (!jobToClose || isClosing) return;
-
-  try {
-    setIsClosing(true);
     setCloseError("");
+    setJobToClose(job);
+  };
 
-    const response = await axios.delete(
-      `${API_BASE}/jobs/${jobToClose._id}`,
-      authHeader()
-    );
+  // ======================================================
+  // CANCEL CLOSE
+  // ======================================================
 
-    const closedJob = response.data.job || response.data;
+  const cancelCloseJob = () => {
+    if (isClosing) {
+      return;
+    }
 
-    // Update the job inside the displayed list.
-    setJobs((previousJobs) =>
-      previousJobs.map((job) =>
-        job._id === closedJob._id ? closedJob : job
-      )
-    );
-
-    // Update the job details modal if the same job is currently displayed.
-    setSelectedJob((previousJob) =>
-      previousJob?._id === closedJob._id
-        ? closedJob
-        : previousJob
-    );
-
-    // Close the confirmation dialog after success.
     setJobToClose(null);
-  } catch (error) {
-    console.error(
-      "Failed to close job:",
-      error.response?.data?.message || error.message
-    );
+    setCloseError("");
+  };
 
-    // Keep the dialog open and display the error inside it.
-    setCloseError(
-      error.response?.data?.message ||
-        "Failed to close the job. Please try again."
-    );
-  } finally {
-    setIsClosing(false);
-  }
-};
+  // ======================================================
+  // CONFIRM CLOSE
+  // ======================================================
 
-return {
-  jobs,
-  selectedJob,
-  isEditing,
-  editForm,
-  saving,
-  checkingAuth,
-  locationLoading,
-  locationResults,
+  const confirmCloseJob = async () => {
+    if (
+      !jobToClose ||
+      isClosing
+    ) {
+      return;
+    }
 
-  // Confirmation-dialog state
-  jobToClose,
-  isClosing,
-  closeError,
+    try {
+      setIsClosing(true);
+      setCloseError("");
 
-  // PostedJobs handlers
-  setIsEditing,
-  openModal,
-  closeModal,
-  handleEditChange,
-  handleSave,
-  selectEditLocation,
+      /*
+       * Again:
+       * We send ONLY job._id.
+       *
+       * We never send companyId.
+       *
+       * Backend verifies:
+       *
+       * Job.companyId
+       * ===
+       * logged-in User.companyId
+       */
+      const response =
+        await axios.delete(
+          `${API_BASE}/jobs/${jobToClose._id}`,
+          authHeader()
+        );
 
-  // PostedJobs receives this exact prop name.
-  onRequestCloseJob: requestCloseJob,
+      const closedJob =
+        response.data.job ||
+        response.data;
 
-  // CloseJobDialog handlers
-  cancelCloseJob,
-  confirmCloseJob,
-};
+      /*
+       * Update card in job list.
+       */
+      setJobs((previousJobs) =>
+        previousJobs.map((job) =>
+          job._id === closedJob._id
+            ? closedJob
+            : job
+        )
+      );
+
+      /*
+       * Update details modal if the
+       * same job is currently open.
+       */
+      setSelectedJob(
+        (previousJob) =>
+          previousJob?._id ===
+          closedJob._id
+            ? closedJob
+            : previousJob
+      );
+
+      setJobToClose(null);
+    } catch (error) {
+      console.error(
+        "Failed to close job:",
+        error.response?.data?.message ||
+          error.message
+      );
+
+      setCloseError(
+        error.response?.data?.message ||
+          "Failed to close the job. Please try again."
+      );
+    } finally {
+      setIsClosing(false);
+    }
+  };
+
+  // ======================================================
+  // RETURN EVERYTHING POSTEDJOBS NEEDS
+  // ======================================================
+
+  return {
+    jobs,
+    selectedJob,
+    isEditing,
+    editForm,
+    saving,
+    checkingAuth,
+    locationLoading,
+    locationResults,
+    jobToClose,
+    isClosing,
+    closeError,
+    setIsEditing,
+    openModal,
+    closeModal,
+    handleEditChange,
+    handleSave,
+    selectEditLocation,
+    onRequestCloseJob:
+      requestCloseJob,
+    cancelCloseJob,
+    confirmCloseJob,
+  };
 }

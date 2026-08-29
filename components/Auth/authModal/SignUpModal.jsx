@@ -20,11 +20,17 @@ const EMPTY_FORM = {
   confirmEmail: "",
   password: "",
   phoneNumber: "",
+
+  // Candidate location
   city: "",
   country: "",
   locationDisplay: "",
+
+  // Company fields
   companyName: "",
   companyDescription: "",
+  companyUrl: "",
+
   companyCity: "",
   companyCountry: "",
   companyLocationDisplay: "",
@@ -55,14 +61,25 @@ const buildSignupPayload = (role, form, guestSessionId) => {
       guestSessionId,
     };
   }
-
   return {
     ...base,
-    companyName: form.companyName,
-    companyDescription: form.companyDescription,
-    companySize: form.companySize,
-    companyType: form.companyType,
-    location: { city: form.companyCity, country: form.companyCountry },
+
+    companyName:
+      form.companyName,
+    companyDescription:
+      form.companyDescription,
+    companyUrl:
+      form.companyUrl.trim(),
+    companySize:
+      form.companySize,
+    companyType:
+      form.companyType,
+    location: {
+      city:
+        form.companyCity,
+      country:
+        form.companyCountry,
+    },
   };
 };
 
@@ -74,24 +91,24 @@ const SignUpModal = ({ isOpen, onClose, onOtpSent, onSwitchToSignIn, initialRole
   const [termsModalOpen, setTermsModalOpen] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
   const [emailCheck, setEmailCheck] = useState({
-  checking: false,
-  valid: false,
-  message: "",
-});
-
-const resetForm = () => {
-  setForm(EMPTY_FORM);
-  setMessage("");
-  setTermsAccepted(false);
-  setTermsModalOpen(false);
-  setRole(initialRole);
-
-  setEmailCheck({
     checking: false,
     valid: false,
     message: "",
   });
-};
+
+  const resetForm = () => {
+    setForm(EMPTY_FORM);
+    setMessage("");
+    setTermsAccepted(false);
+    setTermsModalOpen(false);
+    setRole(initialRole);
+
+    setEmailCheck({
+      checking: false,
+      valid: false,
+      message: "",
+    });
+  };
 
   // Reset the form every time the modal opens, so a previous attempt
   // never leaks into a new session.
@@ -110,66 +127,66 @@ const resetForm = () => {
 
   if (!isOpen) return null;
 
- const handleChange = (e) => {
-  const { name, value } = e.target;
+  const handleChange = (e) => {
+    const { name, value } = e.target;
 
-  setForm((prev) => ({
-    ...prev,
-    [name]: value,
-  }));
+    setForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
 
-  // A changed email must be checked again.
-  if (name === "email") {
-    setEmailCheck({
-      checking: false,
-      valid: false,
-      message: "",
-    });
-  }
-};
-const checkEmailDomain = async () => {
-  const email = form.email.trim();
+    // A changed email must be checked again.
+    if (name === "email") {
+      setEmailCheck({
+        checking: false,
+        valid: false,
+        message: "",
+      });
+    }
+  };
+  const checkEmailDomain = async () => {
+    const email = form.email.trim();
 
-  if (!isValidEmail(email)) {
-    setEmailCheck({
-      checking: false,
-      valid: false,
-      message: "Please enter a valid email address.",
-    });
+    if (!isValidEmail(email)) {
+      setEmailCheck({
+        checking: false,
+        valid: false,
+        message: "Please enter a valid email address.",
+      });
 
-    return false;
-  }
+      return false;
+    }
 
-  try {
-    setEmailCheck({
-      checking: true,
-      valid: false,
-      message: "Checking email domain...",
-    });
+    try {
+      setEmailCheck({
+        checking: true,
+        valid: false,
+        message: "Checking email domain...",
+      });
 
-    const response = await axios.post(`${API_BASE}/check-email`, {
-      email,
-    });
+      const response = await axios.post(`${API_BASE}/check-email`, {
+        email,
+      });
 
-    setEmailCheck({
-      checking: false,
-      valid: response.data.valid === true,
-      // message: "Email domain is valid.",
-    });
+      setEmailCheck({
+        checking: false,
+        valid: response.data.valid === true,
+        // message: "Email domain is valid.",
+      });
 
-    return true;
-  } catch (error) {
-    setEmailCheck({
-      checking: false,
-      valid: false,
-      message:
-        error.response?.data?.message ||
-        "Unable to verify this email domain.",
-    });
+      return true;
+    } catch (error) {
+      setEmailCheck({
+        checking: false,
+        valid: false,
+        message:
+          error.response?.data?.message ||
+          "Unable to verify this email domain.",
+      });
 
-    return false;
-  }
-};
+      return false;
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -189,7 +206,7 @@ const checkEmailDomain = async () => {
       return;
     }
 
-    
+
     // We can't verify a specific mailbox exists (mail providers block that
     // kind of lookup), so this is the practical substitute: catch typos by
     // asking the user to type the address twice and comparing them.
@@ -199,13 +216,13 @@ const checkEmailDomain = async () => {
     }
 
     if (!emailCheck.valid) {
-  setMessage(
-    emailCheck.checking
-      ? "Please wait while we check your email."
-      : "Please validate your email address before creating an account."
-  );
-  return;
-}
+      setMessage(
+        emailCheck.checking
+          ? "Please wait while we check your email."
+          : "Please validate your email address before creating an account."
+      );
+      return;
+    }
 
     setLoading(true);
     try {
@@ -260,7 +277,7 @@ const checkEmailDomain = async () => {
                   </>
                 )}
               </h2>
-        
+
             </div>
 
             {/* Role selector */}
@@ -308,35 +325,35 @@ const checkEmailDomain = async () => {
                   <TwoCol>
                     {/* Email */}
                     <Field label="Email Address" required>
-  <input
-    name="email"
-    type="email"
-    placeholder="jane@example.com"
-    value={form.email}
-    className="am-input"
-    required
-    onChange={handleChange}
-    onBlur={checkEmailDomain}
-  />
+                      <input
+                        name="email"
+                        type="email"
+                        placeholder="jane@example.com"
+                        value={form.email}
+                        className="am-input"
+                        required
+                        onChange={handleChange}
+                        onBlur={checkEmailDomain}
+                      />
 
-  {emailCheck.message && (
-    <p
-      style={{
-        margin: "5px 0 0",
-        fontSize: 12,
-        color: emailCheck.checking
-          ? "#64748b"
-          : emailCheck.valid
-          ? "#15803d"
-          : "#dc2626",
-      }}
-    >
-      {emailCheck.message}
-    </p>
-  )}
-</Field>
+                      {emailCheck.message && (
+                        <p
+                          style={{
+                            margin: "5px 0 0",
+                            fontSize: 12,
+                            color: emailCheck.checking
+                              ? "#64748b"
+                              : emailCheck.valid
+                                ? "#15803d"
+                                : "#dc2626",
+                          }}
+                        >
+                          {emailCheck.message}
+                        </p>
+                      )}
+                    </Field>
 
-{/* Confirm Email Address */}
+                    {/* Confirm Email Address */}
                     <Field label="Confirm Email Address" required>
                       <input
                         name="confirmEmail"
@@ -397,9 +414,25 @@ const checkEmailDomain = async () => {
                   <Field label="Contact Last Name" required>
                     <input name="lastName" value={form.lastName} placeholder="Doe" className="am-input" onChange={handleChange} />
                   </Field>
-
+                  {/* Company Name */}
                   <Field label="Company Name" required>
                     <input name="companyName" value={form.companyName} placeholder="Acme Corp" className="am-input" onChange={handleChange} />
+                  </Field>
+
+                  {/* Company URL */}
+                  {/* Company Website */}
+                  <Field
+                    label="Company Website"
+                    hint="Optional — you can add or change this later"
+                  >
+                    <input
+                      name="companyUrl"
+                      type="url"
+                      value={form.companyUrl}
+                      placeholder="https://www.acmecorp.com"
+                      className="am-input"
+                      onChange={handleChange}
+                    />
                   </Field>
                   {/* Phone Number */}
                   <Field label="Phone Number" required>
@@ -469,33 +502,33 @@ const checkEmailDomain = async () => {
 
                   {/* Email */}
                   <Field label="Email Address" required>
-      <input
-        name="email"
-        type="email"
-        placeholder="jane@example.com"
-        value={form.email}
-        className="am-input"
-        required
-        onChange={handleChange}
-        onBlur={checkEmailDomain}
-      />
+                    <input
+                      name="email"
+                      type="email"
+                      placeholder="jane@example.com"
+                      value={form.email}
+                      className="am-input"
+                      required
+                      onChange={handleChange}
+                      onBlur={checkEmailDomain}
+                    />
 
-      {emailCheck.message && (
-        <p
-          style={{
-            margin: "5px 0 0",
-            fontSize: 12,
-            color: emailCheck.checking
-              ? "#64748b"
-              : emailCheck.valid
-              ? "#15803d"
-              : "#dc2626",
-          }}
-        >
-          {emailCheck.message}
-        </p>
-      )}
-    </Field>
+                    {emailCheck.message && (
+                      <p
+                        style={{
+                          margin: "5px 0 0",
+                          fontSize: 12,
+                          color: emailCheck.checking
+                            ? "#64748b"
+                            : emailCheck.valid
+                              ? "#15803d"
+                              : "#dc2626",
+                        }}
+                      >
+                        {emailCheck.message}
+                      </p>
+                    )}
+                  </Field>
 
                   {/* Confirm Email  */}
                   <Field label="Confirm Email Address" required>
@@ -574,14 +607,14 @@ const checkEmailDomain = async () => {
 
               <Banner msg={message} />
 
-              <button type="submit" className="am-submit" 
-              disabled={
+              <button type="submit" className="am-submit"
+                disabled={
                   loading ||
                   !termsAccepted ||
                   emailCheck.checking ||
                   !emailCheck.valid
                 }
-              style={{ marginTop: 4 }}>
+                style={{ marginTop: 4 }}>
                 {loading ? (
                   <>
                     <Spinner /> Creating account…

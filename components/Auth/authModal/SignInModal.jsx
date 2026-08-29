@@ -1,6 +1,5 @@
 // SignInModal.jsx
-// Handles the "sign in" form only. Sign up lives in SignUpModal.jsx,
-// and both are wired together by AuthModal.jsx.
+
 
 import React, { useState, useEffect } from "react";
 import axios from "axios";

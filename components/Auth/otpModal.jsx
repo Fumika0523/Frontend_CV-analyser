@@ -171,27 +171,69 @@ const [resending, setResending] = useState(false);
     inputRefs.current[Math.min(text.length, 5)]?.focus();
   };
 
-  const handleVerify = async (e) => {
-    e.preventDefault();
-    if (otp.length < 6) { setMessage("Please enter all 6 digits"); setIsError(true); return; }
-    setLoading(true); setMessage("");
-    try {
-      console.log("OTP MODAL _id:", _id);
-console.log("OTP MODAL otp:", otp);
-console.log("VERIFY PAYLOAD:", { _id, otp });
-      const res = await axios.post("http://localhost:8002/verify-otp", { _id, otp });
-      console.log("res",res.data)
-      setSuccess(true); 
-      setMessage("Verified successfully!");
-      setTimeout(() => onVerified?.(res.data), 900);
-    } catch (err) {
-      setIsError(true);
-      setMessage(err?.response?.data?.message || "Invalid OTP. Please try again.");
-      setDigits(["", "", "", "", "", ""]);
-      setTimeout(() => inputRefs.current[0]?.focus(), 50);
-    }
+const handleVerify = async (e) => {
+  e.preventDefault();
+
+  if (otp.length < 6) {
+    setMessage("Please enter all 6 digits");
+    setIsError(true);
+    return;
+  }
+
+  setLoading(true);
+  setMessage("");
+  setIsError(false);
+
+  try {
+    const res = await axios.post(
+      "http://localhost:8002/verify-otp",
+      {
+        _id,
+        otp,
+      }
+    );
+
+    setSuccess(true);
+    setMessage("Verified successfully!");
+
+    /*
+     * Pass the complete backend response
+     * to the parent.
+     *
+     * This now includes:
+     *
+     * token
+     * user.role
+     * user.companyId
+     * user.companyRole
+     */
+    setTimeout(() => {
+      onVerified?.(res.data);
+    }, 900);
+  } catch (err) {
+    setIsError(true);
+
+    setMessage(
+      err?.response?.data?.message ||
+        "Invalid OTP. Please try again."
+    );
+
+    setDigits([
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+    ]);
+
+    setTimeout(() => {
+      inputRefs.current[0]?.focus();
+    }, 50);
+  } finally {
     setLoading(false);
-  };
+  }
+};
 
   const maskedEmail = email
     ? email.replace(/(.{2})(.*)(@.*)/, (_, a, b, c) => a + "*".repeat(b.length) + c)

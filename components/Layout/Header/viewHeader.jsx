@@ -168,27 +168,125 @@ const viewHeader = ({ guestView = "candidate", setGuestView = EMPTY_SET_GUEST_VI
     : "";
 
   /* Converts the backend user shape into what this Header uses. */
-  const normaliseUser = (userData) => {
-    if (!userData) return null;
+ const normaliseUser = (userData) => {
+  if (!userData) {
+    return null;
+  }
 
-    return {
-      id: userData._id || userData.id,
-      userId: userData.userId,
-      firstName: userData.firstName || "",
-      lastName: userData.lastName || "",
-      name:
-        `${userData.firstName || ""} ${userData.lastName || ""}`.trim() ||
-        userData.name ||
-        "User",
-      email: userData.email || "",
-      role: userData.role,
-      phoneNumber: userData.phoneNumber || "",
-      companyName: userData.companyName || "",
-      companyDescription: userData.companyDescription || "",
-      location: userData.location || { city: "", country: "" },
-    };
+  /*
+   * If /user-profile populates companyId,
+   * companyId will be an object.
+   *
+   * Example:
+   *
+   * companyId: {
+   *   _id: "...",
+   *   companyName: "ABC Recruitment Ltd",
+   *   ...
+   * }
+   *
+   * Immediately after OTP verification it may
+   * still just be the Company ObjectId string.
+   */
+  const company =
+    userData.companyId &&
+    typeof userData.companyId === "object"
+      ? userData.companyId
+      : null;
+
+  return {
+    id:
+      userData._id ||
+      userData.id,
+
+    userId:
+      userData.userId,
+
+    firstName:
+      userData.firstName || "",
+
+    lastName:
+      userData.lastName || "",
+
+    name:
+      `${userData.firstName || ""} ${
+        userData.lastName || ""
+      }`.trim() ||
+      userData.name ||
+      "User",
+
+    email:
+      userData.email || "",
+
+    role:
+      userData.role,
+
+    phoneNumber:
+      userData.phoneNumber || "",
+
+    /*
+     * NEW
+     *
+     * Keep company membership in React state.
+     * Do NOT manually put it into localStorage.
+     */
+    companyId:
+      company?._id ||
+      userData.companyId ||
+      null,
+
+    companyRole:
+      userData.companyRole ||
+      null,
+
+    /*
+     * Prefer the real Company document.
+     *
+     * Legacy User fields are kept as fallback
+     * temporarily during migration.
+     */
+    companyName:
+      company?.companyName ||
+      userData.companyName ||
+      "",
+
+    companyDescription:
+      company?.companyDescription ||
+      userData.companyDescription ||
+      "",
+
+    companyUrl:
+      company?.companyUrl ||
+      "",
+
+    companySize:
+      company?.companySize ||
+      "",
+
+    companyType:
+      company?.companyType ||
+      "",
+
+    /*
+     * User.location remains here.
+     *
+     * For candidates this is their location.
+     *
+     * We will handle Company.location separately
+     * when we migrate SettingsModal.
+     */
+    location:
+      userData.location || {
+        city: "",
+        country: "",
+      },
+
+    availableForWork:
+      userData.role === "candidate"
+        ? userData.availableForWork ?? true
+        : false,
   };
-
+};
   /* Runs when AuthModal successfully signs in an existing user. */
   const handleAuthSuccess = (userData) => {
     const authenticatedUser = normaliseUser(userData);

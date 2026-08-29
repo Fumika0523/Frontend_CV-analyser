@@ -1,44 +1,136 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import LocationAutocomplete from "../common/LocationAutocomplete";
+import { FiBriefcase, FiCheck, FiEdit2, FiSettings, FiX,} from "react-icons/fi";
 
-// Pencil icon (inline SVG, no dependency)
-const PencilIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
-    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-  </svg>
-);
+const API_BASE =
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8002";
 
-// Check icon for confirming an edit
-const CheckIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
-    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 00-1.414 0L8 12.586 4.707 9.293a1 1 0 00-1.414 1.414l4 4a1 1 0 001.414 0l8-8a1 1 0 000-1.414z" clipRule="evenodd" />
-  </svg>
-);
+// ======================================================
+// COMPANY OPTIONS
+// ======================================================
 
-// X icon for cancelling an edit
-const XIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
-    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-  </svg>
-);
+const COMPANY_SIZE_OPTIONS = [
+  {
+    value: "1-10",
+    label: "1–10 employees",
+  },
+  {
+    value: "11-50",
+    label: "11–50 employees",
+  },
+  {
+    value: "51-200",
+    label: "51–200 employees",
+  },
+  {
+    value: "201-500",
+    label: "201–500 employees",
+  },
+  {
+    value: "500+",
+    label: "500+ employees",
+  },
+];
 
-// A single editable field row
-const EditableField = ({ label, name, value, onChange, isTextarea = false, disabled = false }) => {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState(value);
+const COMPANY_TYPE_OPTIONS = [
+  {
+    value: "direct-employer",
+    label: "Direct Employer",
+  },
+  {
+    value: "agency",
+    label: "Recruitment Agency",
+  },
+  {
+    value: "non-profit",
+    label: "Non-profit / Charity",
+  },
+];
 
-  // Keep draft in sync if parent resets form
+// ======================================================
+// HELPER: COMPANY ROLE LABEL
+// ======================================================
+
+/*
+ * MongoDB stores machine-friendly values:
+ *
+ * company_admin
+ * recruiter
+ * hiring_manager
+ *
+ * But the frontend should show friendly labels.
+ */
+const formatCompanyRole = (role) => {
+  const labels = {
+    company_admin: "Company Administrator",
+    recruiter: "Recruiter",
+    hiring_manager: "Hiring Manager",
+  };
+
+  return labels[role] || role || "Not assigned";
+};
+
+// ======================================================
+// REUSABLE EDITABLE TEXT FIELD
+// ======================================================
+
+const EditableField = ({
+  label,
+  name,
+  value,
+  onChange,
+  isTextarea = false,
+  disabled = false,
+}) => {
+  /*
+   * editing controls whether this specific
+   * field is currently being edited.
+   */
+  const [editing, setEditing] =
+    useState(false);
+
+  /*
+   * draft is temporary.
+   *
+   * We do not immediately change the main form,
+   * because the user might press Cancel.
+   */
+  const [draft, setDraft] =
+    useState(value);
+
+  /*
+   * Keep this field synchronized if the parent
+   * receives newer profile data from MongoDB.
+   */
   useEffect(() => {
     setDraft(value);
     setEditing(false);
   }, [value]);
 
+  /*
+   * Apply the temporary value to the main form.
+   *
+   * Important:
+   * this does NOT save to MongoDB yet.
+   *
+   * MongoDB is updated only when the main
+   * "Save Changes" button is pressed.
+   */
   const handleConfirm = () => {
-    onChange({ target: { name, value: draft } });
+    onChange({
+      target: {
+        name,
+        value: draft,
+      },
+    });
+
     setEditing(false);
   };
 
+  /*
+   * Discard the temporary edit.
+   */
   const handleCancel = () => {
     setDraft(value);
     setEditing(false);
@@ -47,88 +139,274 @@ const EditableField = ({ label, name, value, onChange, isTextarea = false, disab
   return (
     <div className="flex flex-col gap-1">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide font-['Sora',sans-serif]">
+        <span className="font-['Sora',sans-serif] text-xs font-semibold uppercase tracking-wide text-gray-500">
           {label}
         </span>
+
         {!disabled && !editing && (
           <button
             type="button"
-            onClick={() => { setDraft(value); setEditing(true); }}
-            className="flex items-center gap-1 text-xs text-blue-500 hover:text-blue-600 transition-colors"
+            onClick={() => {
+              setDraft(value);
+              setEditing(true);
+            }}
+            className="flex items-center gap-1 text-xs text-blue-500 transition-colors hover:text-blue-600"
             title={`Edit ${label}`}
           >
-            <PencilIcon />
+            <FiEdit2 size={14} />
             <span>Edit</span>
           </button>
         )}
+
         {editing && (
           <div className="flex items-center gap-1">
             <button
               type="button"
               onClick={handleConfirm}
-              className="flex items-center gap-0.5 text-xs text-emerald-600 hover:text-emerald-700 font-semibold transition-colors"
-              title="Confirm"
+              className="flex items-center gap-1 text-xs font-semibold text-emerald-600 transition-colors hover:text-emerald-700"
             >
-              <CheckIcon /> Done
+              <FiCheck size={14} />
+              Done
             </button>
-            <span className="text-gray-300">|</span>
+
+            <span className="text-gray-300">
+              |
+            </span>
+
             <button
               type="button"
               onClick={handleCancel}
-              className="flex items-center gap-0.5 text-xs text-gray-400 hover:text-gray-600 transition-colors"
-              title="Cancel"
+              className="flex items-center gap-1 text-xs text-gray-400 transition-colors hover:text-gray-600"
             >
-              <XIcon /> Cancel
+              <FiX size={14} />
+              Cancel
             </button>
           </div>
         )}
       </div>
 
-      {/* Display mode */}
+      {/* DISPLAY MODE */}
       {!editing && (
         <div
-          className={`px-3 py-2.5 rounded-xl text-sm border ${
+          className={`rounded-xl border px-3 py-2.5 text-sm ${
             disabled
-              ? "bg-gray-50 text-gray-400 border-gray-100 cursor-not-allowed"
-              : "bg-gray-50 text-gray-700 border-gray-100"
+              ? "cursor-not-allowed border-gray-100 bg-gray-50 text-gray-400"
+              : "border-gray-100 bg-gray-50 text-gray-700"
           }`}
         >
-          {value || <span className="text-gray-300 italic">—</span>}
+          {value || (
+            <span className="italic text-gray-300">
+              —
+            </span>
+          )}
         </div>
       )}
 
-      {/* Edit mode */}
-      {editing && (
-        isTextarea ? (
+      {/* EDIT MODE */}
+      {editing &&
+        (isTextarea ? (
           <textarea
             name={name}
             rows={4}
             value={draft}
             autoFocus
-            onChange={(e) => setDraft(e.target.value)}
-            className="w-full border-[1.5px] border-blue-400 rounded-xl px-3 py-2.5 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-blue-200 resize-none transition"
+            onChange={(event) =>
+              setDraft(event.target.value)
+            }
+            className="w-full resize-none rounded-xl border-[1.5px] border-blue-400 px-3 py-2.5 text-sm text-gray-800 outline-none transition focus:ring-2 focus:ring-blue-200"
           />
         ) : (
           <input
             name={name}
             value={draft}
             autoFocus
-            onChange={(e) => setDraft(e.target.value)}
-            className="w-full border-[1.5px] border-blue-400 rounded-xl px-3 py-2.5 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-blue-200 transition"
+            onChange={(event) =>
+              setDraft(event.target.value)
+            }
+            className="w-full rounded-xl border-[1.5px] border-blue-400 px-3 py-2.5 text-sm text-gray-800 outline-none transition focus:ring-2 focus:ring-blue-200"
           />
-        )
+        ))}
+    </div>
+  );
+};
+
+
+// ======================================================
+// REUSABLE EDITABLE SELECT FIELD
+// ======================================================
+
+/*
+ * Company Size and Company Type should use
+ * select menus because CompanyModel has enums.
+ *
+ * This prevents values like:
+ *
+ * companyType: "random-value"
+ */
+const EditableSelectField = ({
+  label,
+  name,
+  value,
+  options,
+  onChange,
+}) => {
+  const [editing, setEditing] =
+    useState(false);
+
+  const [draft, setDraft] =
+    useState(value);
+
+  useEffect(() => {
+    setDraft(value);
+    setEditing(false);
+  }, [value]);
+
+  const handleConfirm = () => {
+    onChange({
+      target: {
+        name,
+        value: draft,
+      },
+    });
+
+    setEditing(false);
+  };
+
+  const handleCancel = () => {
+    setDraft(value);
+    setEditing(false);
+  };
+
+  /*
+   * Find the human-friendly label
+   * for display mode.
+   */
+  const selectedOption =
+    options.find(
+      (option) =>
+        option.value === value
+    );
+
+  return (
+    <div className="flex flex-col gap-1">
+      <div className="flex items-center justify-between">
+        <span className="font-['Sora',sans-serif] text-xs font-semibold uppercase tracking-wide text-gray-500">
+          {label}
+        </span>
+
+        {!editing && (
+          <button
+            type="button"
+            onClick={() => {
+              setDraft(value);
+              setEditing(true);
+            }}
+            className="flex items-center gap-1 text-xs text-blue-500 transition-colors hover:text-blue-600"
+          >
+            <FiEdit2 size={14} />
+            Edit
+          </button>
+        )}
+
+        {editing && (
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={handleConfirm}
+              className="flex items-center gap-1 text-xs font-semibold text-emerald-600 hover:text-emerald-700"
+            >
+              <FiCheck size={14} />
+              Done
+            </button>
+
+            <span className="text-gray-300">
+              |
+            </span>
+
+            <button
+              type="button"
+              onClick={handleCancel}
+              className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600"
+            >
+              <FiX size={14} />
+              Cancel
+            </button>
+          </div>
+        )}
+      </div>
+
+      {!editing ? (
+        <div className="rounded-xl border border-gray-100 bg-gray-50 px-3 py-2.5 text-sm text-gray-700">
+          {selectedOption?.label || (
+            <span className="italic text-gray-300">
+              —
+            </span>
+          )}
+        </div>
+      ) : (
+        <select
+          name={name}
+          value={draft}
+          autoFocus
+          onChange={(event) =>
+            setDraft(event.target.value)
+          }
+          className="w-full rounded-xl border-[1.5px] border-blue-400 bg-white px-3 py-2.5 text-sm text-gray-800 outline-none focus:ring-2 focus:ring-blue-200"
+        >
+          <option value="">
+            Select an option
+          </option>
+
+          {options.map((option) => (
+            <option
+              key={option.value}
+              value={option.value}
+            >
+              {option.label}
+            </option>
+          ))}
+        </select>
       )}
     </div>
   );
 };
 
-const EditableLocationField = ({ label, city, country, onLocationChange }) => {
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState("");
-  const [selectedLocation, setSelectedLocation] = useState(null);
 
+// ======================================================
+// EDITABLE LOCATION
+// ======================================================
+
+const EditableLocationField = ({
+  label,
+  city,
+  country,
+  onLocationChange,
+}) => {
+  const [editing, setEditing] =
+    useState(false);
+
+  const [draft, setDraft] =
+    useState("");
+
+  const [
+    selectedLocation,
+    setSelectedLocation,
+  ] = useState(null);
+
+  /*
+   * Convert:
+   *
+   * city = London
+   * country = United Kingdom
+   *
+   * into:
+   *
+   * London, United Kingdom
+   */
   const displayValue =
-    city && country ? `${city}, ${country}` : city || country || "";
+    city && country
+      ? `${city}, ${country}`
+      : city || country || "";
 
   useEffect(() => {
     setDraft(displayValue);
@@ -136,10 +414,17 @@ const EditableLocationField = ({ label, city, country, onLocationChange }) => {
     setEditing(false);
   }, [city, country]);
 
+  /*
+   * Only update location if the user
+   * selected a valid autocomplete result.
+   */
   const handleConfirm = () => {
     if (selectedLocation) {
-      onLocationChange(selectedLocation);
+      onLocationChange(
+        selectedLocation
+      );
     }
+
     setEditing(false);
   };
 
@@ -152,7 +437,7 @@ const EditableLocationField = ({ label, city, country, onLocationChange }) => {
   return (
     <div className="flex flex-col gap-1">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide font-['Sora',sans-serif]">
+        <span className="font-['Sora',sans-serif] text-xs font-semibold uppercase tracking-wide text-gray-500">
           {label}
         </span>
 
@@ -163,11 +448,10 @@ const EditableLocationField = ({ label, city, country, onLocationChange }) => {
               setDraft(displayValue);
               setEditing(true);
             }}
-            className="flex items-center gap-1 text-xs text-blue-500 hover:text-blue-600 transition-colors"
-            title={`Edit ${label}`}
+            className="flex items-center gap-1 text-xs text-blue-500 transition-colors hover:text-blue-600"
           >
-            <PencilIcon />
-            <span>Edit</span>
+            <FiEdit2 size={14} />
+            Edit
           </button>
         )}
 
@@ -176,29 +460,35 @@ const EditableLocationField = ({ label, city, country, onLocationChange }) => {
             <button
               type="button"
               onClick={handleConfirm}
-              className="flex items-center gap-0.5 text-xs text-emerald-600 hover:text-emerald-700 font-semibold transition-colors"
-              title="Confirm"
+              className="flex items-center gap-1 text-xs font-semibold text-emerald-600 hover:text-emerald-700"
             >
-              <CheckIcon /> Done
+              <FiCheck size={14} />
+              Done
             </button>
 
-            <span className="text-gray-300">|</span>
+            <span className="text-gray-300">
+              |
+            </span>
 
             <button
               type="button"
               onClick={handleCancel}
-              className="flex items-center gap-0.5 text-xs text-gray-400 hover:text-gray-600 transition-colors"
-              title="Cancel"
+              className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600"
             >
-              <XIcon /> Cancel
+              <FiX size={14} />
+              Cancel
             </button>
           </div>
         )}
       </div>
 
       {!editing && (
-        <div className="px-3 py-2.5 rounded-xl text-sm border bg-gray-50 text-gray-700 border-gray-100">
-          {displayValue || <span className="text-gray-300 italic">—</span>}
+        <div className="rounded-xl border border-gray-100 bg-gray-50 px-3 py-2.5 text-sm text-gray-700">
+          {displayValue || (
+            <span className="italic text-gray-300">
+              —
+            </span>
+          )}
         </div>
       )}
 
@@ -206,9 +496,20 @@ const EditableLocationField = ({ label, city, country, onLocationChange }) => {
         <LocationAutocomplete
           value={draft}
           onChange={(location) => {
-            setSelectedLocation(location);
+            /*
+             * Store the full selected result.
+             */
+            setSelectedLocation(
+              location
+            );
+
+            /*
+             * Update the text shown inside
+             * the autocomplete.
+             */
             setDraft(
-              location.city && location.country
+              location.city &&
+                location.country
                 ? `${location.city}, ${location.country}`
                 : location.displayName
             );
@@ -220,180 +521,895 @@ const EditableLocationField = ({ label, city, country, onLocationChange }) => {
   );
 };
 
-const createInitialForm = (user) => ({
-  firstName: user?.firstName || "",
-  lastName: user?.lastName || "",
-  email: user?.email || "",
-  phoneNumber: user?.phoneNumber || "",
-  companyName: user?.companyName || "",
-  companyDescription:
-    user?.companyDescription || "",
-  city: user?.location?.city || "",
-  country: user?.location?.country || "",
-});
 
-const SettingsModal = ({ isOpen, onClose, user, onUserUpdated }) => {
-  console.log("user",user)
-const [form, setForm] = useState(() =>
-  createInitialForm(user)
-);
+// ======================================================
+// CREATE PROFILE FORM
+// ======================================================
 
-  const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
-  const [isError, setIsError] = useState(false);
+const createInitialForm = (user) => {
+  /*
+   * NEW COMPANY ARCHITECTURE
+   *
+   * GET /user-profile now populates companyId.
+   *
+   * Company user example:
+   *
+   * companyId: {
+   *   _id: "...",
+   *   companyName: "...",
+   *   companyDescription: "...",
+   *   ...
+   * }
+   *
+   * Candidate:
+   *
+   * companyId: null
+   */
+  const company =
+    user?.companyId &&
+    typeof user.companyId === "object"
+      ? user.companyId
+      : null;
 
-  if (!isOpen) return null;
+  return {
+    // ==================================================
+    // USER FIELDS
+    // ==================================================
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    firstName:
+      user?.firstName || "",
+
+    lastName:
+      user?.lastName || "",
+
+    email:
+      user?.email || "",
+
+    phoneNumber:
+      user?.phoneNumber || "",
+
+    /*
+     * Candidate location belongs to User.
+     */
+    city:
+      user?.role === "candidate"
+        ? user?.location?.city || ""
+        : "",
+
+    country:
+      user?.role === "candidate"
+        ? user?.location?.country || ""
+        : "",
+
+    // ==================================================
+    // COMPANY FIELDS
+    // ==================================================
+
+    /*
+     * Prefer CompanyModel.
+     *
+     * user.companyName is temporarily kept
+     * as a legacy fallback.
+     */
+    companyName:
+      company?.companyName ||
+      user?.companyName ||
+      "",
+
+    companyDescription:
+      company?.companyDescription ||
+      user?.companyDescription ||
+      "",
+
+    companyUrl:
+      company?.companyUrl || "",
+
+    companySize:
+      company?.companySize || "",
+
+    companyType:
+      company?.companyType || "",
+
+    /*
+     * Company location comes from CompanyModel,
+     * NOT User.location.
+     */
+    companyCity:
+      company?.location?.city || "",
+
+    companyCountry:
+      company?.location?.country || "",
+
+    /*
+     * This belongs to the USER because it describes
+     * their permissions inside the Company.
+     */
+    companyRole:
+      user?.companyRole || "",
+
+    // ==================================================
+    // CANDIDATE ONLY
+    // ==================================================
+
+    availableForWork:
+      user?.role === "candidate"
+        ? user?.availableForWork ?? true
+        : false,
+  };
+};
+
+
+// ======================================================
+// SETTINGS MODAL
+// ======================================================
+
+const SettingsModal = ({
+  isOpen,
+  onClose,
+  user,
+  onUserUpdated,
+}) => {
+  /*
+   * Keep the full profile returned by the backend.
+   *
+   * This is useful because the original `user`
+   * prop may only contain a simplified Header user.
+   */
+  const [profileUser, setProfileUser] =
+    useState(user);
+
+  const [form, setForm] =
+    useState(() =>
+      createInitialForm(user)
+    );
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const [message, setMessage] =
+    useState("");
+
+  const [isError, setIsError] =
+    useState(false);
+
+
+  // ====================================================
+  // LOAD COMPLETE PROFILE
+  // ====================================================
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    const fetchProfile = async () => {
+      try {
+        const token =
+          localStorage.getItem(
+            "token"
+          );
+
+        if (!token) {
+          setIsError(true);
+
+          setMessage(
+            "Your session has expired. Please sign in again."
+          );
+
+          return;
+        }
+
+        /*
+         * GET /user-profile now returns:
+         *
+         * User
+         * +
+         * populated Company inside companyId.
+         */
+        const response =
+          await axios.get(
+            `${API_BASE}/user-profile`,
+            {
+              headers: {
+                Authorization:
+                  `Bearer ${token}`,
+              },
+            }
+          );
+
+        const fullUser =
+          response.data.user;
+
+        /*
+         * Save the full backend profile.
+         */
+        setProfileUser(fullUser);
+
+        /*
+         * Convert it into editable form data.
+         */
+        setForm(
+          createInitialForm(
+            fullUser
+          )
+        );
+      } catch (error) {
+        console.error(
+          "Failed to load profile:",
+          error
+        );
+
+        setIsError(true);
+
+        setMessage(
+          error?.response?.data
+            ?.message ||
+            "Failed to load profile"
+        );
+      }
+    };
+
+    setMessage("");
+    setIsError(false);
+
+    fetchProfile();
+  }, [isOpen]);
+
+
+  if (!isOpen) {
+    return null;
+  }
+
+
+  // ====================================================
+  // CURRENT ACCOUNT ROLE
+  // ====================================================
+
+  /*
+   * Prefer profileUser because it came directly
+   * from GET /user-profile.
+   */
+  const accountRole =
+    profileUser?.role ||
+    user?.role;
+
+
+  // ====================================================
+  // GENERIC FORM CHANGE
+  // ====================================================
+
+  const handleChange = (
+    event
+  ) => {
+    const {
+      name,
+      value,
+    } = event.target;
+
+    setForm(
+      (previousForm) => ({
+        ...previousForm,
+
+        [name]:
+          value,
+      })
+    );
   };
 
-  const handleSave = async (e) => {
-    e.preventDefault();
+
+  // ====================================================
+  // SAVE PROFILE
+  // ====================================================
+
+  const handleSave = async (
+    event
+  ) => {
+    event.preventDefault();
+
     setLoading(true);
     setMessage("");
     setIsError(false);
 
     try {
-      const token = localStorage.getItem("token");
+      const token =
+        localStorage.getItem(
+          "token"
+        );
 
+      if (!token) {
+        setIsError(true);
+
+        setMessage(
+          "Your session has expired. Please sign in again."
+        );
+
+        return;
+      }
+
+      /*
+       * Common User fields.
+       *
+       * These remain inside UserModel for
+       * both candidates and company users.
+       */
       const payload = {
-        firstName: form.firstName,
-        lastName: form.lastName,
-        phoneNumber: form.phoneNumber,
-        companyName: user?.role === "company" ? form.companyName : undefined,
-        companyDescription: user?.role === "company" ? form.companyDescription : undefined,
-        location: {
-          city: form.city,
-          country: form.country,
-        },
+        firstName:
+          form.firstName,
+
+        lastName:
+          form.lastName,
+
+        phoneNumber:
+          form.phoneNumber,
       };
 
-      const res = await axios.put("http://localhost:8002/user-profile", payload, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      console.log("response from settings", res.data)
-      const updatedUser = res.data.user;
 
-      onUserUpdated?.({
-        id: updatedUser._id,
-        firstName: updatedUser.firstName,
-        lastName: updatedUser.lastName,
-        name: `${updatedUser.firstName || ""} ${updatedUser.lastName || ""}`.trim(),
-        email: updatedUser.email,
-        role: updatedUser.role,
-        phoneNumber: updatedUser.phoneNumber || "",
-        companyName: updatedUser.companyName || "",
-        companyDescription: updatedUser.companyDescription || "",
-        location: updatedUser.location || { city: "", country: "" },
-      });
+      // =================================================
+      // CANDIDATE PAYLOAD
+      // =================================================
 
-      setMessage("Profile updated successfully");
+      if (
+        accountRole ===
+        "candidate"
+      ) {
+        /*
+         * Candidate location belongs
+         * directly to UserModel.
+         */
+        payload.location = {
+          city:
+            form.city,
+
+          country:
+            form.country,
+        };
+
+        /*
+         * Controls whether companies can
+         * discover this candidate.
+         */
+        payload.availableForWork =
+          form.availableForWork;
+      }
+
+
+      // =================================================
+      // COMPANY PAYLOAD
+      // =================================================
+
+      if (
+        accountRole ===
+        "company"
+      ) {
+        /*
+         * These values are now saved in CompanyModel
+         * by updateUserProfile.
+         */
+        payload.companyName =
+          form.companyName;
+
+        payload.companyDescription =
+          form.companyDescription;
+
+        payload.companyUrl =
+          form.companyUrl;
+
+        payload.companySize =
+          form.companySize;
+
+        payload.companyType =
+          form.companyType;
+
+        /*
+         * For a company account, `location`
+         * represents Company.location.
+         *
+         * The backend knows this based on:
+         *
+         * user.role === "company"
+         */
+        payload.location = {
+          city:
+            form.companyCity,
+
+          country:
+            form.companyCountry,
+        };
+
+        /*
+         * IMPORTANT:
+         *
+         * Do NOT send:
+         *
+         * companyId
+         * companyRole
+         * createdBy
+         *
+         * Those are controlled by the backend.
+         */
+      }
+
+
+      const response =
+        await axios.put(
+          `${API_BASE}/user-profile`,
+          payload,
+          {
+            headers: {
+              Authorization:
+                `Bearer ${token}`,
+            },
+          }
+        );
+
+      /*
+       * Backend now returns the refreshed user
+       * with populated companyId.
+       */
+      const updatedUser =
+        response.data.user;
+
+      setProfileUser(
+        updatedUser
+      );
+
+      setForm(
+        createInitialForm(
+          updatedUser
+        )
+      );
+
+      /*
+       * IMPORTANT IMPROVEMENT:
+       *
+       * Do not manually rebuild another user object here.
+       *
+       * The backend already returned the correct,
+       * complete user object.
+       *
+       * Header can normalize it itself.
+       */
+      onUserUpdated?.(
+        updatedUser
+      );
+
+      setMessage(
+        "Profile updated successfully"
+      );
     } catch (error) {
-      console.error(error);
-      setIsError(true);
-      setMessage(error?.response?.data?.message || "Failed to update profile");
-    }
+      console.error(
+        "Profile update error:",
+        error
+      );
 
-    setLoading(false);
+      setIsError(true);
+
+      setMessage(
+        error?.response?.data
+          ?.message ||
+          "Failed to update profile"
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
-  return (
-      <div
-    className="fixed bg-white-500 inset-0 flex items-center justify-center bg-black/60 p-4"
-    style={{ zIndex: 99999 }}
-    onClick={(e) => e.target === e.currentTarget && onClose()}
-  >
-    <div
-      className="relative z-[100000] w-full max-w-[560px] max-h-[90vh] overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl font-['DM_Sans',sans-serif]"
-    >
-        {/* Close */}
-<button
-  onClick={onClose}
-  aria-label="Close"
-  className="absolute top-3.5 right-4 text-gray-300 hover:text-gray-500 text-2xl leading-none transition-colors"
->
-  ×
-</button>
 
-        {/* Header */}
-        <h2 className="font-['Sora',sans-serif] text-xl font-bold text-gray-900 mb-1">
-          ⚙️ Profile Settings
-        </h2>
-        <p className="text-xs text-gray-400 mb-5">
-          Click the <span className="text-blue-500 font-semibold">Edit</span> button next to any field to update it. Email cannot be changed.
+  return (
+    <div
+      className="fixed inset-0 flex items-center justify-center bg-black/60 p-4"
+      style={{
+        zIndex: 99999,
+      }}
+      onClick={(event) => {
+        /*
+         * Close only when clicking the
+         * dark backdrop.
+         */
+        if (
+          event.target ===
+          event.currentTarget
+        ) {
+          onClose();
+        }
+      }}
+    >
+      <div className="relative z-[100000] max-h-[90vh] w-full max-w-[620px] overflow-y-auto rounded-2xl bg-white p-6 font-['DM_Sans',sans-serif] shadow-2xl">
+
+        {/* ==========================================
+            CLOSE
+        ========================================== */}
+
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close profile settings"
+          className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 transition hover:bg-gray-100 hover:text-gray-700"
+        >
+          <FiX size={20} />
+        </button>
+
+
+        {/* ==========================================
+            HEADER
+        ========================================== */}
+
+        <div className="mb-1 flex items-center gap-2">
+          <FiSettings
+            className="text-blue-600"
+            size={22}
+          />
+
+          <h2 className="font-['Sora',sans-serif] text-xl font-bold text-gray-900">
+            Profile Settings
+          </h2>
+        </div>
+
+        <p className="mb-5 text-xs text-gray-400">
+          Click{" "}
+          <span className="font-semibold text-blue-500">
+            Edit
+          </span>{" "}
+          next to a field to update it.
+          Email and account role cannot
+          be changed here.
         </p>
+
 
         <form onSubmit={handleSave}>
           <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
-            <EditableField label="First Name"    name="firstName"    value={form.firstName}    onChange={handleChange} />
-            <EditableField label="Last Name"     name="lastName"     value={form.lastName}     onChange={handleChange} />
+
+            {/* ======================================
+                PERSONAL DETAILS
+            ====================================== */}
 
             <div className="col-span-2 max-sm:col-span-1">
-              <EditableField label="Email Address" name="email" value={form.email} onChange={handleChange} disabled />
+              <p className="mb-1 font-['Sora',sans-serif] text-xs font-bold uppercase tracking-wider text-blue-600">
+                Account Details
+              </p>
+            </div>
+
+            <EditableField
+              label="First Name"
+              name="firstName"
+              value={
+                form.firstName
+              }
+              onChange={
+                handleChange
+              }
+            />
+
+            <EditableField
+              label="Last Name"
+              name="lastName"
+              value={
+                form.lastName
+              }
+              onChange={
+                handleChange
+              }
+            />
+
+            <div className="col-span-2 max-sm:col-span-1">
+              <EditableField
+                label="Email Address"
+                name="email"
+                value={
+                  form.email
+                }
+                onChange={
+                  handleChange
+                }
+                disabled
+              />
             </div>
 
             <div className="col-span-2 max-sm:col-span-1">
-              <EditableField label="Phone Number" name="phoneNumber" value={form.phoneNumber} onChange={handleChange} />
+              <EditableField
+                label="Phone Number"
+                name="phoneNumber"
+                value={
+                  form.phoneNumber
+                }
+                onChange={
+                  handleChange
+                }
+              />
             </div>
 
-            <div className="col-span-2 max-sm:col-span-1">
-  <EditableLocationField
-    label="Location"
-    city={form.city}
-    country={form.country}
-    onLocationChange={(location) => {
-      setForm((prev) => ({
-        ...prev,
-        city: location.city,
-        country: location.country,
-      }));
-    }}
-  />
-</div>
 
-            {/* <EditableField label="City"    name="city"    value={form.city}    onChange={handleChange} />
-            <EditableField label="Country" name="country" value={form.country} onChange={handleChange} /> */}
+            {/* ======================================
+                CANDIDATE ONLY
+            ====================================== */}
 
-            {user?.role === "company" && (
+            {accountRole ===
+              "candidate" && (
               <>
                 <div className="col-span-2 max-sm:col-span-1">
-                  <EditableField label="Company Name" name="companyName" value={form.companyName} onChange={handleChange} />
+                  <EditableLocationField
+                    label="Location"
+                    city={
+                      form.city
+                    }
+                    country={
+                      form.country
+                    }
+                    onLocationChange={(
+                      location
+                    ) => {
+                      setForm(
+                        (
+                          previousForm
+                        ) => ({
+                          ...previousForm,
+
+                          city:
+                            location.city,
+
+                          country:
+                            location.country,
+                        })
+                      );
+                    }}
+                  />
                 </div>
+
+                {/* Available for Work */}
                 <div className="col-span-2 max-sm:col-span-1">
-                  <EditableField label="Company Description" name="companyDescription" value={form.companyDescription} onChange={handleChange} isTextarea />
+                  <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+                    <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-700">
+                          <FiBriefcase
+                            size={18}
+                          />
+                        </div>
+
+                        <div>
+                          <p className="text-sm font-semibold text-gray-800">
+                            Available for Work
+                          </p>
+
+                          <p className="mt-1 text-xs leading-5 text-gray-500">
+                            Allow companies to find
+                            your profile in candidate
+                            recommendations.
+                          </p>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-label="Available for work"
+                        aria-checked={
+                          form.availableForWork
+                        }
+                        onClick={() =>
+                          setForm(
+                            (
+                              previousForm
+                            ) => ({
+                              ...previousForm,
+
+                              availableForWork:
+                                !previousForm.availableForWork,
+                            })
+                          )
+                        }
+                        className={`relative h-6 w-11 shrink-0 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-200 ${
+                          form.availableForWork
+                            ? "bg-blue-600"
+                            : "bg-gray-300"
+                        }`}
+                      >
+                        <span
+                          className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform duration-200 ${
+                            form.availableForWork
+                              ? "translate-x-5"
+                              : "translate-x-0"
+                          }`}
+                        />
+                      </button>
+                    </div>
+
+                    <p
+                      className={`mt-3 text-xs font-medium ${
+                        form.availableForWork
+                          ? "text-emerald-600"
+                          : "text-gray-500"
+                      }`}
+                    >
+                      {form.availableForWork
+                        ? "Your profile can appear in recruiter recommendations."
+                        : "Your profile is hidden from recruiter recommendations."}
+                    </p>
+                  </div>
+                </div>
+              </>
+            )}
+
+
+            {/* ======================================
+                COMPANY ONLY
+            ====================================== */}
+
+            {accountRole ===
+              "company" && (
+              <>
+                <div className="col-span-2 mt-2 max-sm:col-span-1">
+                  <p className="mb-1 font-['Sora',sans-serif] text-xs font-bold uppercase tracking-wider text-blue-600">
+                    Company Details
+                  </p>
+                </div>
+
+                {/* COMPANY ROLE - READ ONLY */}
+                <div className="col-span-2 max-sm:col-span-1">
+                  <EditableField
+                    label="Company Account Role"
+                    name="companyRole"
+                    value={formatCompanyRole(
+                      form.companyRole
+                    )}
+                    onChange={
+                      handleChange
+                    }
+                    disabled
+                  />
+                </div>
+
+                {/* COMPANY NAME */}
+                <div className="col-span-2 max-sm:col-span-1">
+                  <EditableField
+                    label="Company Name"
+                    name="companyName"
+                    value={
+                      form.companyName
+                    }
+                    onChange={
+                      handleChange
+                    }
+                  />
+                </div>
+
+                {/* COMPANY DESCRIPTION */}
+                <div className="col-span-2 max-sm:col-span-1">
+                  <EditableField
+                    label="Company Description"
+                    name="companyDescription"
+                    value={
+                      form.companyDescription
+                    }
+                    onChange={
+                      handleChange
+                    }
+                    isTextarea
+                  />
+                </div>
+
+                {/* COMPANY WEBSITE */}
+                <div className="col-span-2 max-sm:col-span-1">
+                  <EditableField
+                    label="Company Website"
+                    name="companyUrl"
+                    value={
+                      form.companyUrl
+                    }
+                    onChange={
+                      handleChange
+                    }
+                  />
+                </div>
+
+                {/* COMPANY SIZE */}
+                <EditableSelectField
+                  label="Company Size"
+                  name="companySize"
+                  value={
+                    form.companySize
+                  }
+                  options={
+                    COMPANY_SIZE_OPTIONS
+                  }
+                  onChange={
+                    handleChange
+                  }
+                />
+
+                {/* COMPANY TYPE */}
+                <EditableSelectField
+                  label="Company Type"
+                  name="companyType"
+                  value={
+                    form.companyType
+                  }
+                  options={
+                    COMPANY_TYPE_OPTIONS
+                  }
+                  onChange={
+                    handleChange
+                  }
+                />
+
+                {/* COMPANY LOCATION */}
+                <div className="col-span-2 max-sm:col-span-1">
+                  <EditableLocationField
+                    label="Company Location"
+                    city={
+                      form.companyCity
+                    }
+                    country={
+                      form.companyCountry
+                    }
+                    onLocationChange={(
+                      location
+                    ) => {
+                      setForm(
+                        (
+                          previousForm
+                        ) => ({
+                          ...previousForm,
+
+                          companyCity:
+                            location.city,
+
+                          companyCountry:
+                            location.country,
+                        })
+                      );
+                    }}
+                  />
                 </div>
               </>
             )}
           </div>
 
+
+          {/* ==========================================
+              SUCCESS / ERROR
+          ========================================== */}
+
           {message && (
             <div
-              className={`mt-4 px-3 py-2.5 rounded-xl text-sm border ${
+              className={`mt-4 rounded-xl border px-3 py-2.5 text-sm ${
                 isError
-                  ? "bg-rose-50 text-rose-700 border-rose-200"
-                  : "bg-emerald-50 text-emerald-700 border-emerald-200"
+                  ? "border-rose-200 bg-rose-50 text-rose-700"
+                  : "border-emerald-200 bg-emerald-50 text-emerald-700"
               }`}
             >
               {message}
             </div>
           )}
 
-          <div className="flex justify-end gap-2.5 mt-5">
+
+          {/* ==========================================
+              ACTIONS
+          ========================================== */}
+
+          <div className="mt-5 flex justify-end gap-2.5">
             <button
               type="button"
               onClick={onClose}
-              className="border border-gray-200 bg-white text-gray-600 rounded-xl px-4 py-2.5 text-sm font-semibold hover:bg-gray-50 transition-colors"
+              className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-50"
             >
+              <FiX size={16} />
               Cancel
             </button>
+
             <button
               type="submit"
               disabled={loading}
-              className="bg-gradient-to-br from-blue-400 to-blue-600 text-white rounded-xl px-4 py-2.5 text-sm font-bold hover:from-blue-500 hover:to-blue-700 disabled:opacity-60 transition-all shadow-sm"
+              className="flex items-center gap-2 rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:from-blue-500 hover:to-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {loading ? "Saving..." : "Save Changes"}
+              {loading ? (
+                "Saving..."
+              ) : (
+                <>
+                  <FiCheck size={16} />
+                  Save Changes
+                </>
+              )}
             </button>
           </div>
         </form>
@@ -403,5 +1419,3 @@ const [form, setForm] = useState(() =>
 };
 
 export default SettingsModal;
-
-

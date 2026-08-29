@@ -5,10 +5,12 @@ import { url } from "../../../utils/constant";
 import AuthModal from "../../../components/Auth/authModal/authModal";
 import OtpModal from "../../../components/Auth/otpModal";
 import { toast } from "react-toastify";
+import MatchScoreModal from "../../company/Dashboard/Applicants/MatchScoreModal"
 
 const MatchingJobs = ({ isGuest = false }) => {
   const router = useRouter();
-
+const [selectedMatch, setSelectedMatch] =
+  useState(null);
   const [matchedJobs, setMatchedJobs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -143,9 +145,18 @@ const MatchingJobs = ({ isGuest = false }) => {
                 {job.salary} · {job.jobType} · {job.workMode}
               </p>
 
-              <p className="text-sm text-green-600 mt-2">
-                Match Score: {job.matchScore}%
-              </p>
+              <button
+  type="button"
+  onClick={() =>
+    setSelectedMatch({
+      ...job,
+      candidateName: "Your Profile",
+    })
+  }
+  className="text-sm font-semibold text-green-600 mt-2 hover:text-green-700 hover:underline"
+>
+  Match Score: {job.matchScore}%
+</button>
 
               <div className="flex flex-wrap gap-2 mt-3">
                 {job.matchedSkills?.map((skill, index) => (
@@ -216,6 +227,14 @@ const MatchingJobs = ({ isGuest = false }) => {
           }}
         />
       )}
+      {selectedMatch && (
+  <MatchScoreModal
+    data={selectedMatch}
+    onClose={() =>
+      setSelectedMatch(null)
+    }
+  />
+)}
     </>
   );
 };

@@ -17,7 +17,48 @@ const salaryOptions = [
 
 const jobTypes = ["Full-time", "Part-time", "Contract", "Internship"];
 const workModes = ["Office", "Hybrid", "Remote"];
+const jobCategories = [
+  "Accounting & Finance",
+  "Administration",
+  "Customer Service",
+  "Design & Creative",
+  "Education & Training",
+  "Engineering",
+  "Healthcare",
+  "Hospitality",
+  "Human Resources & Recruitment",
+  "IT & Software",
+  "Legal",
+  "Logistics & Supply Chain",
+  "Management & Operations",
+  "Manufacturing",
+  "Marketing",
+  "Retail",
+  "Sales",
+  "Science & Research",
+  "Security & Emergency Services",
+  "Skilled Trades & Construction",
+  "Other",
+];
 
+const industries = [
+  "Technology",
+  "Banking & Financial Services",
+  "Healthcare",
+  "Education",
+  "Retail",
+  "Construction",
+  "Manufacturing",
+  "Hospitality & Leisure",
+  "Automotive",
+  "Aviation",
+  "Logistics & Transport",
+  "Energy & Environment",
+  "Professional Services",
+  "Public Sector",
+  "Charity & Non-profit",
+  "Other",
+];
 const formatDate = (dateString) =>
   new Date(dateString).toLocaleDateString("en-GB", {
     day: "numeric",
@@ -26,9 +67,29 @@ const formatDate = (dateString) =>
   });
 
 const formatLocation = (location) => {
-  if (!location) return "";
-  if (typeof location === "string") return location;
-  return `${location.city || ""}, ${location.country || ""}`;
+  if (!location) {
+    return "Location not specified";
+  }
+
+  if (typeof location === "string") {
+    return location;
+  }
+
+  /*
+   * Avoid output such as:
+   *
+   * ", United Kingdom"
+   *
+   * or
+   *
+   * "Manchester, "
+   */
+  return [
+    location.city,
+    location.country,
+  ]
+    .filter(Boolean)
+    .join(", ");
 };
 
 export default function PostedJobs({
@@ -146,14 +207,21 @@ export default function PostedJobs({
                       <FaPen className="h-5 w-5" />
                     </button>
 
-                    <button
-                      onClick={() => onRequestCloseJob(selectedJob)}
-                      disabled={isClosing}
-                      className="p-2 rounded-lg bg-red-50 text-red-700 hover:bg-red-100 transition disabled:opacity-50"
-                      title="Close"
-                    >
-                      <MdWorkOff className="h-5 w-5" />
-                    </button>
+                 {selectedJob.status === "Open" && (
+  <button
+    type="button"
+    onClick={() =>
+      onRequestCloseJob(
+        selectedJob
+      )
+    }
+    disabled={isClosing}
+    className="rounded-lg bg-red-50 p-2 text-red-700 transition hover:bg-red-100 disabled:opacity-50"
+    title="Close job"
+  >
+    <MdWorkOff className="h-5 w-5" />
+  </button>
+)}
                   </>
                 )}
 
@@ -211,6 +279,31 @@ export default function PostedJobs({
                     <h3 className="text-sm font-bold text-slate-900 mb-1">Location</h3>
                     <p className="text-sm text-slate-600">{formatLocation(selectedJob.location)}</p>
                   </div>
+
+                  {/* Category and Industry */}
+<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+  <div>
+    <h3 className="mb-1 text-sm font-bold text-slate-900">
+      Category
+    </h3>
+
+    <p className="text-sm text-slate-600">
+      {selectedJob.category ||
+        "Not specified"}
+    </p>
+  </div>
+
+  <div>
+    <h3 className="mb-1 text-sm font-bold text-slate-900">
+      Industry
+    </h3>
+
+    <p className="text-sm text-slate-600">
+      {selectedJob.industry ||
+        "Not specified"}
+    </p>
+  </div>
+</div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -368,7 +461,67 @@ export default function PostedJobs({
                         ))}
                       </select>
                     </div>
+{/* ======================================
+    JOB CATEGORY
+====================================== */}
+<div>
+  <label className="mb-1 block text-xs font-semibold text-slate-700">
+    Job Category
+  </label>
 
+  <select
+    name="category"
+    value={editForm.category}
+    onChange={handleEditChange}
+    className="w-full rounded-lg border bg-white px-4 py-3 text-sm"
+  >
+    <option value="">
+      Select category
+    </option>
+
+    {jobCategories.map(
+      (category) => (
+        <option
+          key={category}
+          value={category}
+        >
+          {category}
+        </option>
+      )
+    )}
+  </select>
+</div>
+
+{/* ======================================
+    INDUSTRY
+====================================== */}
+<div>
+  <label className="mb-1 block text-xs font-semibold text-slate-700">
+    Industry
+  </label>
+
+  <select
+    name="industry"
+    value={editForm.industry}
+    onChange={handleEditChange}
+    className="w-full rounded-lg border bg-white px-4 py-3 text-sm"
+  >
+    <option value="">
+      Select industry
+    </option>
+
+    {industries.map(
+      (industry) => (
+        <option
+          key={industry}
+          value={industry}
+        >
+          {industry}
+        </option>
+      )
+    )}
+  </select>
+</div>
                     <div>
                       <label className="text-xs font-semibold text-slate-700 mb-1 block">Education</label>
                       <input

@@ -25,7 +25,48 @@ const workModes = [
   "Hybrid",
   "Remote",
 ];
+const jobCategories = [
+  "Accounting & Finance",
+  "Administration",
+  "Customer Service",
+  "Design & Creative",
+  "Education & Training",
+  "Engineering",
+  "Healthcare",
+  "Hospitality",
+  "Human Resources & Recruitment",
+  "IT & Software",
+  "Legal",
+  "Logistics & Supply Chain",
+  "Management & Operations",
+  "Manufacturing",
+  "Marketing",
+  "Retail",
+  "Sales",
+  "Science & Research",
+  "Security & Emergency Services",
+  "Skilled Trades & Construction",
+  "Other",
+];
 
+const industries = [
+  "Technology",
+  "Banking & Financial Services",
+  "Healthcare",
+  "Education",
+  "Retail",
+  "Construction",
+  "Manufacturing",
+  "Hospitality & Leisure",
+  "Automotive",
+  "Aviation",
+  "Logistics & Transport",
+  "Energy & Environment",
+  "Professional Services",
+  "Public Sector",
+  "Charity & Non-profit",
+  "Other",
+];
 const labelClass =
   "text-xs font-semibold text-slate-700 mb-1 block";
 
@@ -40,6 +81,7 @@ const helperClass =
 
 export default function PostJobForm({
   formData,
+  companyUrlLocked,
   loading,
   locationLoading,
   locationResults,
@@ -48,7 +90,7 @@ export default function PostJobForm({
   handleSubmit,
 }) {
   console.log("POST JOB FORM RECEIVED:", formData);
- 
+
   return (
     <form
       id="job-review-form"
@@ -87,29 +129,120 @@ export default function PostJobForm({
           />
         </div>
 
-        {/* Application URL */}
+{/* Job Category */}
+<div>
+  <label className={labelClass}>
+    Job Category{" "}
+    <span className="text-red-500">
+      *
+    </span>
+  </label>
+
+  <select
+    name="category"
+    value={formData.category}
+    onChange={handleChange}
+    className={`${fieldClass} bg-white`}
+    required
+  >
+    <option value="">
+      Select category
+    </option>
+
+    {jobCategories.map(
+      (category) => (
+        <option
+          key={category}
+          value={category}
+        >
+          {category}
+        </option>
+      )
+    )}
+  </select>
+</div>
+
+
+{/* Industry */}
+<div>
+  <label className={labelClass}>
+    Industry{" "}
+    <span className="text-red-500">
+      *
+    </span>
+  </label>
+
+  <select
+    name="industry"
+    value={formData.industry}
+    onChange={handleChange}
+    className={`${fieldClass} bg-white`}
+    required
+  >
+    <option value="">
+      Select industry
+    </option>
+
+    {industries.map(
+      (industry) => (
+        <option
+          key={industry}
+          value={industry}
+        >
+          {industry}
+        </option>
+      )
+    )}
+  </select>
+</div>
+
+        {/* Company Website */}
         <div className="md:col-span-3">
           <label className={labelClass}>
-            Application URL{" "}
-            <span className="text-red-500">
-              *
-            </span>
+            Company Website{" "}
+
+            {!companyUrlLocked && (
+              <span className="text-red-500">
+                *
+              </span>
+            )}
           </label>
 
           <input
             type="url"
             name="companyUrl"
-            value={formData.companyUrl}
-            onChange={handleChange}
-            placeholder="https://example.com/careers/job-post"
-            className={fieldClass}
+            value={
+              formData.companyUrl
+            }
+            onChange={
+              handleChange
+            }
+            placeholder="https://www.example.com"
+            className={`${fieldClass} ${companyUrlLocked
+                ? "cursor-not-allowed bg-slate-100 text-slate-500"
+                : "bg-white"
+              }`}
+            disabled={
+              companyUrlLocked
+            }
             required
           />
 
-          <p className={helperClass}>
-            Candidates will be redirected to
-            this URL to apply for the role.
-          </p>
+          {companyUrlLocked ? (
+            <p className={helperClass}>
+              This website comes from your
+              company profile. To change it,
+              please update your Profile Settings.
+            </p>
+          ) : (
+            <p className={helperClass}>
+              Your company does not currently
+              have a website saved. Enter it here
+              or upload a JD containing the
+              company website. It will be saved
+              to your company profile.
+            </p>
+          )}
         </div>
 
         {/* Location */}
@@ -457,3 +590,26 @@ export default function PostJobForm({
     </form>
   );
 }
+
+
+// Signup
+// │
+// ├─ entered website
+// │      ↓
+// │  Company.companyUrl
+// │      ↓
+// │  Post Job shows disabled URL
+// │
+// └─ skipped website
+//        ↓
+//    Post Job
+//        ↓
+//    Manual URL OR AI extracts URL
+//        ↓
+//    POST /create
+//        ↓
+//    backend saves Company.companyUrl
+//        ↓
+//    creates Job
+//        ↓
+//    next Post Job shows disabled URL
