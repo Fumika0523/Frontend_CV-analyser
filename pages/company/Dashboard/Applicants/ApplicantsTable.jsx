@@ -91,7 +91,7 @@ const clearFilters = () => {
       const token = localStorage.getItem("token");
 
       const res = await axios.put(
-        `${url}/update-applications/${applicationId}/status`,
+        `${url}/applications/update-applications/${applicationId}/status`,
         { status: newStatus },
         {
           headers: {

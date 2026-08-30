@@ -29,7 +29,7 @@ export default function ApplicantsPage() {
       const token = localStorage.getItem("token");
       if (!token) return;
 
-      const res = await axios.get(`${url}/recommended-candidates`, {
+      const res = await axios.get(`${url}/applications/recommended-candidates`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
