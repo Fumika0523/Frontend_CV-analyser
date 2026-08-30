@@ -70,7 +70,7 @@ const [selectedMatch, setSelectedMatch] =
       const res = await axios.get(endpoint, config);
       console.log("Matched Job Data", res.data)
       const jobsData = res.data.matchedJobs || [];
-      setMatchedJobs(isGuest ? jobsData.slice(0, 5) : jobsData);
+      setMatchedJobs(isGuest ? jobsData.slice(0, 3) : jobsData);
     } catch (error) {
       console.error(error);
       setMessage(error.response?.data?.message || "Failed to fetch matched jobs");
@@ -145,7 +145,7 @@ const [selectedMatch, setSelectedMatch] =
                 {job.salary} · {job.jobType} · {job.workMode}
               </p>
 
-              <button
+            <button
   type="button"
   onClick={() =>
     setSelectedMatch({
@@ -155,7 +155,9 @@ const [selectedMatch, setSelectedMatch] =
   }
   className="text-sm font-semibold text-green-600 mt-2 hover:text-green-700 hover:underline"
 >
-  Match Score: {job.matchScore}%
+  {isGuest
+    ? `Skill Match: ${job.matchScore}%`
+    : `Match Score: ${job.matchScore}%`}
 </button>
 
               <div className="flex flex-wrap gap-2 mt-3">
@@ -227,9 +229,11 @@ const [selectedMatch, setSelectedMatch] =
           }}
         />
       )}
-      {selectedMatch && (
+     
+{selectedMatch && (
   <MatchScoreModal
     data={selectedMatch}
+    isGuest={isGuest}
     onClose={() =>
       setSelectedMatch(null)
     }

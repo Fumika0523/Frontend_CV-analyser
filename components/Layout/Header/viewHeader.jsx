@@ -458,18 +458,37 @@ const viewHeader = ({ guestView = "candidate", setGuestView = EMPTY_SET_GUEST_VI
 
           {/* Desktop navigation */}
           <ul className="col-start-4 col-end-8 hidden items-center text-slate-200 lg:flex">
-            {user
-              ? navLinks.map((item) => (
-                  <DesktopUserLink key={item.href} item={item} activeLink={activeLink} />
-                ))
-              : NAV_GUEST.map((item) => (
-                  <DesktopGuestButton
-                    key={item.id}
-                    item={item}
-                    activeLink={activeLink}
-                    onSelect={handleHomepageSectionClick}
-                  />
-                ))}
+        {user ? (
+  navLinks.map((item) => (
+    <DesktopUserLink
+      key={item.href}
+      item={item}
+      activeLink={activeLink}
+    />
+  ))
+) : (
+  <>
+    {guestView === "candidate" && (
+      <li>
+        <Link href="/candidate/dashboard">
+          <a className="group mx-1 inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-all duration-200 hover:bg-sky-100/40 hover:text-slate-900">
+            <FaTachometerAlt className="h-5 w-5 text-blue-700 group-hover:text-sky-500" />
+            Dashboard
+          </a>
+        </Link>
+      </li>
+    )}
+
+    {NAV_GUEST.map((item) => (
+      <DesktopGuestButton
+        key={item.id}
+        item={item}
+        activeLink={activeLink}
+        onSelect={handleHomepageSectionClick}
+      />
+    ))}
+  </>
+)}
           </ul>
 
           {/* Authentication and account area */}
@@ -637,16 +656,36 @@ const viewHeader = ({ guestView = "candidate", setGuestView = EMPTY_SET_GUEST_VI
       <nav className="fixed bottom-0 left-0 right-0 z-20 bg-white shadow-lg lg:hidden">
         <div className="px-2 sm:px-6">
           <ul className="flex w-full items-center justify-around overflow-x-auto text-slate-600">
-            {user
-              ? navLinks.map((item) => <MobileUserLink key={item.href} item={item} />)
-              : NAV_GUEST.map((item) => (
-                  <MobileGuestButton
-                    key={item.id}
-                    item={item}
-                    activeLink={activeLink}
-                    onSelect={handleHomepageSectionClick}
-                  />
-                ))}
+    {user ? (
+  navLinks.map((item) => (
+    <MobileUserLink
+      key={item.href}
+      item={item}
+    />
+  ))
+) : (
+  <>
+    {guestView === "candidate" && (
+      <li>
+        <Link href="/candidate/dashboard">
+          <a className="flex min-w-[78px] shrink-0 flex-col items-center border-t-2 border-transparent px-2 py-2 text-xs text-sky-600 transition hover:border-blue-700">
+            <FaTachometerAlt className="mb-0.5 h-5 w-5 text-blue-900" />
+            <span>Dashboard</span>
+          </a>
+        </Link>
+      </li>
+    )}
+
+    {NAV_GUEST.map((item) => (
+      <MobileGuestButton
+        key={item.id}
+        item={item}
+        activeLink={activeLink}
+        onSelect={handleHomepageSectionClick}
+      />
+    ))}
+  </>
+)}
           </ul>
         </div>
       </nav>
