@@ -9,13 +9,10 @@ import Layout from "../../components/Layout/Layout";
 
 export default function ViewMyCVs() {
   const router = useRouter();
-
   const [myCVs, setMyCVs] = useState([]);
   const [loading, setLoading] = useState(true);
-
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
-
   const getMyCVs = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -99,6 +96,41 @@ export default function ViewMyCVs() {
       setUploading(false);
     }
   };
+
+  const handleViewCV = async(cvId)=>{
+    try{
+      
+      const token = localStorage.getItem("token");
+      console.log("Opening CV:", cvId);
+
+      const res = await axios.get(`${url}/cv/${cvId}/download`, 
+      {
+        headers:{
+        Authorization: `Bearer ${token}`,
+      },
+      responseType:"blob"
+    }
+)
+console.log("response from handleViewCV:",res)
+
+const fileURL = window.URL.createObjectURL(
+  new Blob(
+    [res.data],
+    {type:"application/pdf"}
+  )
+)
+window.open(
+  fileURL,
+  "_blank"
+)
+setTimeout(()=>{
+  window.URL.revokeObjectURL(fileURL)
+}, 60000)
+    }catch(error){
+      console.error("View CV error:",error)
+      toast.error("Unable to open CV")
+    }
+  }
 
   return (
     <Layout>
@@ -217,16 +249,17 @@ export default function ViewMyCVs() {
                       </p>
                     </div>
                   </div>
-
-                  <a
-                    href={`${url}${cv.filePath}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-100 transition"
-                  >
-                    <FiEye />
-                    View CV
-                  </a>
+<button
+  type="button"
+  onClick={() =>
+    handleViewCV(cv._id)
+  }
+  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-100 transition"
+>
+  <FiEye />
+  View CV
+</button>
+           
                 </div>
               ))}
             </div>
