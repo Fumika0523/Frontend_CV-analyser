@@ -8,9 +8,8 @@ import { TERMS_VERSION } from "../../../pages/legal/terms";
 import LocationAutocomplete from "../../common/LocationAutocomplete";
 import { Field, TwoCol, Banner, Spinner, PasswordField, CloseBtn } from "./authFormAtoms";
 import { isValidEmail } from "./emailHelpers";
+import { url } from "../../../utils/constant";
 
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8002";
 
 
 const EMPTY_FORM = {
@@ -90,11 +89,7 @@ const SignUpModal = ({ isOpen, onClose, onOtpSent, onSwitchToSignIn, initialRole
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [termsModalOpen, setTermsModalOpen] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
-  const [emailCheck, setEmailCheck] = useState({
-    checking: false,
-    valid: false,
-    message: "",
-  });
+
 
   const resetForm = () => {
     setForm(EMPTY_FORM);
@@ -102,12 +97,6 @@ const SignUpModal = ({ isOpen, onClose, onOtpSent, onSwitchToSignIn, initialRole
     setTermsAccepted(false);
     setTermsModalOpen(false);
     setRole(initialRole);
-
-    setEmailCheck({
-      checking: false,
-      valid: false,
-      message: "",
-    });
   };
 
   // Reset the form every time the modal opens, so a previous attempt
@@ -127,67 +116,16 @@ const SignUpModal = ({ isOpen, onClose, onOtpSent, onSwitchToSignIn, initialRole
 
   if (!isOpen) return null;
 
+  // Handle Change
   const handleChange = (e) => {
     const { name, value } = e.target;
-
     setForm((prev) => ({
       ...prev,
       [name]: value,
     }));
-
-    // A changed email must be checked again.
-    if (name === "email") {
-      setEmailCheck({
-        checking: false,
-        valid: false,
-        message: "",
-      });
-    }
-  };
-  const checkEmailDomain = async () => {
-    const email = form.email.trim();
-
-    if (!isValidEmail(email)) {
-      setEmailCheck({
-        checking: false,
-        valid: false,
-        message: "Please enter a valid email address.",
-      });
-
-      return false;
-    }
-
-    try {
-      setEmailCheck({
-        checking: true,
-        valid: false,
-        message: "Checking email domain...",
-      });
-
-      const response = await axios.post(`${API_BASE}/check-email`, {
-        email,
-      });
-
-      setEmailCheck({
-        checking: false,
-        valid: response.data.valid === true,
-        // message: "Email domain is valid.",
-      });
-
-      return true;
-    } catch (error) {
-      setEmailCheck({
-        checking: false,
-        valid: false,
-        message:
-          error.response?.data?.message ||
-          "Unable to verify this email domain.",
-      });
-
-      return false;
-    }
   };
 
+  // Handle Submit
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage("");
@@ -198,50 +136,58 @@ const SignUpModal = ({ isOpen, onClose, onOtpSent, onSwitchToSignIn, initialRole
       return;
     }
 
-    // Catch obviously malformed emails before making a network call.
-    // Domain-level checks (does this email's domain actually accept mail)
-    // happen server-side in validateEmailForOtp.
-    if (!isValidEmail(form.email)) {
-      setMessage("Please enter a valid email address.");
+    const email = form.email.trim().toLowerCase();
+const confirmEmail =
+  form.confirmEmail.trim().toLowerCase();
+
+  // Basic email format check
+if (!isValidEmail(email)) {
+  setMessage("Please enter a valid email address.");
+  return;
+}
+    // Prevent email typos
+    if(email !== confirmEmail){
+      setMessage("Email address do not match. Please check and try again")
       return;
     }
 
-
-    // We can't verify a specific mailbox exists (mail providers block that
-    // kind of lookup), so this is the practical substitute: catch typos by
-    // asking the user to type the address twice and comparing them.
-    if (form.email.trim().toLowerCase() !== form.confirmEmail.trim().toLowerCase()) {
-      setMessage("Email addresses do not match. Please check and try again.");
-      return;
-    }
-
-    if (!emailCheck.valid) {
-      setMessage(
-        emailCheck.checking
-          ? "Please wait while we check your email."
-          : "Please validate your email address before creating an account."
-      );
-      return;
-    }
-
-    setLoading(true);
+    setLoading(true)
+   
     try {
       const guestSessionId = localStorage.getItem("guest_session_id");
-      const payload = buildSignupPayload(role, form, guestSessionId);
-
-      const res = await axios.post(`${API_BASE}/signup`, payload);
+      console.log("guestSessionId",guestSessionId)
+      const payload = buildSignupPayload(
+        role,
+        {
+          ...form,
+          email,
+        },
+        guestSessionId
+      )
+      const res = await axios.post(`${url}/signup`, payload);
+      console.log("payload:",payload)
+      console.log("response for handleSubmit Sign up Modal:",res)
       setMessage(res.data.message);
       onOtpSent?.({ _id: res.data.mongoId, email: form.email });
     } catch (err) {
       // 403 + an _id in the response means the account exists but isn't
       // verified yet — send the user to OTP verification instead of
       // showing a generic error.
-      if (err?.response?.status === 403 && err?.response?.data?._id) {
-        setMessage(err.response.data.message || "Please verify your email");
-        onOtpSent?.({ _id: err.response.data._id, email: form.email });
-      } else {
-        setMessage(err?.response?.data?.message || "Signup failed. Please try again.");
+      const data = err?.response?.data;
+
+      //Existing account but OTP not completed
+      if(
+        err?.response?.status === 403 && data?._id
+      ){
+        setMessage(data.message || "Please verify your email.")
+
+        onOtpSent?.({
+          _id: data._id,
+          email,
+        });
+        return
       }
+      setMessage(data?.message || "Signup failed. please try again")
     } finally {
       setLoading(false);
     }
@@ -333,24 +279,9 @@ const SignUpModal = ({ isOpen, onClose, onOtpSent, onSwitchToSignIn, initialRole
                         className="am-input"
                         required
                         onChange={handleChange}
-                        onBlur={checkEmailDomain}
                       />
 
-                      {emailCheck.message && (
-                        <p
-                          style={{
-                            margin: "5px 0 0",
-                            fontSize: 12,
-                            color: emailCheck.checking
-                              ? "#64748b"
-                              : emailCheck.valid
-                                ? "#15803d"
-                                : "#dc2626",
-                          }}
-                        >
-                          {emailCheck.message}
-                        </p>
-                      )}
+                    
                     </Field>
 
                     {/* Confirm Email Address */}
@@ -510,24 +441,10 @@ const SignUpModal = ({ isOpen, onClose, onOtpSent, onSwitchToSignIn, initialRole
                       className="am-input"
                       required
                       onChange={handleChange}
-                      onBlur={checkEmailDomain}
+                     
                     />
 
-                    {emailCheck.message && (
-                      <p
-                        style={{
-                          margin: "5px 0 0",
-                          fontSize: 12,
-                          color: emailCheck.checking
-                            ? "#64748b"
-                            : emailCheck.valid
-                              ? "#15803d"
-                              : "#dc2626",
-                        }}
-                      >
-                        {emailCheck.message}
-                      </p>
-                    )}
+      
                   </Field>
 
                   {/* Confirm Email  */}
@@ -610,9 +527,7 @@ const SignUpModal = ({ isOpen, onClose, onOtpSent, onSwitchToSignIn, initialRole
               <button type="submit" className="am-submit"
                 disabled={
                   loading ||
-                  !termsAccepted ||
-                  emailCheck.checking ||
-                  !emailCheck.valid
+                  !termsAccepted
                 }
                 style={{ marginTop: 4 }}>
                 {loading ? (
