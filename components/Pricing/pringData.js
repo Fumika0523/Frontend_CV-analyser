@@ -9,6 +9,7 @@ export const pricingPlans = {
       period: "",
       buttonLabel: "Start Free",
       features: [
+        "only for 7 days",
         "3 job applications",
         "Upload and store your CV",
         "Automatic skills extraction",
