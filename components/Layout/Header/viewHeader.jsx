@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import axios from "axios";
-
 import AuthModal from "../../Auth/authModal/authModal";
 import OtpModal from "../../Auth/otpModal";
 import SettingsModal from "../../Auth/settingsModal";
@@ -27,14 +26,6 @@ import {
 import { NAV_GUEST, NAV_CANDIDATE, NAV_COMPANY } from "./headerData";
 
 const EMPTY_SET_GUEST_VIEW = () => {};
-
-/* ---------------------------------------------------------------- */
-/* Small nav-item subcomponents                                     */
-/*                                                                    */
-/* These exist purely to avoid writing the same map() JSX four       */
-/* times (desktop user / desktop guest / mobile user / mobile        */
-/* guest). Markup and classNames are unchanged from before.          */
-/* ---------------------------------------------------------------- */
 
 const DesktopUserLink = ({ item, activeLink }) => {
   const router = useRouter();
@@ -142,7 +133,7 @@ const MobileGuestButton = ({ item, activeLink, onSelect }) => {
 
 const viewHeader = ({ guestView = "candidate", setGuestView = EMPTY_SET_GUEST_VIEW }) => {
   const router = useRouter();
-
+const [guestSessionId, setGuestSessionId] = useState("");
   const [activeLink, setActiveLink] = useState(null);
   const [scrollActive, setScrollActive] = useState(false);
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
@@ -173,21 +164,7 @@ const viewHeader = ({ guestView = "candidate", setGuestView = EMPTY_SET_GUEST_VI
     return null;
   }
 
-  /*
-   * If /user-profile populates companyId,
-   * companyId will be an object.
-   *
-   * Example:
-   *
-   * companyId: {
-   *   _id: "...",
-   *   companyName: "ABC Recruitment Ltd",
-   *   ...
-   * }
-   *
-   * Immediately after OTP verification it may
-   * still just be the Company ObjectId string.
-   */
+
   const company =
     userData.companyId &&
     typeof userData.companyId === "object"
@@ -224,12 +201,6 @@ const viewHeader = ({ guestView = "candidate", setGuestView = EMPTY_SET_GUEST_VI
     phoneNumber:
       userData.phoneNumber || "",
 
-    /*
-     * NEW
-     *
-     * Keep company membership in React state.
-     * Do NOT manually put it into localStorage.
-     */
     companyId:
       company?._id ||
       userData.companyId ||
@@ -267,14 +238,6 @@ const viewHeader = ({ guestView = "candidate", setGuestView = EMPTY_SET_GUEST_VI
       company?.companyType ||
       "",
 
-    /*
-     * User.location remains here.
-     *
-     * For candidates this is their location.
-     *
-     * We will handle Company.location separately
-     * when we migrate SettingsModal.
-     */
     location:
       userData.location || {
         city: "",
@@ -392,16 +355,22 @@ const viewHeader = ({ guestView = "candidate", setGuestView = EMPTY_SET_GUEST_VI
     return () => router.events.off("routeChangeComplete", scrollToHashSection);
   }, [router.pathname, router.events]);
 
-  /* Loads the logged-in user when the Header first mounts. */
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const token = localStorage.getItem("token");
+useEffect(() => {
+  const fetchUser = async () => {
+    try {
+      const token = localStorage.getItem("token");
 
-        if (!token) {
-          setUser(null);
-          return;
-        }
+      const storedGuestSessionId =
+        localStorage.getItem("guest_session_id");
+
+      setGuestSessionId(
+        storedGuestSessionId || ""
+      );
+
+      if (!token) {
+        setUser(null);
+        return;
+      }
 
         const response = await axios.get("http://localhost:8002/user-profile", {
           headers: { Authorization: `Bearer ${token}` },
@@ -431,7 +400,7 @@ const viewHeader = ({ guestView = "candidate", setGuestView = EMPTY_SET_GUEST_VI
     };
 
     fetchUser();
-  }, [setGuestView]);
+}, [setGuestView, router.asPath]);
 
   return (
     <>
@@ -468,7 +437,7 @@ const viewHeader = ({ guestView = "candidate", setGuestView = EMPTY_SET_GUEST_VI
   ))
 ) : (
   <>
-    {guestView === "candidate" && (
+    {guestView === "candidate" && guestSessionId && (
       <li>
         <Link href="/candidate/dashboard">
           <a className="group mx-1 inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition-all duration-200 hover:bg-sky-100/40 hover:text-slate-900">
@@ -665,7 +634,7 @@ const viewHeader = ({ guestView = "candidate", setGuestView = EMPTY_SET_GUEST_VI
   ))
 ) : (
   <>
-    {guestView === "candidate" && (
+    {guestView === "candidate" && guestSessionId && (
       <li>
         <Link href="/candidate/dashboard">
           <a className="flex min-w-[78px] shrink-0 flex-col items-center border-t-2 border-transparent px-2 py-2 text-xs text-sky-600 transition hover:border-blue-700">
