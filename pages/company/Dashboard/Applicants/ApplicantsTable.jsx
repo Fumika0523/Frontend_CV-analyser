@@ -2,6 +2,7 @@ import axios from "axios";
 import React, { useMemo, useState } from "react";
 import { url } from "../../../../utils/constant";
 import MatchScoreModal from "./MatchScoreModal";
+import { toast } from "react-toastify";
 
 const statusOptions = [
   "pending",
@@ -25,66 +26,76 @@ const ApplicantsTable = ({ applicantsData, setApplicantsData }) => {
   const [statusEditApplicant, setStatusEditApplicant] = useState(null);
 
   const [searchTerm, setSearchTerm] = useState("");
-const [statusFilter, setStatusFilter] = useState("all");
-const [jobFilter, setJobFilter] = useState("all");
-const [minimumScore, setMinimumScore] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [jobFilter, setJobFilter] = useState("all");
+  const [minimumScore, setMinimumScore] = useState("");
 
-// Create the job-title dropdown options from the applicants.
-const jobTitles = useMemo(() => {
-  return [
-    ...new Set(
-      (applicantsData || [])
-        .map((applicant) => applicant.title)
-        .filter(Boolean)
-    ),
-  ].sort();
-}, [applicantsData]);
 
-const filteredApplicants = useMemo(() => {
-  const normalizedSearch = searchTerm.trim().toLowerCase();
+  console.log(
+    "Applicant CV identifiers:",
+    applicantsData?.map((applicant) => ({
+      applicationId: applicant._id,
+      cvId: applicant.cvId,
+      hasCvFilePath: Boolean(applicant.cvFilePath),
+    }))
+  );
 
-  return (applicantsData || []).filter((applicant) => {
-    const candidateName = applicant.candidateName?.toLowerCase() || "";
-    const email = applicant.candidateEmail?.toLowerCase() || "";
-    const jobTitle = applicant.title || "";
-    const matchScore = Number(applicant.matchScore) || 0;
+  // Create the job-title dropdown options from the applicants.
+  const jobTitles = useMemo(() => {
+    return [
+      ...new Set(
+        (applicantsData || [])
+          .map((applicant) => applicant.title)
+          .filter(Boolean)
+      ),
+    ].sort();
+  }, [applicantsData]);
 
-    const matchesSearch =
-      !normalizedSearch ||
-      candidateName.includes(normalizedSearch) ||
-      email.includes(normalizedSearch) ||
-      jobTitle.toLowerCase().includes(normalizedSearch);
+  const filteredApplicants = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLowerCase();
 
-    const matchesStatus =
-      statusFilter === "all" || applicant.status === statusFilter;
+    return (applicantsData || []).filter((applicant) => {
+      const candidateName = applicant.candidateName?.toLowerCase() || "";
+      const email = applicant.candidateEmail?.toLowerCase() || "";
+      const jobTitle = applicant.title || "";
+      const matchScore = Number(applicant.matchScore) || 0;
 
-    const matchesJob =
-      jobFilter === "all" || jobTitle === jobFilter;
+      const matchesSearch =
+        !normalizedSearch ||
+        candidateName.includes(normalizedSearch) ||
+        email.includes(normalizedSearch) ||
+        jobTitle.toLowerCase().includes(normalizedSearch);
 
-    const matchesScore =
-      minimumScore === "" || matchScore >= Number(minimumScore);
+      const matchesStatus =
+        statusFilter === "all" || applicant.status === statusFilter;
 
-    return (
-      matchesSearch &&
-      matchesStatus &&
-      matchesJob &&
-      matchesScore
-    );
-  });
-}, [
-  applicantsData,
-  searchTerm,
-  statusFilter,
-  jobFilter,
-  minimumScore,
-]);
+      const matchesJob =
+        jobFilter === "all" || jobTitle === jobFilter;
 
-const clearFilters = () => {
-  setSearchTerm("");
-  setStatusFilter("all");
-  setJobFilter("all");
-  setMinimumScore("");
-};
+      const matchesScore =
+        minimumScore === "" || matchScore >= Number(minimumScore);
+
+      return (
+        matchesSearch &&
+        matchesStatus &&
+        matchesJob &&
+        matchesScore
+      );
+    });
+  }, [
+    applicantsData,
+    searchTerm,
+    statusFilter,
+    jobFilter,
+    minimumScore,
+  ]);
+
+  const clearFilters = () => {
+    setSearchTerm("");
+    setStatusFilter("all");
+    setJobFilter("all");
+    setMinimumScore("");
+  };
 
   const updateStatus = async (applicationId, newStatus) => {
     try {
@@ -99,7 +110,7 @@ const clearFilters = () => {
           },
         }
       );
-      console.log("res",res)
+      console.log("res", res)
 
       setApplicantsData((prev) =>
         prev.map((app) =>
@@ -115,6 +126,68 @@ const clearFilters = () => {
     }
   };
 
+  // Open an applicant's CV securely.
+  const handleViewCV = async (cvId) => {
+    // Read the company's authentication token.
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      toast.error("Please sign in to view this CV.");
+      return;
+    }
+
+    try {
+      // Request the PDF through our protected backend route.
+      const response = await axios.get(
+        `${url}/cv/${cvId}/download`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+
+          // Receive the PDF as binary data.
+          responseType: "blob",
+        }
+      );
+
+      // Create a temporary browser URL for the PDF.
+      const pdfUrl = window.URL.createObjectURL(
+        new Blob([response.data], {
+          type: "application/pdf",
+        })
+      );
+
+      // Open the PDF in a new tab.
+      const newTab = window.open(pdfUrl, "_blank");
+
+      if (!newTab) {
+        toast.error(
+          "Please allow pop-ups to view the CV."
+        );
+      }
+
+      // Release the temporary URL after 60 seconds.
+      setTimeout(() => {
+        window.URL.revokeObjectURL(pdfUrl);
+      }, 60000);
+
+    } catch (error) {
+      console.error("CV download error:", error);
+
+      if (error.response?.status === 403) {
+        toast.error(
+          "You are not authorised to access this CV."
+        );
+      } else if (error.response?.status === 404) {
+        toast.error("CV not found.");
+      } else if (error.response?.status === 401) {
+        toast.error("Please sign in again.");
+      } else {
+        toast.error("Unable to open this CV.");
+      }
+    }
+  };
+
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
       <div className="mb-5">
@@ -126,124 +199,124 @@ const clearFilters = () => {
         </p>
       </div>
 
-<div className="mb-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-  <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-    {/* Search by candidate name, email or job title */}
-    <div>
-      <label
-        htmlFor="applicant-search"
-        className="mb-1.5 block text-sm font-semibold text-slate-700"
-      >
-        Search applicant
-      </label>
+      <div className="mb-6 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {/* Search by candidate name, email or job title */}
+          <div>
+            <label
+              htmlFor="applicant-search"
+              className="mb-1.5 block text-sm font-semibold text-slate-700"
+            >
+              Search applicant
+            </label>
 
-      <input
-        id="applicant-search"
-        type="search"
-        value={searchTerm}
-        onChange={(event) => setSearchTerm(event.target.value)}
-        placeholder="Name, email or job title"
-        className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-      />
-    </div>
+            <input
+              id="applicant-search"
+              type="search"
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder="Name, email or job title"
+              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            />
+          </div>
 
-    {/* Filter by job */}
-    <div>
-      <label
-        htmlFor="job-filter"
-        className="mb-1.5 block text-sm font-semibold text-slate-700"
-      >
-        Job title
-      </label>
+          {/* Filter by job */}
+          <div>
+            <label
+              htmlFor="job-filter"
+              className="mb-1.5 block text-sm font-semibold text-slate-700"
+            >
+              Job title
+            </label>
 
-      <select
-        id="job-filter"
-        value={jobFilter}
-        onChange={(event) => setJobFilter(event.target.value)}
-        className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-      >
-        <option value="all">All jobs</option>
+            <select
+              id="job-filter"
+              value={jobFilter}
+              onChange={(event) => setJobFilter(event.target.value)}
+              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            >
+              <option value="all">All jobs</option>
 
-        {jobTitles.map((jobTitle) => (
-          <option key={jobTitle} value={jobTitle}>
-            {jobTitle}
-          </option>
-        ))}
-      </select>
-    </div>
+              {jobTitles.map((jobTitle) => (
+                <option key={jobTitle} value={jobTitle}>
+                  {jobTitle}
+                </option>
+              ))}
+            </select>
+          </div>
 
-    {/* Filter by application status */}
-    <div>
-      <label
-        htmlFor="status-filter"
-        className="mb-1.5 block text-sm font-semibold text-slate-700"
-      >
-        Status
-      </label>
+          {/* Filter by application status */}
+          <div>
+            <label
+              htmlFor="status-filter"
+              className="mb-1.5 block text-sm font-semibold text-slate-700"
+            >
+              Status
+            </label>
 
-      <select
-        id="status-filter"
-        value={statusFilter}
-        onChange={(event) => setStatusFilter(event.target.value)}
-        className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm capitalize text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-      >
-        <option value="all">All statuses</option>
+            <select
+              id="status-filter"
+              value={statusFilter}
+              onChange={(event) => setStatusFilter(event.target.value)}
+              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm capitalize text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            >
+              <option value="all">All statuses</option>
 
-        {statusOptions.map((status) => (
-          <option key={status} value={status}>
-            {status}
-          </option>
-        ))}
-      </select>
-    </div>
+              {statusOptions.map((status) => (
+                <option key={status} value={status}>
+                  {status}
+                </option>
+              ))}
+            </select>
+          </div>
 
-    {/* Filter by minimum matching score */}
-    <div>
-      <label
-        htmlFor="score-filter"
-        className="mb-1.5 block text-sm font-semibold text-slate-700"
-      >
-        Minimum match score
-      </label>
+          {/* Filter by minimum matching score */}
+          <div>
+            <label
+              htmlFor="score-filter"
+              className="mb-1.5 block text-sm font-semibold text-slate-700"
+            >
+              Minimum match score
+            </label>
 
-      <select
-        id="score-filter"
-        value={minimumScore}
-        onChange={(event) => setMinimumScore(event.target.value)}
-        className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
-      >
-        <option value="">Any score</option>
-        <option value="50">50% or higher</option>
-        <option value="60">60% or higher</option>
-        <option value="70">70% or higher</option>
-        <option value="80">80% or higher</option>
-        <option value="90">90% or higher</option>
-      </select>
-    </div>
-  </div>
+            <select
+              id="score-filter"
+              value={minimumScore}
+              onChange={(event) => setMinimumScore(event.target.value)}
+              className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+            >
+              <option value="">Any score</option>
+              <option value="50">50% or higher</option>
+              <option value="60">60% or higher</option>
+              <option value="70">70% or higher</option>
+              <option value="80">80% or higher</option>
+              <option value="90">90% or higher</option>
+            </select>
+          </div>
+        </div>
 
-  <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-    <p className="text-sm text-slate-500">
-      Showing{" "}
-      <span className="font-semibold text-slate-800">
-        {filteredApplicants.length}
-      </span>{" "}
-      of{" "}
-      <span className="font-semibold text-slate-800">
-        {applicantsData?.length || 0}
-      </span>{" "}
-      applicants
-    </p>
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-slate-500">
+            Showing{" "}
+            <span className="font-semibold text-slate-800">
+              {filteredApplicants.length}
+            </span>{" "}
+            of{" "}
+            <span className="font-semibold text-slate-800">
+              {applicantsData?.length || 0}
+            </span>{" "}
+            applicants
+          </p>
 
-    <button
-      type="button"
-      onClick={clearFilters}
-      className="rounded-lg px-3 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-100"
-    >
-      Clear filters
-    </button>
-  </div>
-</div>
+          <button
+            type="button"
+            onClick={clearFilters}
+            className="rounded-lg px-3 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-100"
+          >
+            Clear filters
+          </button>
+        </div>
+      </div>
 
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
@@ -260,7 +333,7 @@ const clearFilters = () => {
           </thead>
 
           <tbody>
-           {filteredApplicants.map((applicant) => (
+            {filteredApplicants.map((applicant) => (
               <tr
                 key={applicant._id}
                 className="border-b bg-green-50/40 hover:bg-green-50"
@@ -279,27 +352,27 @@ const clearFilters = () => {
                 <td className="py-3 px-3">{applicant.title}</td>
 
                 <td className="py-3 px-3">
-                  {applicant.cvFilePath ? (
-                    <a
-                      href={`${url}${applicant.cvFilePath}`}
-                      target="_blank"
-                      rel="noreferrer"
+                  {applicant.cvId ? (
+                    <button
+                      type="button"
+                      onClick={() => handleViewCV(applicant.cvId)}
                       className="text-blue-600 font-medium hover:underline"
                     >
                       View CV
-                    </a>
+                    </button>
                   ) : (
-                    <span className="text-slate-400">No CV</span>
+                    <span className="text-slate-400">
+                      No CV
+                    </span>
                   )}
                 </td>
 
                 <td className="py-3 px-3">
                   <div className="flex items-center gap-2">
                     <span
-                      className={`px-3 py-1 rounded-full text-xs font-semibold capitalize ${
-                        statusStyle[applicant.status] ||
+                      className={`px-3 py-1 rounded-full text-xs font-semibold capitalize ${statusStyle[applicant.status] ||
                         "bg-slate-100 text-slate-600"
-                      }`}
+                        }`}
                     >
                       {applicant.status}
                     </span>
@@ -330,26 +403,26 @@ const clearFilters = () => {
             ))}
 
             {filteredApplicants.length === 0 && (
-  <tr>
-    <td colSpan={7} className="px-4 py-12 text-center">
-      <p className="font-semibold text-slate-700">
-        No applicants found
-      </p>
+              <tr>
+                <td colSpan={7} className="px-4 py-12 text-center">
+                  <p className="font-semibold text-slate-700">
+                    No applicants found
+                  </p>
 
-      <p className="mt-1 text-sm text-slate-500">
-        Try changing or clearing the selected filters.
-      </p>
+                  <p className="mt-1 text-sm text-slate-500">
+                    Try changing or clearing the selected filters.
+                  </p>
 
-      <button
-        type="button"
-        onClick={clearFilters}
-        className="mt-4 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
-      >
-        Clear filters
-      </button>
-    </td>
-  </tr>
-)}
+                  <button
+                    type="button"
+                    onClick={clearFilters}
+                    className="mt-4 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
+                  >
+                    Clear filters
+                  </button>
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
@@ -387,11 +460,10 @@ const clearFilters = () => {
                 <button
                   key={status}
                   onClick={() => updateStatus(statusEditApplicant._id, status)}
-                  className={`w-full text-left px-4 py-3 rounded-xl border capitalize transition ${
-                    statusEditApplicant.status === status
+                  className={`w-full text-left px-4 py-3 rounded-xl border capitalize transition ${statusEditApplicant.status === status
                       ? "border-slate-900 bg-slate-900 text-white"
                       : "border-slate-200 hover:bg-slate-50 text-slate-700"
-                  }`}
+                    }`}
                 >
                   {status}
                 </button>

@@ -14,50 +14,8 @@ import JobDescriptionUpload from "./JobDescriptionUpload";
 import { url } from "../../../../utils/constant";
 
 
-const MAX_FILE_SIZE =
-  5 * 1024 * 1024;
-const jobCategories = [
-  "Accounting & Finance",
-  "Administration",
-  "Customer Service",
-  "Design & Creative",
-  "Education & Training",
-  "Engineering",
-  "Healthcare",
-  "Hospitality",
-  "Human Resources & Recruitment",
-  "IT & Software",
-  "Legal",
-  "Logistics & Supply Chain",
-  "Management & Operations",
-  "Manufacturing",
-  "Marketing",
-  "Retail",
-  "Sales",
-  "Science & Research",
-  "Security & Emergency Services",
-  "Skilled Trades & Construction",
-  "Other",
-];
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
-const industries = [
-  "Technology",
-  "Banking & Financial Services",
-  "Healthcare",
-  "Education",
-  "Retail",
-  "Construction",
-  "Manufacturing",
-  "Hospitality & Leisure",
-  "Automotive",
-  "Aviation",
-  "Logistics & Transport",
-  "Energy & Environment",
-  "Professional Services",
-  "Public Sector",
-  "Charity & Non-profit",
-  "Other",
-];
 const initialFormData = {
   title: "",
   companyUrl: "",
@@ -77,8 +35,6 @@ const initialFormData = {
   salary: "",
   vacancies: 1,
 };
-
-
 
 const convertCommaTextToArray = (
   value = ""
@@ -124,7 +80,14 @@ const buildJobPayload = (
 
 export default function PostJobPage() {
   const router = useRouter();
+  // Controls the posting confirmation modal.
+  const [showPostModal, setShowPostModal] = useState(false);
 
+  // Records the person responsible for publishing the JD.
+  const [postingDetails, setPostingDetails] = useState({
+    postedByName: "",
+    email: "",
+  });
   const [
     checkingAuth,
     setCheckingAuth,
@@ -233,12 +196,29 @@ export default function PostJobPage() {
               }
             );
 
-          const user =
-            response.data.user;
+          const user = response.data.user;
+
+          // Pre-fill the posting person's name from their profile.
+          if (componentActive) {
+  setPostingDetails((prev) => ({
+    ...prev,
+
+    // Get the poster's name from their account.
+    postedByName: [
+      user.firstName,
+      user.lastName,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .trim(),
+
+    // Get the registered company account email.
+    email: user.email || "",
+  }));
+}
 
           if (
-            user.role !==
-            "company"
+            user.role !== "company"
           ) {
             router.replace("/");
             return;
@@ -304,9 +284,9 @@ export default function PostJobPage() {
   }, [router]);
 
 
-  // ====================================================
+
   // LOCATION SEARCH
-  // ====================================================
+
 
   useEffect(() => {
     const city =
@@ -426,9 +406,9 @@ export default function PostJobPage() {
   };
 
 
-  // ====================================================
+
   // PDF FILE VALIDATION
-  // ====================================================
+
 
   const handleFileChange = (
     event
@@ -482,9 +462,9 @@ export default function PostJobPage() {
   };
 
 
-  // ====================================================
+
   // APPLY AI DATA
-  // ====================================================
+
 
   /*
    * Adds Gemini's extracted JD information
@@ -516,17 +496,17 @@ export default function PostJobPage() {
 
     const extractedLocation =
       typeof jobData.location ===
-      "string"
+        "string"
         ? jobData.location
         : [
-            jobData.location
-              ?.city,
+          jobData.location
+            ?.city,
 
-            jobData.location
-              ?.country,
-          ]
-            .filter(Boolean)
-            .join(", ");
+          jobData.location
+            ?.country,
+        ]
+          .filter(Boolean)
+          .join(", ");
 
     setFormData(
       (
@@ -551,12 +531,12 @@ export default function PostJobPage() {
         companyUrl:
           companyUrlLocked
             ? previousForm
-                .companyUrl
+              .companyUrl
             : jobData
-                .companyUrl ||
-              previousForm
-                .companyUrl ||
-              "",
+              .companyUrl ||
+            previousForm
+              .companyUrl ||
+            "",
 
         jobType:
           jobData.jobType ||
@@ -575,22 +555,22 @@ export default function PostJobPage() {
             jobData.keySkills
           )
             ? jobData.keySkills.join(
-                ", "
-              )
+              ", "
+            )
             : jobData
-                .keySkills ||
-              "",
+              .keySkills ||
+            "",
 
         requirements:
           Array.isArray(
             jobData.requirements
           )
             ? jobData.requirements.join(
-                ", "
-              )
+              ", "
+            )
             : jobData
-                .requirements ||
-              "",
+              .requirements ||
+            "",
 
         experience:
           jobData.experience ||
@@ -604,11 +584,11 @@ export default function PostJobPage() {
             jobData.responsibilities
           )
             ? jobData.responsibilities.join(
-                ", "
-              )
+              ", "
+            )
             : jobData
-                .responsibilities ||
-              "",
+              .responsibilities ||
+            "",
 
         roleSummary:
           jobData.roleSummary ||
@@ -652,12 +632,12 @@ export default function PostJobPage() {
     const filteredMissingFields =
       companyUrlLocked
         ? missingFields.filter(
-            (field) =>
-              field !==
-                "companyUrl" &&
-              field !==
-                "companyWebsite"
-          )
+          (field) =>
+            field !==
+            "companyUrl" &&
+            field !==
+            "companyWebsite"
+        )
         : missingFields;
 
     setAiReviewNotes([
@@ -695,9 +675,9 @@ export default function PostJobPage() {
   };
 
 
-  // ====================================================
+
   // ANALYSE JD PDF
-  // ====================================================
+
 
   const handleAnalyse =
     async () => {
@@ -753,23 +733,21 @@ export default function PostJobPage() {
         toast.success(
           "PDF analysed. The form below has been populated."
         );
-      } catch (error) {
-        console.error(
-          "Job-description analysis error:",
-          error
-        );
+} catch (error) {
+  // Log the error for debugging.
+  console.error(
+    "Job-description analysis error:",
+    error
+  );
 
-        toast.error(
-          error.response
-            ?.data
-            ?.details ||
-            error.response
-              ?.data
-              ?.message ||
-            error.message ||
-            "The PDF could not be analysed."
-        );
-      } finally {
+  // Read the friendly message from our backend.
+  const errorMessage =
+    error.response?.data?.message ||
+    "The PDF could not be analysed. Please try again.";
+
+  // Show the message to the user.
+  toast.error(errorMessage);
+} finally {
         setAnalysing(
           false
         );
@@ -777,88 +755,86 @@ export default function PostJobPage() {
     };
 
 
-  // ====================================================
-  // CREATE JOB
-  // ====================================================
+  // STEP 1: VALIDATE JD AND OPEN CONFIRMATION MODAL
+  const handleSubmit = (event) => {
+    event.preventDefault();
 
-  const handleSubmit =
-    async (event) => {
-      event.preventDefault();
+    setMessage("");
 
-      try {
-        setLoading(true);
-        setMessage("");
+    if (!formData.companyUrl.trim()) {
+      setMessage(
+        "Please enter your company website before posting."
+      );
+      return;
+    }
 
-        const token =
-          localStorage.getItem(
-            "token"
-          );
+    // HTML required fields are validated by the form
+    // before its onSubmit event is triggered.
+    setShowPostModal(true);
+  };
 
-        if (!token) {
-          setMessage(
-            "Your session has expired. Please sign in again."
-          );
+  // STEP 2: CONFIRM AND CREATE JOB
 
-          return;
-        }
+const confirmPostJob = async (event) => {
+  event.preventDefault();
 
-        /*
-         * A Company website must exist before
-         * the job is published.
-         *
-         * It may have come from:
-         *
-         * - Company signup
-         * - Profile Settings
-         * - AI extraction from JD
-         * - manual entry here
-         */
-        if (
-          !formData.companyUrl.trim()
-        ) {
-          setMessage(
-            "Please enter your company website before posting this job."
-          );
+  // Prevent duplicate submissions.
+  if (loading) return;
 
-          return;
-        }
+  try {
+      setLoading(true);
+      setMessage("");
 
-        const payload =
-          buildJobPayload(
-            formData
-          );
+      const token = localStorage.getItem("token");
 
-        await axios.post(
-          `${url}/create`,
-          payload,
-          {
-            headers: {
-              Authorization:
-                `Bearer ${token}`,
-            },
-          }
+      if (!token) {
+        toast.error(
+          "Your session has expired. Please sign in again."
         );
-
-        router.push(
-          "/company/Dashboard/PostedJobs/PostedJobsPage"
-        );
-      } catch (error) {
-        console.error(
-          "Create job error:",
-          error
-        );
-
-        setMessage(
-          error.response
-            ?.data
-            ?.message ||
-            "Failed to post job"
-        );
-      } finally {
-        setLoading(false);
+        return;
       }
-    };
 
+   // Send only the job information.
+// The backend identifies the poster
+// using their authenticated account.
+const payload = buildJobPayload(formData);
+
+      await axios.post(
+        `${url}/create`,
+        payload,
+      
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+        console.log("payload from postJobPage",payload)
+
+      // Only close and redirect AFTER successful creation.
+      setShowPostModal(false);
+
+      toast.success("Job posted successfully!");
+
+      await router.push(
+        "/company/Dashboard/PostedJobs/PostedJobsPage"
+      );
+
+    } catch (error) {
+      console.error("Create job error:", error);
+
+      toast.error(
+        error.response?.data?.message ||
+        "Failed to post job. Please try again."
+      );
+
+      // Keep the modal open so the user doesn't lose
+      // their entered posting details.
+
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (checkingAuth) {
     return (
@@ -989,6 +965,110 @@ export default function PostJobPage() {
                 handleSubmit
               }
             />
+
+
+            {showPostModal && (
+              <div
+                className="fixed inset-0 z-[100] flex items-center
+    justify-center bg-slate-950/60 backdrop-blur-sm p-4"
+                role="presentation"
+              >
+                <div
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="post-job-modal-title"
+                  className="w-full max-w-md rounded-2xl bg-white
+      p-6 shadow-2xl border border-slate-200"
+                >
+                  {/* Modal header */}
+                  <div className="mb-5">
+                    <h3
+                      id="post-job-modal-title"
+                      className="text-lg font-bold text-slate-900"
+                    >
+                      Confirm Job Posting
+                    </h3>
+
+                    <p className="mt-2 text-sm text-slate-500">
+                      Before publishing this job, please confirm
+                      who is posting it on behalf of your company.
+                    </p>
+                  </div>
+
+                  <form onSubmit={confirmPostJob} className="space-y-4">
+
+              {/* Job posting confirmation summary */}
+<div className="rounded-xl border border-blue-100 bg-blue-50 p-4 space-y-3">
+
+  {/* Job being advertised */}
+  <div>
+    <p className="text-xs text-slate-500">
+      Job Title
+    </p>
+
+    <p className="text-sm font-semibold text-slate-900">
+      {formData.title}
+    </p>
+  </div>
+
+  {/* Automatically retrieved from User profile */}
+  <div>
+    <p className="text-xs text-slate-500">
+      Posted By
+    </p>
+
+    <p className="text-sm font-semibold text-slate-900">
+      {postingDetails.postedByName}
+    </p>
+  </div>
+
+  {/* Notification information */}
+ {/* Company account email */}
+<div>
+  <p className="text-xs text-slate-500">
+    Application Notification Email
+  </p>
+
+  <p className="text-sm font-semibold text-slate-900">
+    {postingDetails.email || "Email unavailable"}
+  </p>
+
+  <p className="mt-1 text-xs text-slate-500">
+    This is your registered account email
+    and will not be publicly displayed.
+  </p>
+</div>
+
+</div>
+
+                    {/* Action buttons */}
+                    <div className="flex justify-end gap-3 pt-4">
+                      <button
+                        type="button"
+                        disabled={loading}
+                        onClick={() => setShowPostModal(false)}
+                        className="rounded-lg border border-slate-200
+            px-5 py-2.5 text-sm font-semibold text-slate-600
+            hover:bg-slate-50 disabled:opacity-50"
+                      >
+                        Cancel
+                      </button>
+
+                      <button
+                        type="submit"
+                        disabled={loading}
+                        className="rounded-lg bg-blue-800
+            px-5 py-2.5 text-sm font-semibold text-white
+            hover:bg-blue-900 disabled:opacity-50"
+                      >
+                        {loading ? "Processing..." : "Continue to Post Job"}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
+
 
           </div>
         </div>

@@ -7,16 +7,16 @@ import { useRouter } from "next/router";
 import { url } from "../../utils/constant";
 import Layout from "../../components/Layout/Layout";
 
-export default function ViewMyCVs() {
+export default function ViewMyCVs(){
   const router = useRouter();
   const [myCVs, setMyCVs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
+
   const getMyCVs = async () => {
     try {
       const token = localStorage.getItem("token");
-
       if (!token) {
         router.push("/");
         return;
@@ -26,7 +26,10 @@ export default function ViewMyCVs() {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      });
+      }
+    );
+
+    console.log("res from getMyCVs",res.data)
 
       setMyCVs(res.data || []);
     } catch (error) {
@@ -97,40 +100,51 @@ export default function ViewMyCVs() {
     }
   };
 
-  const handleViewCV = async(cvId)=>{
-    try{
-      
-      const token = localStorage.getItem("token");
-      console.log("Opening CV:", cvId);
+const handleViewCV = async (cvId) => {
+  try {
+    const token = localStorage.getItem("token");
 
-      const res = await axios.get(`${url}/cv/${cvId}/download`, 
-      {
-        headers:{
-        Authorization: `Bearer ${token}`,
-      },
-      responseType:"blob"
+    if (!token) {
+      toast.error("Please sign in to access this CV.");
+      return;
     }
-)
-console.log("response from handleViewCV:",res)
 
-const fileURL = window.URL.createObjectURL(
-  new Blob(
-    [res.data],
-    {type:"application/pdf"}
-  )
-)
-window.open(
-  fileURL,
-  "_blank"
-)
-setTimeout(()=>{
-  window.URL.revokeObjectURL(fileURL)
-}, 60000)
-    }catch(error){
-      console.error("View CV error:",error)
-      toast.error("Unable to open CV")
+    const res = await axios.get(
+      `${url}/cv/${cvId}/download`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        responseType: "blob",
+      }
+    );
+    console.log("handleViewCV",res)
+    const fileURL = window.URL.createObjectURL(
+      new Blob([res.data], {
+        type: "application/pdf",
+      })
+    );
+
+    window.open(fileURL, "_blank");
+
+    setTimeout(() => {
+      window.URL.revokeObjectURL(fileURL);
+    }, 60000);
+
+  } catch (error) {
+    console.error("View CV error:", error);
+
+    if (error.response?.status === 401) {
+      toast.error("Please sign in to access this CV.");
+    } else if (error.response?.status === 403) {
+      toast.error("You are not allowed to access this CV.");
+    } else if (error.response?.status === 404) {
+      toast.error("CV not found.");
+    } else {
+      toast.error("Unable to open CV. Please try again.");
     }
   }
+};
 
   return (
     <Layout>
@@ -259,7 +273,7 @@ setTimeout(()=>{
   <FiEye />
   View CV
 </button>
-           
+
                 </div>
               ))}
             </div>

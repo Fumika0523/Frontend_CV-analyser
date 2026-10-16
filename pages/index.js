@@ -17,7 +17,7 @@ export default function Home() {
     const getUserData = async () => {
       try {
         const token = localStorage.getItem("token");
-        //console.log("token",token)
+      
         if (!token) return;
 
         const res = await axios.get("http://localhost:8002/user-profile", {

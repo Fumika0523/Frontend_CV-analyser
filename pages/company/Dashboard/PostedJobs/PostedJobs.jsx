@@ -152,6 +152,10 @@ export default function PostedJobs({
                     </span>
                   </div>
 
+                  <p className="text-sm font-medium text-slate-800 mt-3">
+                    {job.salary || "Salary not specified"} · {job.jobType} · {job.workMode}
+                  </p>
+
                   <p className="text-sm text-slate-600 mt-3 line-clamp-2">{job.roleSummary}</p>
 
                   <div className="flex flex-wrap gap-2 mt-3">
@@ -162,10 +166,8 @@ export default function PostedJobs({
                     ))}
                   </div>
 
-                  <p className="text-sm font-medium text-slate-700 mt-3">
-                    {job.salary || "Salary not specified"} · {job.jobType} · {job.workMode}
-                  </p>
-
+                  
+                  {/* See full description button */}
                   <div className="flex justify-end mt-4">
                     <button
                       type="button"

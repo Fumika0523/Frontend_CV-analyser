@@ -1,7 +1,14 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import LocationAutocomplete from "../common/LocationAutocomplete";
-import { FiBriefcase, FiCheck, FiEdit2, FiSettings, FiX,} from "react-icons/fi";
+import {
+  FiBriefcase,
+  FiCheck,
+  FiEdit2,
+  FiEye,
+  FiSettings,
+  FiX,
+} from "react-icons/fi";
 
 const API_BASE =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:8002";
@@ -631,10 +638,17 @@ const createInitialForm = (user) => {
     // CANDIDATE ONLY
     // ==================================================
 
-    availableForWork:
-      user?.role === "candidate"
-        ? user?.availableForWork ?? true
-        : false,
+ availableForWork:
+  user?.role === "candidate"
+    ? user?.availableForWork ?? true
+    : false,
+
+// Candidate must explicitly allow recruiters
+// to view the original uploaded CV.
+allowRecruitersToViewCV:
+  user?.role === "candidate"
+    ? user?.allowRecruitersToViewCV ?? false
+    : false,
   };
 };
 
@@ -870,6 +884,11 @@ const SettingsModal = ({
          */
         payload.availableForWork =
           form.availableForWork;
+
+            // Controls whether recruiters can open
+  // the candidate's uploaded CV.
+          payload.allowRecruitersToViewCV =
+  form.allowRecruitersToViewCV;
       }
 
 
@@ -1186,18 +1205,26 @@ const SettingsModal = ({
                         aria-checked={
                           form.availableForWork
                         }
-                        onClick={() =>
-                          setForm(
-                            (
-                              previousForm
-                            ) => ({
-                              ...previousForm,
+                       onClick={() =>
+  setForm((previousForm) => {
+    const nextAvailableForWork =
+      !previousForm.availableForWork;
 
-                              availableForWork:
-                                !previousForm.availableForWork,
-                            })
-                          )
-                        }
+    return {
+      ...previousForm,
+
+      availableForWork:
+        nextAvailableForWork,
+
+      // If the candidate hides their profile,
+      // recruiter CV access should also be disabled.
+      allowRecruitersToViewCV:
+        nextAvailableForWork
+          ? previousForm.allowRecruitersToViewCV
+          : false,
+    };
+  })
+}
                         className={`relative h-6 w-11 shrink-0 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-200 ${
                           form.availableForWork
                             ? "bg-blue-600"
@@ -1227,6 +1254,100 @@ const SettingsModal = ({
                     </p>
                   </div>
                 </div>
+
+                {/* Allow Recruiters to View CV */}
+<div className="col-span-2 max-sm:col-span-1">
+  <div
+    className={`rounded-xl border p-4 transition ${
+      form.availableForWork
+        ? "border-gray-200 bg-gray-50"
+        : "border-gray-100 bg-gray-50/60"
+    }`}
+  >
+    <div className="flex items-center justify-between gap-4">
+      <div className="flex items-start gap-3">
+        <div
+          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
+            form.availableForWork
+              ? "bg-emerald-100 text-emerald-700"
+              : "bg-gray-100 text-gray-400"
+          }`}
+        >
+          <FiEye size={18} />
+        </div>
+
+        <div>
+          <p
+            className={`text-sm font-semibold ${
+              form.availableForWork
+                ? "text-gray-800"
+                : "text-gray-400"
+            }`}
+          >
+            Allow Recruiters to View My CV
+          </p>
+
+          <p className="mt-1 text-xs leading-5 text-gray-500">
+            Allow authenticated companies to securely view
+            your uploaded CV when they discover you through
+            candidate recommendations.
+          </p>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        role="switch"
+        aria-label="Allow recruiters to view my CV"
+        aria-checked={
+          form.allowRecruitersToViewCV
+        }
+        disabled={
+          !form.availableForWork
+        }
+        onClick={() =>
+          setForm((previousForm) => ({
+            ...previousForm,
+
+            allowRecruitersToViewCV:
+              !previousForm.allowRecruitersToViewCV,
+          }))
+        }
+        className={`relative h-6 w-11 shrink-0 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-200 ${
+          !form.availableForWork
+            ? "cursor-not-allowed bg-gray-200"
+            : form.allowRecruitersToViewCV
+            ? "bg-emerald-600"
+            : "bg-gray-300"
+        }`}
+      >
+        <span
+          className={`absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow-sm transition-transform duration-200 ${
+            form.allowRecruitersToViewCV
+              ? "translate-x-5"
+              : "translate-x-0"
+          }`}
+        />
+      </button>
+    </div>
+
+    <p
+      className={`mt-3 text-xs font-medium ${
+        !form.availableForWork
+          ? "text-gray-400"
+          : form.allowRecruitersToViewCV
+          ? "text-emerald-600"
+          : "text-gray-500"
+      }`}
+    >
+      {!form.availableForWork
+        ? "Turn on Available for Work before allowing recruiter CV access."
+        : form.allowRecruitersToViewCV
+        ? "Recruiters can securely view your CV."
+        : "Recruiters can see your profile and match information, but not your CV."}
+    </p>
+  </div>
+</div>
               </>
             )}
 

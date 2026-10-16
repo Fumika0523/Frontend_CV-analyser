@@ -34,12 +34,13 @@ export default function JobDescriptionUpload({
             : "border-blue-200 bg-white/70 hover:border-blue-400"
         }`}
       >
-        <input
-          type="file"
-          accept=".pdf,application/pdf"
-          onChange={handleFileChange}
-          className="sr-only"
-        />
+       <input
+  type="file"
+  accept=".pdf,application/pdf"
+  onChange={handleFileChange}
+  disabled={analysing}
+  className="sr-only"
+/>
 
         <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center">
           📎
