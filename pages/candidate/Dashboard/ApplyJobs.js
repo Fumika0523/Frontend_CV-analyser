@@ -3,6 +3,7 @@ import axios from "axios";
 import { useRouter } from "next/router";
 import { toast } from "react-toastify";
 import { url } from "../../../utils/constant";
+import CVUploadModal from "../../../components/Jobs/CVUploadModal";
 
 import {
   FiBriefcase,
@@ -37,21 +38,25 @@ const ApplyJobs = () => {
 
   // Login
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+// Track whether the candidate has uploaded a CV.
+//
+// "checking" = loading CV information
+// "ready"    = at least one CV exists
+// "missing"  = no uploaded CV
+// "error"    = could not check CV information
+const [cvStatus, setCvStatus] = useState("checking");
+// Controls whether the CV upload modal is visible.
+const [showCVUploadModal, setShowCVUploadModal] = useState(false);
 
   // Applications
-  const [applicationsByJob, setApplicationsByJob] =
-    useState({});
-
-  const [applyingJobId, setApplyingJobId] =
-    useState(null);
+  const [applicationsByJob, setApplicationsByJob] = useState({});
+  const [applyingJobId, setApplyingJobId] = useState(null);
 
   // Filters
   const [searchTerm, setSearchTerm] = useState("");
-  const [locationFilter, setLocationFilter] =
-    useState("");
+  const [locationFilter, setLocationFilter] = useState("");
   const [minSalary, setMinSalary] = useState(0);
-  const [workModeFilter, setWorkModeFilter] =
-    useState("");
+  const [workModeFilter, setWorkModeFilter] = useState("");
 
   const salaryFilterOptions = [
     { label: "Any salary", value: 0 },
@@ -290,25 +295,59 @@ const ApplyJobs = () => {
     }
   };
 
-  /**
-   * Load jobs and application history.
-   */
-  useEffect(() => {
-    const token =
-      localStorage.getItem("token");
+  // Check whether the candidate has an uploaded CV.
+const checkCandidateCV = async (token) => {
+  try {
+    const response = await axios.get(
+      `${url}/cv/my-cvs`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
 
-    setIsLoggedIn(Boolean(token));
+    // The backend returns an array of CV documents.
+    const cvs = response.data;
 
-    getJobsData();
+    // Check whether at least one valid CV record exists.
+    const hasCV =
+      Array.isArray(cvs) &&
+      cvs.some((cv) => cv._id);
 
-    if (token) {
-      getApplicationsData();
-    }
-  }, []);
+    setCvStatus(hasCV ? "ready" : "missing");
 
-  /**
-   * Apply for a job.
-   */
+  } catch (error) {
+    console.error("Check candidate CV error:", error);
+
+    // Do not assume the candidate has no CV
+    // when the request itself fails.
+    setCvStatus("error");
+  }
+};
+
+
+useEffect(() => {
+  const token = localStorage.getItem("token");
+
+  setIsLoggedIn(Boolean(token));
+
+  // Load available jobs.
+  getJobsData();
+
+  if (token) {
+    // Load existing applications.
+    getApplicationsData();
+
+    // Check whether the candidate has a CV.
+    checkCandidateCV(token);
+  } else {
+    setCvStatus("missing");
+  }
+}, []);
+
+
+// Apply for job
   const handleApply = async (job) => {
     const token =
       localStorage.getItem("token");
@@ -334,6 +373,29 @@ const ApplyJobs = () => {
       return;
     }
 
+    // Wait until we know whether the candidate has a CV.
+    if (cvStatus === "checking") {
+      toast.info("Checking your uploaded CV. Please wait.");
+      return;
+    }
+
+    // Do not submit when the CV check has failed.
+    if (cvStatus === "error") {
+      toast.error(
+        "Unable to check your CV. Please refresh the page and try again."
+      );
+      return;
+    }
+
+    // Candidate has no CV.
+    // Redirect to the existing CV upload page.
+    if (cvStatus === "missing") {
+    // Open the CV upload modal instead of leaving the page.
+    setShowCVUploadModal(true);
+    return;
+  }
+
+    // CV is ready: continue to the existing application request.
     try {
       setApplyingJobId(job._id);
 
@@ -355,13 +417,12 @@ const ApplyJobs = () => {
             ...previousApplications,
             [job._id]: newApplication,
           })
-        );
+        )
       } else {
         // If backend did not return the application,
         // refresh from the server.
         await getApplicationsData();
       }
-
       toast.success(
         response.data?.message ||
           "Application submitted successfully"
@@ -1148,6 +1209,24 @@ const ApplyJobs = () => {
           </div>
         </div>
       )}
+
+{/* CV upload modal */}
+{showCVUploadModal && (
+<CVUploadModal
+  isOpen={showCVUploadModal}
+  onClose={() => {
+    // Close the modal.
+    setShowCVUploadModal(false);
+  }}
+  onUploadSuccess={() => {
+    // The candidate now has a CV.
+    setCvStatus("ready");
+
+    // Close the modal after successful upload.
+    setShowCVUploadModal(false);
+  }}
+/>
+)}
     </div>
   );
 };
