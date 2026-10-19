@@ -6,16 +6,19 @@ import { FiEye } from "react-icons/fi";
 import { url } from "../../../utils/constant";
 import { useRouter } from "next/router";
 
-export default function CVUpload({ isGuest = false, onSignUpClick, guestView }) {
- // console.log("isGuest:", isGuest);
-  //console.log("guestView", guestView)
+export default function CVUpload({
+  isGuest = false,
+  onSignUpClick,
+  guestView,
+  onUploadSuccess,
+}) {
+
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [uploadedCV, setUploadedCV] = useState(null);
   const [uploadSuccess, setUploadSuccess] = useState(false)
   const [analysisData, setAnalysysData] = useState(null)
   const [myCVs, setMyCVs] = useState([]);
-  // 
   const router = useRouter()
 
    // Get CV
@@ -103,17 +106,25 @@ export default function CVUpload({ isGuest = false, onSignUpClick, guestView }) 
     
       const res = await axios.post(endpoint, formData, { headers });
       console.log("CV upload response:", res.data.cv);
-      setUploadedCV(res.data.cv || null);
-      setUploadSuccess(true);
-      setAnalysysData(res.data);
+     // Save the successfully uploaded CV.
+        setUploadedCV(res.data.cv || null);
+        // Mark the upload as successful.
+        setUploadSuccess(true);
+        // Store the analysis result.
+        setAnalysysData(res.data);
+        // Refresh the candidate's CV list.
+        await getMyCVs();
+        // Notify the parent component if a
+        // registered candidate uploaded a CV.
+        if (!isGuest && typeof onUploadSuccess === "function") {
+          onUploadSuccess(res.data.cv);
+        }
 
-      await getMyCVs();
-
-      // toast.success(
-      //     isGuest
-      //     ? "CV analysed temporarily! "
-      //     : "CV uploaded successfully!"
-      // );
+      toast.success(
+          isGuest
+          ? "CV analysed temporarily! "
+          : "CV uploaded successfully!"
+      );
     } catch (err) {
       console.error("Upload error:", err);
       toast.error(err.response?.data?.message || "Upload failed");

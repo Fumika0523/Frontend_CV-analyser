@@ -3,7 +3,7 @@ import axios from "axios";
 import { useRouter } from "next/router";
 import Layout from "../../../components/Layout/Layout";
 import { url } from "../../../utils/constant";
-
+import CVUploadModal from "../../../components/Jobs/CVUploadModal";
 import {
   FiAlertCircle,
   FiBriefcase,
@@ -34,7 +34,8 @@ const LatestJobs = () => {
     useState({});
 
     const [selectedJob, setSelectedJob] = useState(null);
-
+// Controls the CV upload modal.
+const [showCVUploadModal, setShowCVUploadModal] = useState(false);
   const applicationStatusLabels = {
     pending: "Application Submitted",
     reviewing: "Application Under Review",
@@ -291,6 +292,18 @@ const passesSalaryFilter = (job) => {
         return;
       }
 
+      // The backend rejected the application
+// because the candidate has no CV.
+if (
+  error.response?.status === 400 &&
+  serverMessage
+    .toLowerCase()
+    .includes("please upload a cv")
+) {
+  // Open our reusable CV upload modal.
+  setShowCVUploadModal(true);
+  return;
+}
       if (
         error.response?.status === 400 &&
         serverMessage
@@ -1098,8 +1111,22 @@ const hasAlreadyApplied =
     </div>
   </div>
 )}
-      </main>
-    </Layout>
+</main>
+
+{/* Reusable CV upload modal */}
+<CVUploadModal
+  isOpen={showCVUploadModal}
+  onClose={() => {
+    setShowCVUploadModal(false);
+  }}
+  onUploadSuccess={() => {
+    // Close the modal after uploading.
+    setShowCVUploadModal(false);
+  }}
+/>
+
+</Layout>
+
     
   );
 };
