@@ -12,6 +12,7 @@ import Layout from "../../../../components/Layout/Layout";
 import PostJobForm from "./postJobForm";
 import JobDescriptionUpload from "./JobDescriptionUpload";
 import { url } from "../../../../utils/constant";
+import { convertLinesToArray, extractedItemsToText, experienceOptions, mapExtractedExperience } from "../../../../utils/createJobForm";
 
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
@@ -47,7 +48,8 @@ const convertCommaTextToArray = (
 
 
 const buildJobPayload = (
-  formData
+  formData,
+  jobLocation
 ) => {
   return {
     ...formData,
@@ -66,15 +68,47 @@ const buildJobPayload = (
       ),
 
     responsibilities:
-      convertCommaTextToArray(
+      convertLinesToArray(
         formData.responsibilities
       ),
 
     requirements:
-      convertCommaTextToArray(
+      convertLinesToArray(
         formData.requirements
       ),
+
+    // These must follow the form spread so legacy text can never overwrite them.
+    location: { ...jobLocation.location },
+    locationToken: jobLocation.token,
   };
+};
+
+const getJobLocationError = (selection, workMode, scope) => {
+  const location = selection?.location;
+  const hasText = (value) => typeof value === "string" && Boolean(value.trim());
+  if (!location || typeof location !== "object" || Array.isArray(location) ||
+      !hasText(selection?.token) || !hasText(location.providerPlaceId) ||
+      !hasText(location.country)) {
+    return "Please select a location from the suggestions before posting.";
+  }
+  if (!["Office", "Hybrid", "Remote"].includes(workMode)) {
+    return "Please choose Office, Hybrid or Remote as the work mode.";
+  }
+  if (workMode !== "Remote" && location.locationType !== "city") {
+    return "Office and Hybrid jobs require a city. Please select a city suggestion.";
+  }
+  if (workMode === "Remote" && !["city", "county", "region", "country"].includes(location.locationType)) {
+    return "Remote jobs require a city, county, region or country. Please select again.";
+  }
+  if ((scope === "country" && (workMode !== "Remote" || location.locationType !== "country")) ||
+      (scope === "locality" && !["city", "county", "region"].includes(location.locationType)) ||
+      !["locality", "country"].includes(scope)) {
+    return "Please select a location that matches the search area.";
+  }
+  if (location.locationType !== "country" && !hasText(location[location.locationType])) {
+    return `Please select a ${location.locationType} suggestion with a ${location.locationType} name.`;
+  }
+  return "";
 };
 
 
@@ -136,20 +170,16 @@ export default function PostJobPage() {
     setAnalysing,
   ] = useState(false);
 
-  const [
-    locationLoading,
-    setLocationLoading,
-  ] = useState(false);
-
-  const [
-    locationResults,
-    setLocationResults,
-  ] = useState([]);
-
-  const [
-    locationSelected,
-    setLocationSelected,
-  ] = useState(false);
+  // Keep display text separate from the structured selection and signed token.
+  // The payload builder explicitly reads the latter two from this state.
+  const [jobLocation, setJobLocation] = useState({
+    displayLabel: "",
+    location: null,
+    token: null,
+  });
+  const [locationScope, setLocationScope] = useState("locality");
+  const [locationMessage, setLocationMessage] = useState("");
+  const [locationPickerRevision, setLocationPickerRevision] = useState(0);
 
   // CHECK COMPANY ACCOUNT
 
@@ -285,72 +315,75 @@ export default function PostJobPage() {
 
 
 
-  // LOCATION SEARCH
+  // LOCATION SELECTION
+  const invalidateLocation = (displayLabel, reason) => {
+    setFormData((previous) => ({ ...previous, location: displayLabel }));
+    setJobLocation({ displayLabel, location: null, token: null });
+    setLocationMessage(reason);
+    // Reset the picker's selected-text cache and cancel any pending requests,
+    // even when a PDF supplies exactly the same text as the previous selection.
+    setLocationPickerRevision((revision) => revision + 1);
+  };
 
+  // Catch other programmatic changes to the legacy text field as well.
+  // This text mirror detects programmatic edits; it is never submitted as location.
+  const legacyLocationText = jobLocation.location?.locationType === "city"
+    ? `${jobLocation.location.city}, ${jobLocation.location.country}`
+    : jobLocation.displayLabel;
 
   useEffect(() => {
-    const city =
-      formData.location.trim();
-
-    if (
-      locationSelected ||
-      city.length < 2
-    ) {
-      setLocationResults([]);
-      return;
+    if (formData.location !== legacyLocationText) {
+      setJobLocation({
+        displayLabel: formData.location,
+        location: null,
+        token: null,
+      });
+      setLocationMessage("Location text changed. Choose a suggestion to confirm it.");
+      setLocationPickerRevision((revision) => revision + 1);
     }
+  }, [formData.location, legacyLocationText]);
 
-    const timer =
-      setTimeout(
-        async () => {
-          try {
-            setLocationLoading(
-              true
-            );
+  const locationValidationMessage = getJobLocationError(jobLocation, formData.workMode, locationScope) ||
+    (formData.location !== legacyLocationText
+      ? "Location text changed. Please select the location again."
+      : "");
+  const locationReady = !locationValidationMessage;
 
-            const response =
-              await axios.get(
-                "https://geocoding-api.open-meteo.com/v1/search",
-                {
-                  params: {
-                    name: city,
-                    count: 6,
-                    language:
-                      "en",
-                    format:
-                      "json",
-                  },
-                }
-              );
+  const validateLocationForSubmission = () => {
+    if (locationReady) return true;
+    setLocationMessage(locationValidationMessage);
+    setMessage(locationValidationMessage);
+    setShowPostModal(false);
+    return false;
+  };
 
-            setLocationResults(
-              response.data
-                .results || []
-            );
-          } catch (error) {
-            console.error(
-              "Location search error:",
-              error
-            );
+  const handleLocationChange = ({ displayLabel, location, token }) => {
+    setMessage("");
+    const selectionError = getJobLocationError({ location, token }, formData.workMode, locationScope);
+    const typeAllowed = !selectionError;
 
-            setLocationResults(
-              []
-            );
-          } finally {
-            setLocationLoading(
-              false
-            );
-          }
-        },
-        500
-      );
+    setJobLocation({
+      displayLabel,
+      location: typeAllowed && token ? location : null,
+      token: typeAllowed && location ? token : null,
+    });
+    // Preserve the text mirror used to detect programmatic edits.
+    setFormData((previous) => ({
+      ...previous,
+      location: typeAllowed && token && location?.locationType === "city"
+        ? `${location.city}, ${location.country}`
+        : displayLabel,
+    }));
+    setLocationMessage(location && !typeAllowed ? selectionError : "");
+  };
 
-    return () =>
-      clearTimeout(timer);
-  }, [
-    formData.location,
-    locationSelected,
-  ]);
+  const handleLocationScopeChange = (event) => {
+    const scope = event.target.value;
+    if (scope === locationScope) return;
+    setLocationScope(scope);
+    invalidateLocation(jobLocation.displayLabel,
+      "Search scope changed. Choose a new suggestion to confirm the location.");
+  };
 
 
   const handleChange = (
@@ -366,9 +399,18 @@ export default function PostJobPage() {
     if (
       name === "location"
     ) {
-      setLocationSelected(
-        false
-      );
+      invalidateLocation(value, "Location text changed. Choose a suggestion to confirm it.");
+    }
+
+    if (name === "workMode" && value !== formData.workMode && value !== "Remote") {
+      // A city remains usable when switching between Office and Hybrid.
+      // Country searches and broader Remote selections need a fresh city choice.
+      if (locationScope !== "locality" ||
+          (jobLocation.location && jobLocation.location.locationType !== "city")) {
+        invalidateLocation(jobLocation.displayLabel,
+          "Office and Hybrid jobs require a city. Choose a city suggestion.");
+      }
+      setLocationScope("locality");
     }
 
     setFormData(
@@ -382,29 +424,6 @@ export default function PostJobPage() {
       })
     );
   };
-
-
-  const selectLocation = (
-    place
-  ) => {
-    const selectedLocation =
-      `${place.name}, ${place.country}`;
-
-    setFormData(
-      (
-        previousFormData
-      ) => ({
-        ...previousFormData,
-
-        location:
-          selectedLocation,
-      })
-    );
-
-    setLocationSelected(true);
-    setLocationResults([]);
-  };
-
 
 
   // PDF FILE VALIDATION
@@ -494,6 +513,8 @@ export default function PostJobPage() {
       return;
     }
 
+    const extractedExperience = mapExtractedExperience(jobData.experience);
+
     const extractedLocation =
       typeof jobData.location ===
         "string"
@@ -507,6 +528,11 @@ export default function PostJobPage() {
         ]
           .filter(Boolean)
           .join(", ");
+
+    // Gemini supplies text, never a trusted selection or confirmation token.
+    invalidateLocation(extractedLocation,
+      "Location came from the PDF. Choose a suggestion to confirm it.");
+    if (jobData.workMode !== "Remote") setLocationScope("locality");
 
     setFormData(
       (
@@ -562,33 +588,16 @@ export default function PostJobPage() {
             "",
 
         requirements:
-          Array.isArray(
-            jobData.requirements
-          )
-            ? jobData.requirements.join(
-              ", "
-            )
-            : jobData
-              .requirements ||
-            "",
+          extractedItemsToText(jobData.requirements),
 
         experience:
-          jobData.experience ||
-          "",
+          extractedExperience,
 
         location:
           extractedLocation,
 
         responsibilities:
-          Array.isArray(
-            jobData.responsibilities
-          )
-            ? jobData.responsibilities.join(
-              ", "
-            )
-            : jobData
-              .responsibilities ||
-            "",
+          extractedItemsToText(jobData.responsibilities),
 
         roleSummary:
           jobData.roleSummary ||
@@ -641,6 +650,11 @@ export default function PostJobPage() {
         : missingFields;
 
     setAiReviewNotes([
+      ...(!extractedExperience ? [
+        typeof jobData.experience === "string" && jobData.experience.trim()
+          ? `Review experience from PDF: "${jobData.experience}". Select minimum relevant experience before posting.`
+          : "Experience was not specified in the PDF. Select minimum relevant experience, or choose Not specified, before posting.",
+      ] : []),
       ...filteredMissingFields.map(
         (field) =>
           `Missing from PDF: ${field}`
@@ -650,12 +664,6 @@ export default function PostJobPage() {
     ]);
 
     setPdfAnalysed(true);
-
-    setLocationSelected(
-      Boolean(
-        extractedLocation
-      )
-    );
 
     setMessage("");
 
@@ -761,12 +769,19 @@ export default function PostJobPage() {
 
     setMessage("");
 
+    if (!experienceOptions.includes(formData.experience)) {
+      setMessage("Please select minimum relevant experience before posting.");
+      return;
+    }
+
     if (!formData.companyUrl.trim()) {
       setMessage(
         "Please enter your company website before posting."
       );
       return;
     }
+
+    if (!validateLocationForSubmission()) return;
 
     // HTML required fields are validated by the form
     // before its onSubmit event is triggered.
@@ -794,10 +809,16 @@ const confirmPostJob = async (event) => {
         return;
       }
 
-   // Send only the job information.
-// The backend identifies the poster
-// using their authenticated account.
-const payload = buildJobPayload(formData);
+      // Recheck after confirmation in case the selection changed while reviewing.
+      if (!experienceOptions.includes(formData.experience)) {
+        setMessage("Please select minimum relevant experience before posting.");
+        setShowPostModal(false);
+        return;
+      }
+      if (!validateLocationForSubmission()) return;
+
+      // The backend identifies the poster and independently verifies the selection.
+      const payload = buildJobPayload(formData, jobLocation);
 
       await axios.post(
         `${url}/create`,
@@ -809,7 +830,6 @@ const payload = buildJobPayload(formData);
           },
         }
       );
-        console.log("payload from postJobPage",payload)
 
       // Only close and redirect AFTER successful creation.
       setShowPostModal(false);
@@ -821,7 +841,23 @@ const payload = buildJobPayload(formData);
       );
 
     } catch (error) {
-      console.error("Create job error:", error);
+      console.error("Create job error:", error.response?.status || error.message);
+
+      const errorCode = error.response?.data?.code;
+      if ([
+        "EXPIRED_LOCATION_TOKEN", "INVALID_LOCATION_TOKEN", "MISSING_LOCATION_TOKEN",
+        "LOCATION_TOKEN_MISMATCH", "LOCATION_NOT_VERIFIED", "INCOMPATIBLE_LOCATION",
+        "INVALID_LOCATION",
+      ].includes(errorCode)) {
+        const locationError = errorCode === "EXPIRED_LOCATION_TOKEN"
+          ? "Your location confirmation has expired. Please select the location again."
+          : "Your location could not be confirmed. Please select the location again.";
+        invalidateLocation(jobLocation.displayLabel, locationError);
+        setMessage(locationError);
+        setShowPostModal(false);
+        toast.error(locationError);
+        return;
+      }
 
       toast.error(
         error.response?.data?.message ||
@@ -945,20 +981,16 @@ const payload = buildJobPayload(formData);
                 loading
               }
 
-              locationLoading={
-                locationLoading
-              }
-
-              locationResults={
-                locationResults
-              }
+              jobLocation={jobLocation}
+              locationScope={locationScope}
+              locationMessage={locationMessage}
+              locationReady={locationReady}
+              locationPickerRevision={locationPickerRevision}
+              handleLocationChange={handleLocationChange}
+              handleLocationScopeChange={handleLocationScopeChange}
 
               handleChange={
                 handleChange
-              }
-
-              selectLocation={
-                selectLocation
               }
 
               handleSubmit={
@@ -1056,7 +1088,7 @@ const payload = buildJobPayload(formData);
 
                       <button
                         type="submit"
-                        disabled={loading}
+                        disabled={loading || !locationReady}
                         className="rounded-lg bg-blue-800
             px-5 py-2.5 text-sm font-semibold text-white
             hover:bg-blue-900 disabled:opacity-50"

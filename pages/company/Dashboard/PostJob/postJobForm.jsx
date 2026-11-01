@@ -1,4 +1,6 @@
 import React from "react";
+import LocationAutocomplete from "../../../../components/common/LocationAutocomplete";
+import { educationOptions, experienceOptions } from "../../../../utils/createJobForm";
 
 const salaryOptions = [
   "£15,000 - £20,000",
@@ -83,10 +85,14 @@ export default function PostJobForm({
   formData,
   companyUrlLocked,
   loading,
-  locationLoading,
-  locationResults,
+  jobLocation,
+  locationScope,
+  locationMessage,
+  locationReady,
+  locationPickerRevision,
+  handleLocationChange,
+  handleLocationScopeChange,
   handleChange,
-  selectLocation,
   handleSubmit,
 }) {
   console.log("POST JOB FORM RECEIVED:", formData);
@@ -247,51 +253,50 @@ export default function PostJobForm({
 
         {/* Location */}
         <div className="relative md:col-span-2">
-          <label className={labelClass}>
+          <label htmlFor="create-job-location" className={labelClass}>
             Location{" "}
             <span className="text-red-500">
               *
             </span>
           </label>
 
-          <input
-            name="location"
-            value={formData.location}
-            onChange={handleChange}
-            placeholder="Type a city, e.g. London"
-            className={fieldClass}
-            autoComplete="off"
-            required
-          />
-
-          {locationLoading && (
-            <p className={helperClass}>
-              Searching for locations...
-            </p>
-          )}
-
-          {locationResults.length > 0 && (
-            <div className="absolute z-20 mt-1 w-full bg-white rounded-lg shadow-lg border border-blue-100 overflow-hidden">
-              {locationResults.map(
-                (place) => (
-                  <button
-                    type="button"
-                    key={`${place.id}-${place.name}`}
-                    onClick={() =>
-                      selectLocation(place)
-                    }
-                    className="w-full text-left px-4 py-2 text-sm text-slate-900 hover:bg-blue-50"
-                  >
-                    {place.name}
-                    {place.admin1
-                      ? `, ${place.admin1}`
-                      : ""}
-                    , {place.country}
-                  </button>
-                )
-              )}
+          {formData.workMode === "Remote" && (
+            <div className="mb-2">
+              <label htmlFor="create-job-location-scope" className={labelClass}>
+                Search area
+              </label>
+              <select
+                id="create-job-location-scope"
+                value={locationScope}
+                onChange={handleLocationScopeChange}
+                className={`${fieldClass} bg-white`}
+              >
+                <option value="locality">City, county or region</option>
+                <option value="country">Entire country</option>
+              </select>
             </div>
           )}
+
+          <LocationAutocomplete
+            key={`${locationScope}-${locationPickerRevision}`}
+            id="create-job-location"
+            mode="job"
+            scope={locationScope}
+            value={jobLocation.displayLabel}
+            onChange={handleLocationChange}
+            placeholder={locationScope === "country"
+              ? "Search a country"
+              : (formData.workMode === "Remote"
+                ? "Search a city, county or region"
+                : "Search a city, e.g. London")}
+          />
+          <p role="status" className={helperClass}>
+            {locationMessage || (locationReady
+              ? "Location selected from suggestions."
+              : (formData.workMode === "Remote"
+                ? "Choose a city, county, region or entire-country suggestion for the selected search area."
+                : "Office and Hybrid jobs require a city selected from suggestions."))}
+          </p>
         </div>
 
         {/* Vacancies */}
@@ -400,21 +405,26 @@ export default function PostJobForm({
 
         {/* Experience */}
         <div>
-          <label className={labelClass}>
-            Experience{" "}
+          <label htmlFor="create-job-experience" className={labelClass}>
+            Minimum relevant experience{" "}
             <span className="text-red-500">
               *
             </span>
           </label>
 
-          <input
+          <select
+            id="create-job-experience"
             name="experience"
             value={formData.experience}
             onChange={handleChange}
-            placeholder="1-2 years"
             className={fieldClass}
             required
-          />
+          >
+            <option value="">Select minimum relevant experience</option>
+            {experienceOptions.map((experience) => (
+              <option key={experience} value={experience}>{experience}</option>
+            ))}
+          </select>
         </div>
 
         {/* Education */}
@@ -426,14 +436,22 @@ export default function PostJobForm({
             </span>
           </label>
 
-          <input
+          <select
             name="education"
             value={formData.education}
             onChange={handleChange}
-            placeholder="Bachelor's degree or equivalent"
             className={fieldClass}
             required
-          />
+          >
+            <option value="">Select education</option>
+            {/* Preserve specific qualifications returned by the PDF verbatim. */}
+            {formData.education && !educationOptions.includes(formData.education) && (
+              <option value={formData.education}>{formData.education}</option>
+            )}
+            {educationOptions.map((education) => (
+              <option key={education} value={education}>{education}</option>
+            ))}
+          </select>
         </div>
 
         {/* Application end date */}
@@ -514,14 +532,13 @@ export default function PostJobForm({
               formData.responsibilities
             }
             onChange={handleChange}
-            placeholder="Develop features, fix bugs, collaborate with the team..."
+            placeholder={"Develop and maintain features\nInvestigate bugs, document fixes and share findings\nCollaborate with the team"}
             className={textareaClass}
             required
           />
 
           <p className={helperClass}>
-            Separate responsibilities with
-            commas.
+            Enter one responsibility per line. Commas can stay within an item.
           </p>
         </div>
 
@@ -538,13 +555,13 @@ export default function PostJobForm({
             name="requirements"
             value={formData.requirements}
             onChange={handleChange}
-            placeholder="1 year of experience, good communication, eligible to work in the UK..."
+            placeholder={"At least 1 year of relevant experience\nClear written and verbal communication\nEligible to work in the UK"}
             className={textareaClass}
             required
           />
 
           <p className={helperClass}>
-            Separate requirements with commas.
+            Enter one requirement per line. Commas can stay within an item.
           </p>
         </div>
 
@@ -573,7 +590,7 @@ export default function PostJobForm({
       <div className="flex justify-end pt-3">
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || !locationReady}
           className="px-6 py-3 rounded-lg text-sm font-semibold text-white transition disabled:opacity-50"
           style={{
             background:
