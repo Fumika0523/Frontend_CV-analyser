@@ -1,6 +1,7 @@
 import React from "react";
 import { FaPen, FaTimes } from "react-icons/fa";
 import { MdWorkOff } from "react-icons/md";
+import LocationAutocomplete from "../../../../components/common/LocationAutocomplete";
 
 const salaryOptions = [
   "£15,000 - £20,000",
@@ -75,21 +76,12 @@ const formatLocation = (location) => {
     return location;
   }
 
-  /*
-   * Avoid output such as:
-   *
-   * ", United Kingdom"
-   *
-   * or
-   *
-   * "Manchester, "
-   */
-  return [
-    location.city,
+  // New Geoapify locations already have a formatted display name.
+  // Fall back to the saved locality/country for older job records.
+  return location.displayName || [
+    location.city || location.county || location.region,
     location.country,
-  ]
-    .filter(Boolean)
-    .join(", ");
+  ].filter(Boolean).join(", ") || "Location not specified";
 };
 
 export default function PostedJobs({
@@ -100,16 +92,17 @@ export default function PostedJobs({
   saving,
   isClosing,
   checkingAuth,
-  locationLoading,
-  locationResults,
+  locationScope,
+  locationError,
+  locationWasEdited,
+  handleEditLocationChange,
+  handleLocationScopeChange,
   setIsEditing,
   openModal,
   closeModal,
   handleEditChange,
   handleSave,
   onRequestCloseJob,
-  selectEditLocation,
-  onSelectJob,
 }) {
   if (checkingAuth) {
     return <p>Checking authentication...</p>;
@@ -129,7 +122,7 @@ export default function PostedJobs({
 
                 <div
                   key={job._id}
-                  onClick={() => onSelectJob?.(job)}
+                  onClick={() => openModal(job)}
                   className="border border-slate-200 rounded-xl p-4 hover:shadow-md hover:border-blue-200 transition cursor-pointer bg-white"
                 >
                   <div className="flex justify-between items-start">
@@ -385,33 +378,50 @@ export default function PostedJobs({
                       />
                     </div>
 
-                    <div className="relative">
-                      <label className="text-xs font-semibold text-slate-700 mb-1 block">Location</label>
-                      <input
-                        name="location"
-                        value={editForm.location}
-                        onChange={handleEditChange}
-                        placeholder="Type city name, e.g. London"
-                        autoComplete="off"
-                        className="w-full border rounded-lg px-4 py-3 text-sm"
+                    <div className="relative md:col-span-2">
+                      <label htmlFor="edit-job-location" className="text-xs font-semibold text-slate-700 mb-1 block">
+                        Location
+                      </label>
+
+                      {editForm.workMode === "Remote" && (
+                        <div className="mb-2">
+                          <label htmlFor="edit-job-location-scope" className="text-xs text-slate-600 block mb-1">
+                            Search area
+                          </label>
+                          <select
+                            id="edit-job-location-scope"
+                            value={locationScope}
+                            onChange={handleLocationScopeChange}
+                            className="w-full border rounded-lg px-3 py-2 bg-white"
+                          >
+                            <option value="locality">City, county or region</option>
+                            <option value="country">Entire country</option>
+                          </select>
+                        </div>
+                      )}
+
+                      <LocationAutocomplete
+                        key={`${selectedJob._id}-${locationScope}`}
+                        id="edit-job-location"
+                        mode="job"
+                        scope={locationScope}
+                        value={editForm.location || ""}
+                        onChange={handleEditLocationChange}
+                        placeholder={locationScope === "country"
+                          ? "Search a country"
+                          : editForm.workMode === "Remote"
+                            ? "Search a city, county or region"
+                            : "Search a city, e.g. London"}
                       />
 
-                      {locationLoading && <p className="text-xs mt-1 text-slate-500">Searching location...</p>}
+                      {locationError && (
+                        <p role="alert" className="text-red-600 text-sm mt-2">{locationError}</p>
+                      )}
 
-                      {locationResults.length > 0 && (
-                        <div className="absolute z-20 mt-1 w-full bg-white rounded-lg shadow-lg border border-blue-100 overflow-hidden">
-                          {locationResults.map((place) => (
-                            <button
-                              type="button"
-                              key={`${place.id}-${place.name}`}
-                              onClick={() => selectEditLocation(place)}
-                              className="w-full text-left px-4 py-2 text-sm hover:bg-blue-50"
-                            >
-                              {place.name}
-                              {place.admin1 ? `, ${place.admin1}` : ""}, {place.country}
-                            </button>
-                          ))}
-                        </div>
+                      {!locationWasEdited && (
+                        <p className="text-xs text-slate-500 mt-2">
+                          Current location will be preserved unless changed.
+                        </p>
                       )}
                     </div>
 
@@ -544,18 +554,6 @@ export default function PostedJobs({
                       />
                     </div>
 
-                    <div>
-                      <label className="text-xs font-semibold text-slate-700 mb-1 block">Status</label>
-                      <select
-                        name="status"
-                        value={editForm.status}
-                        onChange={handleEditChange}
-                        className="w-full border rounded-lg px-4 py-3 text-sm bg-white"
-                      >
-                        <option value="Open">Open</option>
-                        <option value="Closed">Closed</option>
-                      </select>
-                    </div>
 
                     <div>
                       <label className="text-xs font-semibold text-slate-700 mb-1 block">Number of Vacancies</label>
@@ -635,7 +633,7 @@ export default function PostedJobs({
                     <div className="md:col-span-2 flex justify-end gap-3 pt-2">
                       <button
                         type="button"
-                        onClick={() => setIsEditing(false)}
+                        onClick={() => openModal(selectedJob)}
                         className="px-6 py-3 rounded-lg text-sm font-semibold border border-slate-200 text-slate-700 hover:bg-slate-50 transition"
                       >
                         Cancel

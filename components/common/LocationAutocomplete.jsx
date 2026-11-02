@@ -276,8 +276,7 @@ const JobLocationAutocomplete = ({
   scope = "locality",
 }) => {
   const [query, setQuery] = useState(value || "");
-  const [selectedText, setSelectedText] = useState("");
-  const [suggestions, setSuggestions] = useState([]);
+const [selectedText, setSelectedText] = useState(value || "");  const [suggestions, setSuggestions] = useState([]);
   const [status, setStatus] = useState("idle");
   const [error, setError] = useState("");
   const previousScope = useRef(scope);
@@ -324,44 +323,75 @@ const JobLocationAutocomplete = ({
       return;
     }
 
-    setStatus("loading");
-    const timer = setTimeout(async () => {
-     // try {
-        const response = await axios.get(
-          `${url.replace(/\/$/, "")}/api/locations/autocomplete`,
-          { params: { q: searchText, scope }, signal: controller.signal, timeout: 10000 }
-        );
-        console.log("Response from JobLocation Auto complete",response)
-        const results = response.data?.suggestions;
-          console.log("Result from JobLocation Auto complete",results)
-        // Fail visibly if the contract is incomplete; never offer unsigned results.
-        if (!Array.isArray(results) || results.some((place) =>
-          !place || typeof place.displayLabel !== "string" || !place.displayLabel.trim() ||
-          !place.location || typeof place.location !== "object" || Array.isArray(place.location) ||
-          typeof place.token !== "string" || !place.token.trim()
-        )) {
-          throw new Error("Invalid location suggestions");
-        }
-        if (active) {
-          setSuggestions(results);
-          setStatus(results.length ? "success" : "empty");
-        }
-      // } catch (requestError) {
-      //   if (!active || axios.isCancel(requestError)) return;
-      //   setSuggestions([]);
-      //   setStatus("error");
-      //   setError(requestError.response?.status === 429
-      //     ? "Too many location searches. Please wait and try again."
-      //     : "Unable to search locations. Please try again.");
-      // }
-    }, 400);
+   
+setStatus("loading");
 
-    // Ignore late responses, including errors, after typing, selection or unmount.
-    return () => {
-      active = false;
-      clearTimeout(timer);
-     // controller.abort();
-    };
+const timer = setTimeout(async () => {
+  try {
+    const response = await axios.get(
+      `${url.replace(/\/$/, "")}/api/locations/autocomplete`,
+      {
+        params: { q: searchText, scope },
+        signal: controller.signal,
+        timeout: 10000,
+      }
+    );
+
+    const results = response.data?.suggestions;
+
+    // Only accept complete, signed suggestions.
+    if (
+      !Array.isArray(results) ||
+      results.some(
+        (place) =>
+          !place ||
+          typeof place.displayLabel !== "string" ||
+          !place.displayLabel.trim() ||
+          !place.location ||
+          typeof place.location !== "object" ||
+          Array.isArray(place.location) ||
+          typeof place.token !== "string" ||
+          !place.token.trim()
+      )
+    ) {
+      throw new Error("Invalid location suggestions");
+    }
+
+    // Ignore results from an outdated request.
+    if (!active) return;
+
+    setSuggestions(results);
+    setStatus(results.length ? "success" : "empty");
+
+  } catch (requestError) {
+
+    // Ignore cancelled requests.
+    if (
+      !active ||
+      controller.signal.aborted ||
+      axios.isCancel(requestError)
+    ) {
+      return;
+    }
+
+    setSuggestions([]);
+    setStatus("error");
+
+    setError(
+      requestError.response?.status === 429
+        ? "Too many location searches. Please wait and try again."
+        : "Unable to search locations. Please try again."
+    );
+  }
+}, 400);
+
+// Cleanup when the user types again or leaves the page.
+return () => {
+  active = false;
+  clearTimeout(timer);
+  controller.abort();
+};
+
   }, [query, selectedText, scope]);
 
   return (
