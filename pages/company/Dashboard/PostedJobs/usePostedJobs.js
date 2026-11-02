@@ -2,6 +2,18 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import axios from "axios";
 
+
+const getEditLocationLabel = (location) => {
+  if (typeof location === "string") return location;
+  if (!location) return "";
+
+  return location.displayName ||
+    [
+      location.city || location.county || location.region,
+      location.country,
+    ].filter(Boolean).join(", ");
+};
+
 /*
  * Backend URL.
  *
@@ -60,12 +72,12 @@ export default function usePostedJobs() {
   const [checkingAuth, setCheckingAuth] =
     useState(true);
 
-  // Location autocomplete
-  const [locationLoading, setLocationLoading] =
-    useState(false);
 
-  const [locationResults, setLocationResults] =
-    useState([]);
+const [editLocation, setEditLocation] = useState(null);
+const [locationWasEdited, setLocationWasEdited] = useState(false);
+const [locationScope, setLocationScope] = useState("locality");
+const [locationError, setLocationError] = useState("");
+
 
   // ======================================================
   // LOAD COMPANY JOBS
@@ -161,94 +173,23 @@ export default function usePostedJobs() {
     };
   }, [router]);
 
-  // ======================================================
-  // LOCATION SEARCH
-  // ======================================================
+const handleEditLocationChange = (selection) => {
+  setEditLocation(selection);
+  setLocationWasEdited(true);
+  setLocationError("");
 
-  useEffect(() => {
-    /*
-     * Only search while editing.
-     */
-    if (
-      !isEditing ||
-      !editForm?.location
-    ) {
-      setLocationResults([]);
-      return;
-    }
+  setEditForm((previous) => ({
+    ...previous,
+    location: selection.displayLabel,
+  }));
+};
 
-    const city =
-      editForm.location.trim();
+const handleLocationScopeChange = (event) => {
+  setLocationScope(event.target.value);
+  setEditLocation(null);
+  setLocationWasEdited(true);
+};
 
-    if (city.length < 2) {
-      setLocationResults([]);
-      return;
-    }
-
-    /*
-     * Debounce:
-     * wait 500ms after typing before
-     * calling the location API.
-     */
-    const timer = setTimeout(
-      async () => {
-        try {
-          setLocationLoading(true);
-
-          const response =
-            await axios.get(
-              `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(
-                city
-              )}&count=6&language=en&format=json`
-            );
-
-          setLocationResults(
-            response.data.results || []
-          );
-        } catch (error) {
-          console.error(
-            "Location search failed:",
-            error
-          );
-
-          setLocationResults([]);
-        } finally {
-          setLocationLoading(false);
-        }
-      },
-      500
-    );
-
-    return () =>
-      clearTimeout(timer);
-  }, [
-    editForm?.location,
-    isEditing,
-  ]);
-
-  // ======================================================
-  // SELECT LOCATION
-  // ======================================================
-
-  const selectEditLocation = (place) => {
-    setEditForm((previousForm) => ({
-      ...previousForm,
-
-      /*
-       * Backend accepts this string and
-       * converts it back into:
-       *
-       * {
-       *   city,
-       *   country
-       * }
-       */
-      location:
-        `${place.name}, ${place.country}`,
-    }));
-
-    setLocationResults([]);
-  };
 
   // ======================================================
   // OPEN JOB DETAILS
@@ -256,6 +197,16 @@ export default function usePostedJobs() {
 
   const openModal = (job) => {
     setSelectedJob(job);
+
+    
+setEditLocation(null);
+setLocationWasEdited(false);
+setLocationError("");
+setLocationScope(
+  job.location?.locationType === "country"
+    ? "country"
+    : "locality"
+);
 
     /*
      * Convert the database Job object
@@ -265,10 +216,7 @@ export default function usePostedJobs() {
       title:
         job.title || "",
 
-      location:
-        job.location?.city
-          ? `${job.location.city}, ${job.location.country}`
-          : job.location || "",
+   location: getEditLocationLabel(job.location),
 
       salary:
         job.salary || "",
@@ -285,11 +233,7 @@ export default function usePostedJobs() {
       experience:
         job.experience || "",
 
-      /*
-       * NEW:
-       * These fields exist in JobModel
-       * and should also be editable.
-       */
+
       category:
         job.category || "",
 
@@ -346,12 +290,18 @@ export default function usePostedJobs() {
   // CLOSE DETAILS MODAL
   // ======================================================
 
-  const closeModal = () => {
-    setSelectedJob(null);
-    setEditForm(null);
-    setIsEditing(false);
-    setLocationResults([]);
-  };
+
+const closeModal = () => {
+  setSelectedJob(null);
+  setEditForm(null);
+  setIsEditing(false);
+
+  // Reset Geoapify Edit Job state.
+  setEditLocation(null);
+  setLocationWasEdited(false);
+  setLocationScope("locality");
+  setLocationError("");
+};
 
   // ======================================================
   // HANDLE FORM INPUT
@@ -362,6 +312,12 @@ export default function usePostedJobs() {
       name,
       value,
     } = event.target;
+
+    
+if (name === "workMode" && value !== "Remote") {
+  setLocationScope("locality");
+}
+
 
     setEditForm(
       (previousForm) => ({
@@ -379,6 +335,31 @@ export default function usePostedJobs() {
     if (!selectedJob || !editForm) {
       return;
     }
+
+    
+if (locationWasEdited &&
+    (!editLocation?.location || !editLocation?.token)) {
+  setLocationError(
+    "Please select a location from Geoapify suggestions."
+  );
+  return;
+}
+
+const effectiveLocation = locationWasEdited
+  ? editLocation.location
+  : selectedJob.location;
+
+if (
+  editForm.workMode !== "Remote" &&
+  effectiveLocation?.locationType &&
+  effectiveLocation.locationType !== "city"
+) {
+  setLocationError(
+    "Office and Hybrid jobs require a city."
+  );
+  return;
+}
+
 
     try {
       setSaving(true);
@@ -399,10 +380,6 @@ export default function usePostedJobs() {
       const payload = {
         title:
           editForm.title,
-
-        location:
-          editForm.location,
-
         salary:
           editForm.salary,
 
@@ -437,9 +414,6 @@ export default function usePostedJobs() {
           Number(
             editForm.vacancies
           ) || 1,
-
-        status:
-          editForm.status,
 
         /*
          * Convert comma-separated strings
@@ -478,6 +452,13 @@ export default function usePostedJobs() {
             .filter(Boolean),
       };
 
+      
+// Only send location when the user selected a new one.
+if (locationWasEdited) {
+  payload.location = editLocation.location;
+  payload.locationToken = editLocation.token;
+}
+
       const response =
         await axios.put(
           `${API_BASE}/jobs/${selectedJob._id}`,
@@ -493,6 +474,7 @@ export default function usePostedJobs() {
        *   job
        * }
        */
+      
       const updatedJob =
         response.data.job ||
         response.data.jobPost ||
@@ -517,6 +499,15 @@ export default function usePostedJobs() {
        */
       setSelectedJob(updatedJob);
 
+setLocationWasEdited(false);
+setEditLocation(null);
+setLocationError("");
+
+setEditForm((previous) => ({
+  ...previous,
+  location: getEditLocationLabel(updatedJob.location),
+}));
+
       setIsEditing(false);
     } catch (error) {
       console.error(
@@ -539,11 +530,8 @@ export default function usePostedJobs() {
 
   /*
    * Backend DELETE does NOT delete the job.
-   *
    * It performs a soft close:
-   *
    * Job.status = "Closed"
-   *
    * This preserves applications and history.
    */
   const requestCloseJob = (job) => {
@@ -590,14 +578,9 @@ export default function usePostedJobs() {
       /*
        * Again:
        * We send ONLY job._id.
-       *
        * We never send companyId.
-       *
        * Backend verifies:
-       *
-       * Job.companyId
-       * ===
-       * logged-in User.companyId
+       * Job.companyId === logged-in User.companyId
        */
       const response =
         await axios.delete(
@@ -653,27 +636,37 @@ export default function usePostedJobs() {
   // RETURN EVERYTHING POSTEDJOBS NEEDS
   // ======================================================
 
-  return {
-    jobs,
-    selectedJob,
-    isEditing,
-    editForm,
-    saving,
-    checkingAuth,
-    locationLoading,
-    locationResults,
-    jobToClose,
-    isClosing,
-    closeError,
-    setIsEditing,
-    openModal,
-    closeModal,
-    handleEditChange,
-    handleSave,
-    selectEditLocation,
-    onRequestCloseJob:
-      requestCloseJob,
-    cancelCloseJob,
-    confirmCloseJob,
-  };
+return {
+  jobs,
+  selectedJob,
+  isEditing,
+  editForm,
+  saving,
+  checkingAuth,
+
+  // New Geoapify Edit Job state.
+  editLocation,
+  locationScope,
+  locationError,
+  locationWasEdited,
+
+  jobToClose,
+  isClosing,
+  closeError,
+
+  setIsEditing,
+  openModal,
+  closeModal,
+  handleEditChange,
+  handleSave,
+
+  // New Geoapify handlers.
+  handleEditLocationChange,
+  handleLocationScopeChange,
+
+  onRequestCloseJob: requestCloseJob,
+  cancelCloseJob,
+  confirmCloseJob,
+};
+
 }
