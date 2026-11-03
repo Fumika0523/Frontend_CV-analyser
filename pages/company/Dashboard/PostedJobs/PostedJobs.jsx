@@ -87,7 +87,7 @@ const formatLocation = (location) => {
 export default function PostedJobs({
   jobs,
   selectedJob,
-    onSelectJob,
+  onSelectJob,
   isEditing,
   editForm,
   saving,
@@ -121,18 +121,17 @@ export default function PostedJobs({
           <div className="space-y-4">
             {jobs.map((job) => (
 
-<div
-  key={job._id}
-
+<div key={job._id}
 onClick={() => {
-  // Preserve the original desktop behaviour.
-  if (window.innerWidth >= 1024) {
-    if (onSelectJob && job.status === "Open") {
+  if (onSelectJob) {
+    // Medium and large screens:
+    // Clicking ANY posted job updates Matching Candidates.
+    if (window.innerWidth >= 768) {
       onSelectJob(job);
-    } else {
-      // Closed/expired jobs, or standalone page.
-      openModal(job);
     }
+  } else {
+    // Standalone Posted Jobs page.
+    openModal(job);
   }
 }}
   className="border border-slate-200 rounded-xl p-4 hover:shadow-md hover:border-blue-200 transition  bg-white"
@@ -177,7 +176,7 @@ onClick={() => {
 <div className="flex flex-wrap justify-end gap-3 mt-4">
 
   {/* Only visible on smaller screens */}
-  {onSelectJob && job.status === "Open" && (
+{onSelectJob && (
     <button
       type="button"
       onClick={(e) => {

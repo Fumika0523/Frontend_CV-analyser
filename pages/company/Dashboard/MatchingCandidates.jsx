@@ -101,26 +101,23 @@ export default function MatchingCandidates({ jobId }) {
           </p>
         )}
 
-        
-{/* No job selected yet */}
+
+{/* No job selected */}
 {!jobId && (
-  <div className="py-10 text-center">
-    <p className="text-sm text-slate-500">
-      Select a posted job to view matching candidates.
-    </p>
-  </div>
+  <p className="py-8 text-center text-sm text-slate-500">
+    Select a posted job to view matching candidates.
+  </p>
 )}
 
-{/* Job selected but no matching candidates */}
+{/* Selected job has no matching candidates */}
 {jobId && !loading && !message && matches.length === 0 && (
   <div className="py-10 text-center">
-    <p className="font-medium text-slate-700">
+    <p className="font-semibold text-slate-700">
       No matching candidates yet.
     </p>
 
     <p className="mt-2 text-sm text-slate-500">
-      We'll show suitable candidates here
-      when they become available.
+      No suitable candidates are currently available for this job.
     </p>
   </div>
 )}

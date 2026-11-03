@@ -70,23 +70,22 @@ export default function Dashboard() {
       <div className="min-h-screen py-8">
         <div className="mx-auto mt-20 max-w-screen-xl px-4 sm:px-6 xl:px-16">
 
-          {/* ORIGINAL DESKTOP LAYOUT */}
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+        
+{/* Responsive columns */}
+<div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
 
-            {/* Posted Jobs - always visible */}
-            <div className="md:col-span-1 lg:col-span-2">
-              <PostedJobs
-                {...postedJobs}
-                onSelectJob={handleSelectJob}
-              />
-            </div>
+  {/* Posted Jobs */}
+  <div className="md:col-span-1 lg:col-span-2">
+    <PostedJobs
+      {...postedJobs}
+      onSelectJob={handleSelectJob}
+    />
+  </div>
 
-            {/* Matching Candidates - desktop only */}
-         <div className="hidden md:block md:col-span-1">
-          <MatchingCandidates
-            jobId={mobileMatchesOpen ? null : selectedJobId}
-          />
-        </div>
+  {/* Matching Candidates: always visible from 768px */}
+  <div className="hidden md:block md:col-span-1">
+    <MatchingCandidates jobId={selectedJobId} />
+  </div>
 
           </div>
         </div>
@@ -101,7 +100,8 @@ export default function Dashboard() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="matching-candidates-title"
-            className="flex h-[100dvh] w-full flex-col overflow-hidden bg-white shadow-2xl sm:h-auto sm:max-h-[90dvh] sm:max-w-2xl sm:rounded-2xl"
+
+className="flex h-[100dvh] w-full flex-col overflow-hidden bg-white shadow-2xl sm:h-[85dvh] sm:max-w-2xl sm:rounded-2xl"
           >
             {/* Modal header */}
             <div className="flex shrink-0 items-center justify-between border-b border-slate-200 p-4">
@@ -122,10 +122,10 @@ export default function Dashboard() {
                 ✕ Close
               </button>
             </div>
-          {/* Always visible on medium and larger screens */}
-          <div className="hidden md:block md:col-span-1">
-            <MatchingCandidates jobId={selectedJobId} />
-          </div>
+        {/* Scrollable Matching Candidates content */}
+<div className="min-h-0 flex-1 overflow-y-auto p-3 sm:p-5">
+  <MatchingCandidates jobId={selectedJobId} />
+</div>
           </div>
         </div>
       )}
