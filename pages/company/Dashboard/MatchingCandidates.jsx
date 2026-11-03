@@ -101,14 +101,29 @@ export default function MatchingCandidates({ jobId }) {
           </p>
         )}
 
-        {!loading &&
-          !message &&
-          matches.length === 0 && (
-            <p className="text-slate-500 text-sm">
-              No matching candidates found
-              yet.
-            </p>
-          )}
+        
+{/* No job selected yet */}
+{!jobId && (
+  <div className="py-10 text-center">
+    <p className="text-sm text-slate-500">
+      Select a posted job to view matching candidates.
+    </p>
+  </div>
+)}
+
+{/* Job selected but no matching candidates */}
+{jobId && !loading && !message && matches.length === 0 && (
+  <div className="py-10 text-center">
+    <p className="font-medium text-slate-700">
+      No matching candidates yet.
+    </p>
+
+    <p className="mt-2 text-sm text-slate-500">
+      We'll show suitable candidates here
+      when they become available.
+    </p>
+  </div>
+)}
 
         {!loading &&
           matches.length > 0 && (
@@ -127,7 +142,7 @@ export default function MatchingCandidates({ jobId }) {
                           {candidate.candidateName ||
                             `Candidate ${candidate.candidateId}`}
                         </h3>
-
+{/* 
                         {candidate.cvPath && (
                           <a
                             href={`http://localhost:8002${candidate.cvPath}`}
@@ -137,7 +152,7 @@ export default function MatchingCandidates({ jobId }) {
                           >
                             Open CV
                           </a>
-                        )}
+                        )} */}
 
                         <p className="text-sm text-slate-500">
                           Candidate ID:{" "}

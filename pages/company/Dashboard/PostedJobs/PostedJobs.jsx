@@ -87,6 +87,7 @@ const formatLocation = (location) => {
 export default function PostedJobs({
   jobs,
   selectedJob,
+    onSelectJob,
   isEditing,
   editForm,
   saving,
@@ -120,11 +121,23 @@ export default function PostedJobs({
           <div className="space-y-4">
             {jobs.map((job) => (
 
-                <div
-                  key={job._id}
-                  onClick={() => openModal(job)}
-                  className="border border-slate-200 rounded-xl p-4 hover:shadow-md hover:border-blue-200 transition cursor-pointer bg-white"
-                >
+<div
+  key={job._id}
+
+onClick={() => {
+  // Preserve the original desktop behaviour.
+  if (window.innerWidth >= 1024) {
+    if (onSelectJob && job.status === "Open") {
+      onSelectJob(job);
+    } else {
+      // Closed/expired jobs, or standalone page.
+      openModal(job);
+    }
+  }
+}}
+  className="border border-slate-200 rounded-xl p-4 hover:shadow-md hover:border-blue-200 transition  bg-white"
+>
+
                   <div className="flex justify-between items-start">
                     <div>
                       <p className="text-xs text-slate-400 mb-1">Posted Job on {formatDate(job.createdAt)}</p>
@@ -159,20 +172,38 @@ export default function PostedJobs({
                     ))}
                   </div>
 
-                  
-                  {/* See full description button */}
-                  <div className="flex justify-end mt-4">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openModal(job);
-                      }}
-                      className="text-sm font-semibold text-blue-700 hover:underline"
-                    >
-                      See full description
-                    </button>
-                  </div>
+               
+{/* Job card actions */}
+<div className="flex flex-wrap justify-end gap-3 mt-4">
+
+  {/* Only visible on smaller screens */}
+  {onSelectJob && job.status === "Open" && (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation();
+        onSelectJob(job);
+      }}
+      className="md:hidden rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800"
+    >
+      View Matches
+    </button>
+  )}
+
+  {/* Available on all screen sizes */}
+  <button
+    type="button"
+    onClick={(e) => {
+      e.stopPropagation();
+      openModal(job);
+    }}
+    className="text-sm font-semibold text-blue-700 hover:underline"
+  >
+    See full description
+  </button>
+
+</div>
+
                 </div>
               ))}
             </div>

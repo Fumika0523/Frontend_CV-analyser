@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useEffect, useRef, useState } from "react";
 import Layout from "../../components/Layout/Layout";
 
 import PostedJobs from "../company/Dashboard/PostedJobs/PostedJobs";
@@ -8,83 +9,128 @@ import usePostedJobs from "../company/Dashboard/PostedJobs/usePostedJobs";
 import CloseJobDialog from "../company/Dashboard/PostedJobs/CloseJobDialog";
 
 export default function Dashboard() {
-  /*
-   * NEW:
-   * The dashboard must use the same Posted Jobs logic
-   * as the standalone Posted Jobs page.
-   *
-   * This gives PostedJobs:
-   * jobs
-   * edit state
-   * API functions
-   * close-job functions
-   * etc.
-   */
   const postedJobs = usePostedJobs();
 
-  /*
-   * This is separate from postedJobs.selectedJob.
-   *
-   * selectedJobId is specifically used by
-   * MatchingCandidates to know which job the
-   * recruiter selected.
-   */
-  const [selectedJobId, setSelectedJobId] =
-    useState(null);
+  // Selected job used by the matching engine.
+  const [selectedJobId, setSelectedJobId] = useState(null);
 
-  /*
-   * When the recruiter clicks a job card,
-   * send that job's MongoDB _id to
-   * MatchingCandidates.
-   */
+  // Controls only the small-screen Matching Candidates modal.
+  const [mobileMatchesOpen, setMobileMatchesOpen] = useState(false);
+  const closeButtonRef = useRef(null);
+
   const handleSelectJob = (jobOrId) => {
     const id =
       typeof jobOrId === "string"
         ? jobOrId
         : jobOrId?._id;
 
-    setSelectedJobId(id || null);
+    if (!id) return;
+
+    setSelectedJobId(id);
+
+    // Large screen: existing right-hand panel.
+    // Smaller screen: open the modal.
+    if (window.innerWidth < 768) {
+      setMobileMatchesOpen(true);
+    }
   };
+
+  useEffect(() => {
+    if (!mobileMatchesOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    closeButtonRef.current?.focus();
+
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setMobileMatchesOpen(false);
+      }
+    };
+
+    const handleResize = () => {
+      if (window.innerWidth >= 768) {
+        setMobileMatchesOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [mobileMatchesOpen]);
 
   return (
     <Layout>
       <div className="min-h-screen py-8">
-        <div className="mx-auto mt-20 max-w-screen-xl px-8 xl:px-16">
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-            {/* ======================================
-                LEFT SIDE - COMPANY'S POSTED JOBS
-            ====================================== */}
-            <div className="lg:col-span-2">
-              <PostedJobs
-                /*
-                 * Pass everything returned by
-                 * usePostedJobs into the component.
-                 */
-                {...postedJobs}
+        <div className="mx-auto mt-20 max-w-screen-xl px-4 sm:px-6 xl:px-16">
 
-                /*
-                 * Additional dashboard-only function.
-                 *
-                 * This tells MatchingCandidates
-                 * which job was selected.
-                 */
+          {/* ORIGINAL DESKTOP LAYOUT */}
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+
+            {/* Posted Jobs - always visible */}
+            <div className="md:col-span-1 lg:col-span-2">
+              <PostedJobs
+                {...postedJobs}
                 onSelectJob={handleSelectJob}
               />
             </div>
 
-            {/* ======================================
-                RIGHT SIDE - MATCHING CANDIDATES
-            ====================================== */}
-            <div className="lg:col-span-1">
-              <MatchingCandidates
-                jobId={selectedJobId}
-              />
-            </div>
+            {/* Matching Candidates - desktop only */}
+         <div className="hidden md:block md:col-span-1">
+          <MatchingCandidates
+            jobId={mobileMatchesOpen ? null : selectedJobId}
+          />
+        </div>
+
           </div>
         </div>
       </div>
 
-    
+      {/* SMALL-SCREEN MATCHING CANDIDATES MODAL */}
+      {mobileMatchesOpen && selectedJobId && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 sm:p-4 lg:hidden"
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="matching-candidates-title"
+            className="flex h-[100dvh] w-full flex-col overflow-hidden bg-white shadow-2xl sm:h-auto sm:max-h-[90dvh] sm:max-w-2xl sm:rounded-2xl"
+          >
+            {/* Modal header */}
+            <div className="flex shrink-0 items-center justify-between border-b border-slate-200 p-4">
+              <h2
+                id="matching-candidates-title"
+                className="text-lg font-bold text-slate-900"
+              >
+                Matching Candidates
+              </h2>
+
+              <button
+                ref={closeButtonRef}
+                type="button"
+                onClick={() => setMobileMatchesOpen(false)}
+                className="rounded-lg bg-slate-100 px-3 py-2 text-sm font-semibold hover:bg-slate-200"
+                aria-label="Close matching candidates"
+              >
+                ✕ Close
+              </button>
+            </div>
+          {/* Always visible on medium and larger screens */}
+          <div className="hidden md:block md:col-span-1">
+            <MatchingCandidates jobId={selectedJobId} />
+          </div>
+          </div>
+        </div>
+      )}
+
+      {/* EXISTING CLOSE JOB DIALOG */}
       <CloseJobDialog
         job={postedJobs.jobToClose}
         isClosing={postedJobs.isClosing}
