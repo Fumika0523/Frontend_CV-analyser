@@ -1,26 +1,26 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/router";
+import LocationAutocomplete from "../../../components/common/LocationAutocomplete";
 import { toast } from "react-toastify";
 import { url } from "../../../utils/constant";
 import CVUploadModal from "../../../components/Jobs/CVUploadModal";
-
+import JobDetailsModal from "../../../components/Jobs/JobDetailsModal";
+import JobCard from "../../../components/Jobs/JobCard";
+import QuickApplyModal from "../../../components/Jobs/QuickApplyModal";
+import JobMatchIndicator from "../../../components/Jobs/JobMatchIndicator";
+import { jobDetailsMatchState } from "../../../components/Jobs/jobDetailsMatchState";
+import useLatestJobScores from "../../../components/Jobs/useLatestJobScores";
+import MatchScoreModal from "../../company/Dashboard/Applicants/MatchScoreModal";
 import {
-  FiBriefcase,
-  FiCalendar,
-  FiCheckCircle,
-  FiDollarSign,
-  FiExternalLink,
-  FiFileText,
-  FiHome,
-  FiInbox,
-  FiLoader,
-  FiLogIn,
-  FiMapPin,
-  FiSearch,
-  FiX,
+  salaryFilterOptions,
+  workModeOptions,
+  passesJobFilters,
+} from "../../../components/Jobs/jobUtils";
+import {
+  FiBriefcase, FiCalendar, FiCheckCircle, FiDollarSign, FiExternalLink,
+  FiFileText, FiHome, FiInbox, FiLoader, FiLogIn, FiMapPin, FiSearch, FiX,
 } from "react-icons/fi";
-
 const applicationStatusLabels = {
   pending: "Application Submitted",
   reviewing: "Application Under Review",
@@ -35,18 +35,16 @@ const ApplyJobs = () => {
   // Jobs
   const [jobData, setJobData] = useState([]);
   const [selectedJob, setSelectedJob] = useState(null);
+  const [quickApplyJob, setQuickApplyJob] = useState(null);
+  const [scoreJobId, setScoreJobId] = useState(null);
+  const applicationInFlight = useRef(false);
+  const submittedIds = useRef(new Set());
+  const localApplications = useRef({});
 
   // Login
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-// Track whether the candidate has uploaded a CV.
-//
-// "checking" = loading CV information
-// "ready"    = at least one CV exists
-// "missing"  = no uploaded CV
-// "error"    = could not check CV information
-const [cvStatus, setCvStatus] = useState("checking");
-// Controls whether the CV upload modal is visible.
-const [showCVUploadModal, setShowCVUploadModal] = useState(false);
+  // Controls whether the CV upload modal is visible.
+  const [showCVUploadModal, setShowCVUploadModal] = useState(false);
 
   // Applications
   const [applicationsByJob, setApplicationsByJob] = useState({});
@@ -55,130 +53,10 @@ const [showCVUploadModal, setShowCVUploadModal] = useState(false);
   // Filters
   const [searchTerm, setSearchTerm] = useState("");
   const [locationFilter, setLocationFilter] = useState("");
+  // Track whether the candidate is editing the location.
+  const [isEditingLocation, setIsEditingLocation] = useState(false);
   const [minSalary, setMinSalary] = useState(0);
   const [workModeFilter, setWorkModeFilter] = useState("");
-
-  const salaryFilterOptions = [
-    { label: "Any salary", value: 0 },
-    { label: "£15,000+", value: 15000 },
-    { label: "£20,000+", value: 20000 },
-    { label: "£25,000+", value: 25000 },
-    { label: "£30,000+", value: 30000 },
-    { label: "£35,000+", value: 35000 },
-    { label: "£40,000+", value: 40000 },
-    { label: "£50,000+", value: 50000 },
-    { label: "£60,000+", value: 60000 },
-    { label: "£70,000+", value: 70000 },
-  ];
-
-  const workModeOptions = [
-    "Office",
-    "Hybrid",
-    "Remote",
-  ];
-
-  /**
-   * Convert location object into readable text.
-   *
-   * Example:
-   *
-   * {
-   *   city: "London",
-   *   country: "United Kingdom"
-   * }
-   *
-   * becomes:
-   *
-   * London, United Kingdom
-   */
-  const formatLocation = (location) => {
-    if (!location) {
-      return "";
-    }
-
-    if (typeof location === "string") {
-      return location;
-    }
-
-    return [location.city, location.country]
-      .filter(Boolean)
-      .join(", ");
-  };
-
-  /**
-   * Extract the minimum salary from the salary string.
-   *
-   * Examples:
-   *
-   * £30,000 - £35,000 -> 30000
-   * £70,000+          -> 70000
-   * Competitive       -> null
-   */
-  const parseSalaryMin = (salaryString) => {
-    if (
-      !salaryString ||
-      typeof salaryString !== "string"
-    ) {
-      return null;
-    }
-
-    const cleanedSalary =
-      salaryString.replace(/,/g, "");
-
-    const match =
-      cleanedSalary.match(/\d+/);
-
-    if (!match) {
-      return null;
-    }
-
-    return Number(match[0]);
-  };
-
-  /**
-   * Check whether a job satisfies the selected
-   * minimum salary.
-   */
-  const passesSalaryFilter = (job) => {
-    // 0 means "Any salary".
-    if (minSalary === 0) {
-      return true;
-    }
-
-    const salaryText = String(job.salary || "")
-      .trim()
-      .toLowerCase();
-
-    // We don't know the exact salary, so keep
-    // Competitive jobs visible.
-    if (salaryText === "competitive") {
-      return true;
-    }
-
-    const jobMinSalary =
-      parseSalaryMin(job.salary);
-
-    if (jobMinSalary === null) {
-      return false;
-    }
-
-    return jobMinSalary >= minSalary;
-  };
-
-  /**
-   * Check whether the application deadline
-   * has passed.
-   */
-  const isJobExpired = (job) => {
-    if (!job.applicationEndDate) {
-      return false;
-    }
-
-    return (
-      new Date(job.applicationEndDate) <
-      new Date()
-    );
-  };
 
   /**
    * Create authorization headers.
@@ -249,12 +127,12 @@ const [showCVUploadModal, setShowCVUploadModal] = useState(false);
       )
         ? response.data
         : Array.isArray(
-              response.data?.applications
-            )
+          response.data?.applications
+        )
           ? response.data.applications
           : Array.isArray(
-                response.data?.data
-              )
+            response.data?.data
+          )
             ? response.data.data
             : [];
 
@@ -263,7 +141,7 @@ const [showCVUploadModal, setShowCVUploadModal] = useState(false);
           (result, application) => {
             const jobId =
               typeof application.jobId ===
-              "object"
+                "object"
                 ? application.jobId?._id
                 : application.jobId;
 
@@ -278,7 +156,7 @@ const [showCVUploadModal, setShowCVUploadModal] = useState(false);
         );
 
       setApplicationsByJob(
-        applicationMap
+        { ...localApplications.current, ...applicationMap }
       );
     } catch (error) {
       console.error(
@@ -295,60 +173,24 @@ const [showCVUploadModal, setShowCVUploadModal] = useState(false);
     }
   };
 
-  // Check whether the candidate has an uploaded CV.
-const checkCandidateCV = async (token) => {
-  try {
-    const response = await axios.get(
-      `${url}/cv/my-cvs`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+  useEffect(() => {
+    const token = localStorage.getItem("token");
 
-    // The backend returns an array of CV documents.
-    const cvs = response.data;
+    setIsLoggedIn(Boolean(token));
 
-    // Check whether at least one valid CV record exists.
-    const hasCV =
-      Array.isArray(cvs) &&
-      cvs.some((cv) => cv._id);
+    // Load available jobs.
+    getJobsData();
 
-    setCvStatus(hasCV ? "ready" : "missing");
+    if (token) {
+      // Load existing applications.
+      getApplicationsData();
 
-  } catch (error) {
-    console.error("Check candidate CV error:", error);
-
-    // Do not assume the candidate has no CV
-    // when the request itself fails.
-    setCvStatus("error");
-  }
-};
+    }
+  }, []);
 
 
-useEffect(() => {
-  const token = localStorage.getItem("token");
-
-  setIsLoggedIn(Boolean(token));
-
-  // Load available jobs.
-  getJobsData();
-
-  if (token) {
-    // Load existing applications.
-    getApplicationsData();
-
-    // Check whether the candidate has a CV.
-    checkCandidateCV(token);
-  } else {
-    setCvStatus("missing");
-  }
-}, []);
-
-
-// Apply for job
-  const handleApply = async (job) => {
+  // Apply for job
+  const openQuickApply = async (job) => {
     const token =
       localStorage.getItem("token");
 
@@ -358,6 +200,8 @@ useEffect(() => {
       return;
     }
 
+    if (applicationInFlight.current || submittedIds.current.has(String(job._id))) return;
+
     const existingApplication =
       applicationsByJob[job._id];
 
@@ -365,9 +209,9 @@ useEffect(() => {
     if (existingApplication) {
       toast.info(
         applicationStatusLabels[
-          existingApplication.status
+        existingApplication.status
         ] ||
-          "You have already applied for this job"
+        "You have already applied for this job"
       );
 
       return;
@@ -387,15 +231,22 @@ useEffect(() => {
       return;
     }
 
-    // Candidate has no CV.
-    // Redirect to the existing CV upload page.
+    // Candidate has no CV: keep the existing upload flow.
     if (cvStatus === "missing") {
-    // Open the CV upload modal instead of leaving the page.
-    setShowCVUploadModal(true);
-    return;
-  }
+      // Open the CV upload modal instead of leaving the page.
+      setShowCVUploadModal(true);
+      return;
+    }
 
-    // CV is ready: continue to the existing application request.
+    setSelectedJob(null);
+    setScoreJobId(null);
+    setQuickApplyJob({ ...job, jobId: String(job._id) });
+  };
+
+  const handleApply = async (job, cvId) => {
+    if (!localStorage.getItem("token")) { router.push("/signup"); return false; }
+    if (!cvId || applicationInFlight.current || submittedIds.current.has(String(job._id)) || applicationsByJob[job._id]) return false;
+    applicationInFlight.current = true;
     try {
       setApplyingJobId(job._id);
 
@@ -403,30 +254,30 @@ useEffect(() => {
         `${url}/applications/apply`,
         {
           jobId: job._id,
-          cvId: null,
+          cvId,
         },
         getAuthConfig()
       );
 
-      const newApplication =
-        response.data?.application;
+      const newApplication = response.data?.application || { jobId: job._id, status: "pending" };
 
-      if (newApplication) {
-        setApplicationsByJob(
-          (previousApplications) => ({
-            ...previousApplications,
-            [job._id]: newApplication,
-          })
-        )
-      } else {
+      submittedIds.current.add(String(job._id));
+      localApplications.current[String(job._id)] = newApplication;
+      setApplicationsByJob((previousApplications) => ({
+        ...previousApplications,
+        [job._id]: newApplication,
+      }));
+      if (!response.data?.application) {
         // If backend did not return the application,
         // refresh from the server.
         await getApplicationsData();
       }
       toast.success(
         response.data?.message ||
-          "Application submitted successfully"
+        "Application submitted successfully"
       );
+      setQuickApplyJob(null);
+      return true;
     } catch (error) {
       const message =
         error.response?.data?.message ||
@@ -460,7 +311,9 @@ useEffect(() => {
       }
 
       toast.error(message);
+      return false;
     } finally {
+      applicationInFlight.current = false;
       setApplyingJobId(null);
     }
   };
@@ -486,7 +339,7 @@ useEffect(() => {
 
     const baseClass = modalButton
       ? "flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition"
-      : "mt-4 flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold transition";
+      : "flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold transition";
 
     const colourClass =
       hasApplied || isApplying
@@ -497,10 +350,10 @@ useEffect(() => {
       <button
         type="button"
         onClick={() =>
-          handleApply(job)
+          openQuickApply(job)
         }
         disabled={
-          hasApplied || isApplying
+          hasApplied || Boolean(applyingJobId)
         }
         className={`${baseClass} ${colourClass}`}
       >
@@ -535,12 +388,13 @@ useEffect(() => {
               size={16}
             />
 
-            Apply with CV
+            Quick Apply
           </>
         )}
       </button>
     );
   };
+
 
   /*
    * Prepare filter values.
@@ -575,96 +429,35 @@ useEffect(() => {
   };
 
   /**
-   * Filter All Jobs.
+   * Filter available jobs using our shared function.
    *
-   * IMPORTANT:
-   * Unlike Latest Jobs, there is NO
-   * 14-day restriction here.
+   * Each job is checked against the candidate's
+   * selected search and filter values.
    */
   const filteredJobs = jobData
-    .filter((job) => {
-      const title =
-        String(job.title || "");
-
-      const companyName =
-        String(
-          job.companyId?.companyName ||
-            job.companyName ||
-            ""
-        );
-
-      const locationText =
-        formatLocation(job.location);
-
-      const skillsText =
-        Array.isArray(job.keySkills)
-          ? job.keySkills.join(" ")
-          : "";
-
-      /*
-       * Keyword:
-       * title, company, or skill.
-       */
-      const matchesSearch =
-        !searchValue ||
-        title
-          .toLowerCase()
-          .includes(searchValue) ||
-        companyName
-          .toLowerCase()
-          .includes(searchValue) ||
-        skillsText
-          .toLowerCase()
-          .includes(searchValue);
-
-      /*
-       * Location filter.
-       */
-      const matchesLocation =
-        !locationValue ||
-        locationText
-          .toLowerCase()
-          .includes(locationValue);
-
-      /*
-       * Work mode filter.
-       */
-      const matchesWorkMode =
-        !workModeFilter ||
-        String(job.workMode || "")
-          .toLowerCase() ===
-          workModeFilter.toLowerCase();
-
-      /*
-       * Job must be Open.
-       */
-      const isOpen =
-        String(job.status || "")
-          .toLowerCase() === "open";
-
-      /*
-       * Job must also be non-expired.
-       */
-      const isAvailable =
-        isOpen &&
-        !isJobExpired(job);
-
-      return (
-        matchesSearch &&
-        matchesLocation &&
-        matchesWorkMode &&
-        passesSalaryFilter(job) &&
-        isAvailable
-      );
-    })
-    /*
-     * Newest jobs first.
-     */
+    .filter((job) =>
+    passesJobFilters(job, {
+  searchTerm,
+  locationFilter: isEditingLocation ? "" : locationFilter,
+  minSalary,
+  workModeFilter,
+})
+    )
+    // Display the newest jobs first.
     .sort(
       (a, b) =>
         new Date(b.createdAt) -
         new Date(a.createdAt)
     );
+
+  const scoring = useLatestJobScores(filteredJobs, isLoggedIn);
+  const cvStatus = scoring.status === "ready" ? (scoring.cv ? "ready" : "missing")
+    : scoring.status === "error" ? "error" : "checking";
+  const selectScoringCv = (cv) => { setScoreJobId(null); scoring.selectCv(cv); };
+  const scoreJob = filteredJobs.find((job) => String(job._id) === scoreJobId);
+  const scoreEntry = scoreJob && scoring.scoreFor(scoreJob);
+
+
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-950/10">
@@ -742,7 +535,7 @@ useEffect(() => {
             </div>
           </div>
 
-          {/* Location */}
+          {/* Location filter with autocomplete */}
           <div>
             <label
               htmlFor="all-jobs-location"
@@ -751,26 +544,24 @@ useEffect(() => {
               Location
             </label>
 
-            <div className="relative">
-              <FiMapPin
-                aria-hidden="true"
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-                size={18}
-              />
+        <LocationAutocomplete
+          id="all-jobs-location"
+          value={locationFilter}
 
-              <input
-                id="all-jobs-location"
-                type="text"
-                placeholder="e.g. London or United Kingdom"
-                value={locationFilter}
-                onChange={(event) =>
-                  setLocationFilter(
-                    event.target.value
-                  )
-                }
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm text-slate-900 placeholder:text-slate-400 transition focus:border-blue-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-100"
-              />
-            </div>
+          // Called when the candidate starts typing.
+          onTyping={() => {
+            setIsEditingLocation(true);
+          }}
+
+          // Called when the candidate selects a location.
+          onChange={(location) => {
+            setLocationFilter(location.displayName);
+            setIsEditingLocation(false);
+          }}
+
+          placeholder="Search city or country..."
+        />
+
           </div>
 
           {/* Salary */}
@@ -862,7 +653,7 @@ useEffect(() => {
 
         {/* Filter footer */}
         <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-       
+
           <button
             type="button"
             onClick={clearFilters}
@@ -897,336 +688,65 @@ useEffect(() => {
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {filteredJobs.map((job) => {
-              const companyName =
-                job.companyId?.companyName ||
-                job.companyName ||
-                "Company";
 
-              const keySkills =
-                Array.isArray(job.keySkills)
-                  ? job.keySkills
-                  : [];
+            {filteredJobs.map((job) => (
+              <JobCard
+                key={job._id}
+                job={job}
+                onViewDetails={() => { setScoreJobId(null); setSelectedJob(job); }}
+                applyButton={getApplicationButton(job)}
+                matchIndicator={isLoggedIn ? <JobMatchIndicator job={job} scoring={scoring}
+                  onView={() => setScoreJobId(String(job._id))}
+                  onUpload={() => setShowCVUploadModal(true)} /> : null}
+              />
+            ))}
 
-              return (
-                <article
-                  key={job._id}
-                  className="group flex h-full flex-col rounded-xl border border-l-4 border-slate-200 border-l-blue-500 bg-white p-5 transition duration-200 hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-lg"
-                >
-                  {/* Title */}
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex min-w-0 items-start gap-3">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-700 transition group-hover:bg-blue-700 group-hover:text-white">
-                        <FiBriefcase
-                          size={19}
-                        />
-                      </div>
-
-                      <div className="min-w-0">
-                        <h3 className="font-semibold text-slate-900">
-                          {job.title ||
-                            "Untitled job"}
-                        </h3>
-
-                        <p className="mt-1 flex items-center gap-1.5 text-sm text-slate-600">
-                          <FiHome
-                            className="shrink-0 text-slate-400"
-                            size={14}
-                          />
-
-                          <span>
-                            {companyName}
-                          </span>
-                        </p>
-
-                        <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-500">
-                          <FiCalendar
-                            className="shrink-0 text-slate-400"
-                            size={13}
-                          />
-
-                          <span>
-                            Posted{" "}
-                            {job.createdAt
-                              ? new Date(
-                                  job.createdAt
-                                ).toLocaleDateString(
-                                  "en-GB",
-                                  {
-                                    day: "numeric",
-                                    month: "short",
-                                    year: "numeric",
-                                  }
-                                )
-                              : "Date unavailable"}
-                          </span>
-                        </p>
-                      </div>
-                    </div>
-
-                    <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-semibold text-emerald-700">
-                      <FiCheckCircle
-                        size={13}
-                      />
-                      Open
-                    </span>
-                  </div>
-
-                  {/* Summary */}
-                  <p className="mt-4 line-clamp-3 text-sm leading-6 text-slate-600">
-                    {job.roleSummary ||
-                      job.description ||
-                      "No description provided."}
-                  </p>
-
-                  {/* Details */}
-                  <div className="mt-4 space-y-2 rounded-lg bg-slate-50 p-3">
-                    <p className="flex items-center gap-2 text-xs text-slate-600">
-                      <FiMapPin
-                        className="shrink-0 text-blue-600"
-                        size={15}
-                      />
-
-                      <span>
-                        {formatLocation(
-                          job.location
-                        ) ||
-                          "Location not specified"}
-                      </span>
-                    </p>
-
-                    <p className="flex items-center gap-2 text-xs text-slate-600">
-                      <FiBriefcase
-                        className="shrink-0 text-blue-600"
-                        size={15}
-                      />
-
-                      <span>
-                        {job.jobType ||
-                          "Job type not specified"}
-                      </span>
-                    </p>
-
-                    <p className="flex items-center gap-2 text-xs text-slate-600">
-                      <FiHome
-                        className="shrink-0 text-blue-600"
-                        size={15}
-                      />
-
-                      <span>
-                        {job.workMode ||
-                          "Work mode not specified"}
-                      </span>
-                    </p>
-
-                    <p className="flex items-center gap-2 text-xs text-slate-600">
-                      <FiDollarSign
-                        className="shrink-0 text-blue-600"
-                        size={15}
-                      />
-
-                      <span>
-                        {job.salary ||
-                          "Salary not specified"}
-                      </span>
-                    </p>
-                  </div>
-
-                  {/* Skills */}
-                  {keySkills.length > 0 && (
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      {keySkills
-                        .slice(0, 4)
-                        .map(
-                          (
-                            skill,
-                            index
-                          ) => (
-                            <span
-                              key={`${skill}-${index}`}
-                              className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700"
-                            >
-                              {skill}
-                            </span>
-                          )
-                        )}
-                    </div>
-                  )}
-
-                  {/* Description */}
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setSelectedJob(job)
-                    }
-                    className="mt-4 text-left text-sm font-semibold text-blue-700 transition hover:text-blue-900 hover:underline"
-                  >
-                    See full description
-                  </button>
-
-                  {/* Apply */}
-                  {getApplicationButton(
-                    job
-                  )}
-                </article>
-              );
-            })}
           </div>
         )}
       </div>
 
-      {/* Full description modal */}
-      {selectedJob && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
-            {/* Modal heading */}
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h2 className="text-2xl font-bold text-slate-900">
-                  {selectedJob.title}
-                </h2>
+      {/* Shared job description modal */}
+      <JobDetailsModal
+        job={selectedJob}
+        matchState={jobDetailsMatchState(scoring, selectedJob, undefined, !isLoggedIn)}
+        onRetryMatch={scoring.retry}
+        onUploadCv={() => { setSelectedJob(null); setShowCVUploadModal(true); }}
+        onClose={() => setSelectedJob(null)}
+        applyButton={
+          selectedJob
+            ? getApplicationButton(selectedJob, true)
+            : null
+        }
+      />
 
-                <p className="mt-1 text-sm text-slate-500">
-                  {formatLocation(
-                    selectedJob.location
-                  ) ||
-                    "Location not specified"}
-                </p>
-              </div>
+      {quickApplyJob && <QuickApplyModal key={quickApplyJob.jobId} job={quickApplyJob}
+        initialCv={scoring.status === "ready" ? scoring.cv : undefined}
+        loadMatch={scoring.status === "ready" && scoring.cv ? scoring.getMatch : undefined}
+        onCvUploaded={selectScoringCv} submitting={Boolean(applyingJobId)}
+        onClose={() => { if (!applicationInFlight.current) setQuickApplyJob(null); }}
+        onConfirm={(cvId) => handleApply(quickApplyJob, cvId)} />}
+      {scoreEntry?.status === "ready" && <MatchScoreModal
+        data={{ ...scoreEntry.match, title: scoreJob.title, candidateName: "Your Profile" }} isGuest={false}
+        onClose={() => setScoreJobId(null)} />}
 
-              <button
-                type="button"
-                onClick={() =>
-                  setSelectedJob(null)
-                }
-                aria-label="Close job details"
-                className="text-slate-500 transition hover:text-slate-800"
-              >
-                <FiX size={22} />
-              </button>
-            </div>
+      {/* CV upload modal */}
+      {showCVUploadModal && (
+        <CVUploadModal
+          isOpen={showCVUploadModal}
+          onClose={() => {
+            // Close the modal.
+            setShowCVUploadModal(false);
+          }}
+          uploadOnly
+          onUploadSuccess={(cv) => {
+            // The candidate now has a CV.
+            if (cv?._id) selectScoringCv(cv);
 
-            {/* Main details */}
-            <p className="mb-4 mt-3 text-sm text-slate-600">
-              {selectedJob.salary ||
-                "Salary not specified"}{" "}
-              ·{" "}
-              {selectedJob.jobType ||
-                "Job type not specified"}{" "}
-              ·{" "}
-              {selectedJob.workMode ||
-                "Work mode not specified"}
-            </p>
-
-            {/* Role summary */}
-            <h3 className="mb-1 text-sm font-bold text-slate-900">
-              Role Summary
-            </h3>
-
-            <p className="mb-4 text-sm leading-6 text-slate-600">
-              {selectedJob.roleSummary ||
-                "No role summary provided."}
-            </p>
-
-            {/* Requirements */}
-            <h3 className="mb-1 text-sm font-bold text-slate-900">
-              Requirements
-            </h3>
-
-            {Array.isArray(
-              selectedJob.requirements
-            ) &&
-            selectedJob.requirements
-              .length > 0 ? (
-              <ul className="mb-4 list-disc space-y-1 pl-5 text-sm text-slate-600">
-                {selectedJob.requirements.map(
-                  (item, index) => (
-                    <li
-                      key={`${item}-${index}`}
-                    >
-                      {item}
-                    </li>
-                  )
-                )}
-              </ul>
-            ) : (
-              <p className="mb-4 text-sm text-slate-500">
-                No requirements provided.
-              </p>
-            )}
-
-            {/* Responsibilities */}
-            <h3 className="mb-1 text-sm font-bold text-slate-900">
-              Responsibilities
-            </h3>
-
-            {Array.isArray(
-              selectedJob.responsibilities
-            ) &&
-            selectedJob.responsibilities
-              .length > 0 ? (
-              <ul className="mb-4 list-disc space-y-1 pl-5 text-sm text-slate-600">
-                {selectedJob.responsibilities.map(
-                  (item, index) => (
-                    <li
-                      key={`${item}-${index}`}
-                    >
-                      {item}
-                    </li>
-                  )
-                )}
-              </ul>
-            ) : (
-              <p className="mb-4 text-sm text-slate-500">
-                No responsibilities provided.
-              </p>
-            )}
-
-            {/* Modal actions */}
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
-              {selectedJob.companyUrl && (
-                <a
-                  href={
-                    selectedJob.companyUrl
-                  }
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-blue-700 transition hover:bg-slate-50"
-                >
-                  <FiExternalLink
-                    size={15}
-                  />
-
-                  Company Website
-                </a>
-              )}
-
-              {getApplicationButton(
-                selectedJob,
-                true
-              )}
-            </div>
-          </div>
-        </div>
+            // Close the modal after successful upload.
+            setShowCVUploadModal(false);
+          }}
+        />
       )}
-
-{/* CV upload modal */}
-{showCVUploadModal && (
-<CVUploadModal
-  isOpen={showCVUploadModal}
-  onClose={() => {
-    // Close the modal.
-    setShowCVUploadModal(false);
-  }}
-  onUploadSuccess={() => {
-    // The candidate now has a CV.
-    setCvStatus("ready");
-
-    // Close the modal after successful upload.
-    setShowCVUploadModal(false);
-  }}
-/>
-)}
     </div>
   );
 };

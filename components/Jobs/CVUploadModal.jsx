@@ -6,6 +6,7 @@ export default function CVUploadModal({
   isOpen,
   onClose,
   onUploadSuccess,
+  uploadOnly = false,
 }) {
   // Do not render the modal when it is closed.
   if (!isOpen) {
@@ -33,6 +34,7 @@ export default function CVUploadModal({
         <CVUpload
           isGuest={false}
           onUploadSuccess={onUploadSuccess}
+          uploadOnly={uploadOnly}
         />
       </div>
     </div>

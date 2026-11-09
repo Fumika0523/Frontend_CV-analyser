@@ -5,12 +5,14 @@ import { AiOutlineFileSearch } from "react-icons/ai";
 import { FiEye } from "react-icons/fi";
 import { url } from "../../../utils/constant";
 import { useRouter } from "next/router";
+import { cvDisplayName } from "../../../utils/cvDisplayName";
 
 export default function CVUpload({
   isGuest = false,
   onSignUpClick,
   guestView,
   onUploadSuccess,
+  uploadOnly = false,
 }) {
 
   const [file, setFile] = useState(null);
@@ -24,7 +26,7 @@ export default function CVUpload({
    // Get CV
   const getMyCVs =  async () => {
   try {
-    if (isGuest) return;
+    if (isGuest || uploadOnly) return;
 
     const token = localStorage.getItem("token");
 
@@ -105,7 +107,6 @@ export default function CVUpload({
     console.log("guest_session_id:", localStorage.getItem("guest_session_id"));
     
       const res = await axios.post(endpoint, formData, { headers });
-      console.log("CV upload response:", res.data.cv);
      // Save the successfully uploaded CV.
         setUploadedCV(res.data.cv || null);
         // Mark the upload as successful.
@@ -130,6 +131,27 @@ export default function CVUpload({
       toast.error(err.response?.data?.message || "Upload failed");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleViewCV = async (cvId) => {
+    const token = localStorage.getItem("token");
+    if (!token || isGuest) {
+      toast.error("Please sign in to access this CV.");
+      return;
+    }
+    try {
+      const response = await axios.get(`${url}/cv/${encodeURIComponent(cvId)}/download`, {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: "blob",
+      });
+      const blobUrl = window.URL.createObjectURL(new Blob([response.data], { type: "application/pdf" }));
+      window.open(blobUrl, "_blank", "noopener,noreferrer");
+      setTimeout(() => window.URL.revokeObjectURL(blobUrl), 60000);
+    } catch (error) {
+      toast.error([401, 403].includes(error.response?.status)
+        ? "Please sign in with an account that can access this CV."
+        : "Unable to open CV. Please try again.");
     }
   };
 
@@ -231,15 +253,14 @@ export default function CVUpload({
         </div>
 
        {isGuest && uploadedCV && (
-          <a
-            href={`${url}${uploadedCV.filePath}`}
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            type="button"
+            onClick={onSignUpClick}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-100 transition"
           >
             <FiEye className="text-sm" />
-            View CV
-          </a>
+            Sign up to preview CV
+          </button>
         )}
       </div>
 
@@ -286,7 +307,7 @@ export default function CVUpload({
       </button>
 
 
-      {!isGuest && myCVs.length > 0 && (
+      {!uploadOnly && !isGuest && myCVs.length > 0 && (
   <div className="mt-6 border-t border-slate-200 pt-5">
     <h3 className="text-sm font-semibold text-slate-900 mb-3">
       My Uploaded CVs
@@ -300,21 +321,20 @@ export default function CVUpload({
         >
           <div>
             <p className="text-sm font-medium text-slate-800">
-              Version {cv.version} — {cv.fileName}
+              Version {cv.version} — {cvDisplayName(cv)}
             </p>
             <p className="text-xs text-slate-400">
               {new Date(cv.createdAt || cv.uploadedAt).toLocaleDateString("en-GB")}
             </p>
           </div>
 
-          <a
-            href={`${url}${cv.filePath}`}
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            type="button"
+            onClick={() => handleViewCV(cv._id)}
             className="text-sm font-semibold text-blue-700 hover:underline"
           >
             View CV
-          </a>
+          </button>
         </div>
       ))}
     </div>

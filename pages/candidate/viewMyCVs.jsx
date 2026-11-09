@@ -6,6 +6,7 @@ import { FiEye, FiFileText } from "react-icons/fi";
 import { useRouter } from "next/router";
 import { url } from "../../utils/constant";
 import Layout from "../../components/Layout/Layout";
+import { cvDisplayName } from "../../utils/cvDisplayName";
 
 export default function ViewMyCVs(){
   const router = useRouter();
@@ -29,7 +30,6 @@ export default function ViewMyCVs(){
       }
     );
 
-    console.log("res from getMyCVs",res.data)
 
       setMyCVs(res.data || []);
     } catch (error) {
@@ -252,11 +252,11 @@ const handleViewCV = async (cvId) => {
 
                     <div className="min-w-0">
                       <h2 className="text-sm font-semibold text-slate-900 truncate">
-                        Version {cv.version} — {cv.fileName}
+                        Version {cv.version} — {cvDisplayName(cv)}
                       </h2>
 
                       <p className="text-xs text-slate-400 mt-1">
-                        Uploaded:{" "}
+                        {" "}
                         {new Date(
                           cv.createdAt || cv.uploadedAt
                         ).toLocaleDateString("en-GB")}
