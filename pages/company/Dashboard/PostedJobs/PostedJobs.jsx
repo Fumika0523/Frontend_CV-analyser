@@ -96,6 +96,7 @@ export default function PostedJobs({
   locationScope,
   locationError,
   locationWasEdited,
+  locationPickerRevision,
   handleEditLocationChange,
   handleLocationScopeChange,
   setIsEditing,
@@ -431,7 +432,7 @@ onClick={() => {
                       )}
 
                       <LocationAutocomplete
-                        key={`${selectedJob._id}-${locationScope}`}
+                        key={`${selectedJob._id}-${locationScope}-${locationPickerRevision}`}
                         id="edit-job-location"
                         mode="job"
                         scope={locationScope}

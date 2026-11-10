@@ -14,6 +14,27 @@ const getEditLocationLabel = (location) => {
     ].filter(Boolean).join(", ");
 };
 
+const getEditLocationError = (selection, workMode, scope, displayLabel) => {
+  const location = selection?.location;
+  const hasText = (value) => typeof value === "string" && Boolean(value.trim());
+  if (!location || typeof location !== "object" || Array.isArray(location) ||
+      !hasText(selection?.token) || !hasText(location.providerPlaceId) ||
+      !hasText(location.country) || !hasText(selection.displayLabel) ||
+      selection.displayLabel !== displayLabel) {
+    return "Please select a location from Geoapify suggestions.";
+  }
+  if (workMode !== "Remote" && location.locationType !== "city") {
+    return "Office and Hybrid jobs require a city.";
+  }
+  if ((scope === "country" && location.locationType !== "country") ||
+      (scope === "locality" && !["city", "county", "region"].includes(location.locationType)) ||
+      !["country", "locality"].includes(scope) ||
+      (location.locationType !== "country" && !hasText(location[location.locationType]))) {
+    return "Please select a location that matches the search area.";
+  }
+  return "";
+};
+
 /*
  * Backend URL.
  *
@@ -77,6 +98,7 @@ const [editLocation, setEditLocation] = useState(null);
 const [locationWasEdited, setLocationWasEdited] = useState(false);
 const [locationScope, setLocationScope] = useState("locality");
 const [locationError, setLocationError] = useState("");
+const [locationPickerRevision, setLocationPickerRevision] = useState(0);
 
 
   // ======================================================
@@ -180,14 +202,22 @@ const handleEditLocationChange = (selection) => {
 
   setEditForm((previous) => ({
     ...previous,
-    location: selection.displayLabel,
+    location: selection?.displayLabel || "",
   }));
 };
 
-const handleLocationScopeChange = (event) => {
-  setLocationScope(event.target.value);
+const invalidateEditLocation = (message) => {
   setEditLocation(null);
   setLocationWasEdited(true);
+  setLocationError(message);
+  // Clear the picker's selected-text cache and cancel outdated searches.
+  setLocationPickerRevision((revision) => revision + 1);
+};
+
+const handleLocationScopeChange = (event) => {
+  if (event.target.value === locationScope) return;
+  setLocationScope(event.target.value);
+  invalidateEditLocation("Search area changed. Please search for and select a location again.");
 };
 
 
@@ -202,6 +232,7 @@ const handleLocationScopeChange = (event) => {
 setEditLocation(null);
 setLocationWasEdited(false);
 setLocationError("");
+setLocationPickerRevision((revision) => revision + 1);
 setLocationScope(
   job.location?.locationType === "country"
     ? "country"
@@ -314,8 +345,17 @@ const closeModal = () => {
     } = event.target;
 
     
-if (name === "workMode" && value !== "Remote") {
-  setLocationScope("locality");
+if (name === "location") {
+  invalidateEditLocation("Location text changed. Please select a Geoapify suggestion.");
+}
+
+if (name === "workMode" && value !== editForm.workMode) {
+  const location = locationWasEdited ? editLocation?.location : selectedJob.location;
+  setLocationScope(value === "Remote" && location?.locationType === "country" ? "country" : "locality");
+  setLocationError("");
+  if (locationWasEdited && value !== "Remote" && location && location.locationType !== "city") {
+    invalidateEditLocation("Office and Hybrid jobs require a city. Please select a city suggestion.");
+  }
 }
 
 
@@ -337,12 +377,18 @@ if (name === "workMode" && value !== "Remote") {
     }
 
     
-if (locationWasEdited &&
-    (!editLocation?.location || !editLocation?.token)) {
-  setLocationError(
-    "Please select a location from Geoapify suggestions."
-  );
+// A text edit must never silently fall back to the saved location or an old token.
+if (!locationWasEdited && editForm.location !== getEditLocationLabel(selectedJob.location)) {
+  invalidateEditLocation("Location text changed. Please select a Geoapify suggestion.");
   return;
+}
+
+if (locationWasEdited) {
+  const message = getEditLocationError(editLocation, editForm.workMode, locationScope, editForm.location);
+  if (message) {
+    setLocationError(message);
+    return;
+  }
 }
 
 const effectiveLocation = locationWasEdited
@@ -510,10 +556,27 @@ setEditForm((previous) => ({
 
       setIsEditing(false);
     } catch (error) {
+      const errorCode = error.response?.data?.code;
+      // Axios errors may contain authorization headers and signed location tokens.
       console.error(
         "Failed to save job:",
-        error
+        error.response?.status || "Request failed"
       );
+
+      if ([
+        "EXPIRED_LOCATION_TOKEN", "INVALID_LOCATION_TOKEN", "MISSING_LOCATION_TOKEN",
+        "LOCATION_TOKEN_MISMATCH", "LOCATION_NOT_VERIFIED", "INCOMPATIBLE_LOCATION",
+        "INVALID_LOCATION",
+      ].includes(errorCode)) {
+        const message = errorCode === "EXPIRED_LOCATION_TOKEN"
+          ? "Your location confirmation has expired. Please search for and select the location again."
+          : "Your location could not be confirmed. Please search for and select the location again.";
+        // An unchanged saved location does not need a fresh token. For example,
+        // an incompatible work-mode change only needs a city selection or undo.
+        if (locationWasEdited) invalidateEditLocation(message);
+        else setLocationError(error.response?.data?.message || message);
+        return;
+      }
 
       alert(
         error.response?.data?.message ||
@@ -649,6 +712,7 @@ return {
   locationScope,
   locationError,
   locationWasEdited,
+  locationPickerRevision,
 
   jobToClose,
   isClosing,
