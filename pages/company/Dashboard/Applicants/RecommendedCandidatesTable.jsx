@@ -22,7 +22,7 @@ const RecommendedCandidatesTable = ({ candidates }) => {
             <tr className="border-b text-left text-slate-500">
               <th className="py-3 px-3">Name</th>
               <th className="py-3 px-3">Job Title</th>
-              <th className="py-3 px-3">View CV</th>
+              {/* <th className="py-3 px-3">View CV</th> */}
               <th className="py-3 px-3">Matched Score</th>
               {/* <th className="py-3 px-3">Note</th> */}
             </tr>

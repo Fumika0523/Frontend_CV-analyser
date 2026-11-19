@@ -11,7 +11,6 @@ import { isValidEmail } from "./emailHelpers";
 import { url } from "../../../utils/constant";
 
 
-
 const EMPTY_FORM = {
   firstName: "",
   lastName: "",
@@ -155,7 +154,6 @@ if (!isValidEmail(email)) {
    
     try {
       const guestSessionId = localStorage.getItem("guest_session_id");
-      console.log("guestSessionId",guestSessionId)
       const payload = buildSignupPayload(
         role,
         {

@@ -1,11 +1,12 @@
 import React, { useEffect, useRef } from "react";
-import { FiX } from "react-icons/fi";
+import { FiLock, FiX } from "react-icons/fi";
 import { restoreModalFocus, trapModalFocus } from "../../../../components/Jobs/modalFocus";
 
 const MatchScoreModal = ({
   data,
   onClose,
   isGuest = false,
+  onSignUp,
   nested = false,
   returnFocus,
 }) => {
@@ -41,12 +42,33 @@ const MatchScoreModal = ({
 
   return (
     <div className={`fixed inset-0 bg-black/40 flex items-center justify-center px-4 py-4 ${nested ? "z-[70]" : "z-50"}`}
-      role="dialog" aria-modal="true" aria-label="Match details" aria-labelledby="match-details-title"
+      role="dialog" aria-modal="true" aria-labelledby="match-details-title"
       onMouseDown={(event) => {
         event.stopPropagation();
         if (event.target === event.currentTarget) close.current?.();
       }}>
       <div ref={panel} tabIndex={-1} className="max-h-[90vh] overflow-y-auto bg-white rounded-2xl shadow-xl max-w-lg w-full min-w-0 p-5 sm:p-6">
+        {isGuest ? (
+          <div className="rounded-xl bg-gradient-to-br from-blue-50 to-white p-4 sm:p-5">
+            <span className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-blue-100 text-blue-700">
+              <FiLock aria-hidden="true" size={20} />
+            </span>
+            <h3 id="match-details-title" className="text-xl font-bold text-slate-900">
+              Unlock Your Full Match Analysis
+            </h3>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              Create a free account to see your matching and missing skills, unlock employer details and apply for jobs.
+            </p>
+            <div className="mt-5 flex flex-wrap gap-2">
+              <button type="button" onClick={onSignUp} className="rounded-lg bg-blue-700 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800 focus-visible:outline-blue-600">
+                Sign Up — Free
+              </button>
+              <button ref={closeButton} type="button" onClick={onClose} className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus-visible:outline-blue-600">
+                Maybe Later
+              </button>
+            </div>
+          </div>
+        ) : <>
         <div className="flex justify-between items-start mb-4">
           <div>
             <h3 id="match-details-title" className="text-xl font-bold text-slate-900">
@@ -73,20 +95,13 @@ const MatchScoreModal = ({
         {/* SCORE */}
         <div className="mb-5">
           <p className="text-sm text-slate-500">
-            {isGuest
-              ? "Skill Match Score"
-              : "Match Score"}
+            Match Score
           </p>
 
           <p className="text-3xl font-bold text-indigo-600">
             {hasScore ? `${data.matchScore}%` : "Match score unavailable"}
           </p>
 
-          {isGuest && (
-            <p className="text-xs text-slate-400 mt-1">
-              Guest preview score is based on CV skills only.
-            </p>
-          )}
         </div>
 
         <div className="space-y-5">
@@ -117,7 +132,6 @@ const MatchScoreModal = ({
           </div>
 
           {/* LOCATION - REGISTERED USERS ONLY */}
-          {!isGuest && (
             <div>
               <h4 className="font-semibold text-slate-800 mb-2">
                 Location
@@ -133,7 +147,6 @@ const MatchScoreModal = ({
                 </span>
               )}
             </div>
-          )}
 
           {/* MISSING SKILLS */}
           <div>
@@ -169,6 +182,7 @@ const MatchScoreModal = ({
         >
           Close
         </button>
+        </>}
       </div>
     </div>
   );

@@ -20,6 +20,7 @@ export default function JobCard({
   detailsLoading = false,
   maxSkills = 4,
   unavailable = false,
+  guestPreview = false,
 }) {
   // If no job data exists, display nothing.
   if (!job) {
@@ -82,11 +83,11 @@ export default function JobCard({
               </button>
             </h3>
 
-            <p className="mt-1 flex items-center gap-1.5 text-sm text-slate-600">
+            {!guestPreview && <p className="mt-1 flex items-center gap-1.5 text-sm text-slate-600">
               {!companyWebsite && <FiHome size={14} className="shrink-0" />}
               {companyWebsite ? <a href={companyWebsite} target="_blank" rel="noopener noreferrer" className="inline-flex min-w-0 items-start gap-1 text-blue-700 hover:underline focus-visible:outline-blue-600"><FiExternalLink size={13} className="mt-0.5 shrink-0" /><span className="min-w-0 break-words">{companyName}</span></a>
                 : <span className="min-w-0 break-words">{companyName}</span>}
-            </p>
+            </p>}
 
             <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-500">
               <FiCalendar size={13} />
@@ -194,7 +195,7 @@ export default function JobCard({
       )}
 
         {/* Role summary */}
-      {(job.roleSummary || job.description) && <p className="mt-2 line-clamp-3 text-sm leading-tight text-slate-600">
+      {!guestPreview && (job.roleSummary || job.description) && <p className="mt-2 line-clamp-3 text-sm leading-tight text-slate-600">
         {job.roleSummary ||
           job.description ||
           "No description provided."}

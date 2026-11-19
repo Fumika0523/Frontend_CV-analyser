@@ -17,6 +17,30 @@ const match = {
   matchScore: 0, matchedSkills: ["React"], missingSkills: ["SQL"], locationMatch: false,
 };
 
+test("guest job details keep the genuine score and role facts and open the registration invitation", () => {
+  let signups = 0;
+  const app = harness({
+    guestPreview: true,
+    job: { ...job, matchScore: 67, roleSummary: "Contact the employer at hiring@example.com" },
+    matchState: { status: "guest" },
+    onGuestSignup: () => { signups += 1; },
+  });
+  app.render();
+  assert.match(app.text(), /Software Engineer.*67%.*Competitive.*React/s);
+  assert.doesNotMatch(app.text(), /Example Company|Company website|Contact the employer|Build and test/);
+  assert.equal(app.entries().some(({ element }) => element?.props?.href), false);
+  app.click(app.breakdownTrigger());
+  assert.match(app.text(), /Unlock Your Full Match Analysis/);
+  assert.match(app.text(), /Create a free account to see your matching and missing skills, unlock employer details and apply for jobs\./);
+  assert.doesNotMatch(app.text(), /Matching Skills|Missing Skills/);
+  app.click(app.button("Maybe Later"));
+  assert.equal(app.breakdown(), undefined);
+  app.click(app.breakdownTrigger());
+  app.click(app.button("Sign Up — Free"));
+  assert.equal(signups, 1);
+  app.unmount();
+});
+
 // An isolated hook/DOM harness executes both real modal components, including
 // their document listeners and refs. It does not make API or browser requests.
 function harness(initial = {}) {

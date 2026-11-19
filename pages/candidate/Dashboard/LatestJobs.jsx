@@ -247,7 +247,7 @@ const [minSalary, setMinSalary] = useState(0);
         setIsLoggedIn(false);
         setApplicationStatuses({});
 
-        router.push("/signin");
+        router.replace("/?auth=signin");
         return;
       }
 
