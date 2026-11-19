@@ -60,15 +60,15 @@ function BulletSection({ title, items, emptyText }) {
   );
 }
 
-export default function JobDetailsModal({ job, onClose, applyButton, matchState, onUploadCv, onRetryMatch }) {
+export default function JobDetailsModal({ job, onClose, applyButton, matchState, onUploadCv, onRetryMatch, guestPreview = false, onGuestSignup }) {
   const isOpen = Boolean(job);
   const [breakdownOpen, setBreakdownOpen] = useState(false);
   const panel = useRef(null);
   const scoreTrigger = useRef(null);
   const close = useRef(onClose);
   close.current = onClose;
-  const rawMatchScore = matchState?.match?.matchScore;
-  const validScore = matchState?.status === "ready" && typeof rawMatchScore === "number" && Number.isFinite(rawMatchScore) && rawMatchScore >= 0 && rawMatchScore <= 100;
+  const rawMatchScore = guestPreview ? job?.matchScore : matchState?.match?.matchScore;
+  const validScore = (guestPreview || matchState?.status === "ready") && typeof rawMatchScore === "number" && Number.isFinite(rawMatchScore) && rawMatchScore >= 0 && rawMatchScore <= 100;
   const showBreakdown = breakdownOpen && validScore;
   const nestedActive = useRef(false);
   nestedActive.current = showBreakdown;
@@ -125,7 +125,7 @@ export default function JobDetailsModal({ job, onClose, applyButton, matchState,
       : null;
 
   const hasSkills = Array.isArray(job.keySkills) && job.keySkills.length > 0;
-  const matchPercent = validScore ? matchState.match.matchScore : null;
+  const matchPercent = validScore ? rawMatchScore : null;
   // Presentation categories only; application scoring and eligibility stay upstream.
   const matchStrength = matchPercent >= 80
     ? { label: "Strong match", badge: "bg-emerald-50 text-emerald-700 ring-emerald-200", bar: "bg-emerald-500" }
@@ -159,12 +159,12 @@ export default function JobDetailsModal({ job, onClose, applyButton, matchState,
           </button>
 
           <div className="flex items-center gap-4 pr-10">
-            <div
+            {!guestPreview && <div
               aria-hidden="true"
               className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-white text-2xl font-bold text-[#001342] shadow-lg shadow-black/20"
             >
               {companyInitial}
-            </div>
+            </div>}
 
             <div className="min-w-0">
               <h2
@@ -173,9 +173,9 @@ export default function JobDetailsModal({ job, onClose, applyButton, matchState,
               >
                 {job.title}
               </h2>
-              <p className="mt-1 break-words text-sm font-medium text-blue-200 [overflow-wrap:anywhere]">
+              {!guestPreview && <p className="mt-1 break-words text-sm font-medium text-blue-200 [overflow-wrap:anywhere]">
                 {companyName}
-              </p>
+              </p>}
             </div>
           </div>
 
@@ -197,7 +197,7 @@ export default function JobDetailsModal({ job, onClose, applyButton, matchState,
 
         {/* SCROLLABLE CONTENT */}
         <div className="min-h-0 flex-1 overflow-y-auto bg-slate-50/60">
-          {matchState && matchState.status !== "guest" && (
+          {(guestPreview ? validScore : matchState && matchState.status !== "guest") && (
             <section aria-label="Your match for this job" className="min-w-0 border-b border-slate-200 bg-white px-6 py-4 sm:px-9">
               <div className="min-w-0 rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50/60 via-white to-white p-4 sm:p-5">
                 <div className="flex items-center gap-2.5">
@@ -210,7 +210,7 @@ export default function JobDetailsModal({ job, onClose, applyButton, matchState,
                       <p className="text-3xl font-bold tracking-tight text-[#001342] tabular-nums sm:text-4xl">{`${matchPercent}%`}</p>
                       <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset ${matchStrength.badge}`}>{matchStrength.label}</span>
                     </div>
-                    <p className="mt-1 text-xs leading-5 text-slate-500">Based on your current CV</p>
+                    <p className="mt-1 text-xs leading-5 text-slate-500">{guestPreview ? "Based on skills in your CV" : "Based on your current CV"}</p>
                     <div role="progressbar" aria-label="CV match score" aria-valuemin={0} aria-valuemax={100} aria-valuenow={matchPercent}
                       className="mt-3 h-2 w-full overflow-hidden rounded-full bg-slate-100">
                       <div className={`h-full rounded-full transition-[width] ${matchStrength.bar}`} style={{ width: `${matchPercent}%` }} />
@@ -266,23 +266,23 @@ export default function JobDetailsModal({ job, onClose, applyButton, matchState,
             )}
 
             {/* ABOUT THE ROLE */}
-            <section>
+            {!guestPreview && <section>
               <h3 className="text-base font-semibold text-slate-900">
                 About the role
               </h3>
               <p className="mt-3 max-w-prose whitespace-pre-line text-sm leading-7 text-slate-600">
                 {job.roleSummary || "No role summary provided."}
               </p>
-            </section>
+            </section>}
 
-            <section>
+            {!guestPreview && <section>
               <h3 className="text-base font-semibold text-slate-900">
                 Minimum relevant experience
               </h3>
               <p className="mt-3 text-sm text-slate-600">
                 {job.experience || "Not specified"}
               </p>
-            </section>
+            </section>}
 
             {/* KEY SKILLS */}
             {hasSkills && (
@@ -304,7 +304,7 @@ export default function JobDetailsModal({ job, onClose, applyButton, matchState,
             )}
 
             {/* REQUIREMENTS + RESPONSIBILITIES */}
-            <div className="grid gap-5 lg:grid-cols-2">
+            {!guestPreview && <div className="grid gap-5 lg:grid-cols-2">
               <div className="rounded-2xl border border-slate-200 bg-white p-5">
                 <BulletSection
                   title="Requirements"
@@ -320,13 +320,13 @@ export default function JobDetailsModal({ job, onClose, applyButton, matchState,
                   emptyText="No responsibilities provided."
                 />
               </div>
-            </div>
+            </div>}
           </div>
         </div>
 
         {/* FOOTER */}
         <footer className="flex shrink-0 flex-col-reverse gap-3 border-t border-slate-200 bg-white px-6 py-4 sm:flex-row sm:items-center sm:justify-end sm:px-9">
-          {job.companyUrl && (
+          {!guestPreview && job.companyUrl && (
             <a
               href={job.companyUrl}
               target="_blank"
@@ -343,7 +343,9 @@ export default function JobDetailsModal({ job, onClose, applyButton, matchState,
       </div>
       {showBreakdown && (
         <MatchScoreModal nested returnFocus={scoreTrigger.current}
-          data={{ ...matchState.match, title: job.title, candidateName: "Your Profile" }}
+          isGuest={guestPreview}
+          onSignUp={onGuestSignup}
+          data={guestPreview ? job : { ...matchState.match, title: job.title, candidateName: "Your Profile" }}
           onClose={() => setBreakdownOpen(false)} />
       )}
     </div>

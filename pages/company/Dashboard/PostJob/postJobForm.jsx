@@ -81,6 +81,11 @@ const textareaClass =
 const helperClass =
   "text-xs mt-1 text-slate-500";
 
+// The form is rendered by postJobPage, which supplies its props.
+export function getStaticProps() {
+  return { notFound: true };
+}
+
 export default function PostJobForm({
   formData,
   companyUrlLocked,

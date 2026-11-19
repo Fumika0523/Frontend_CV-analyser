@@ -207,3 +207,5 @@
 // };
 
 // export default CandidatePayment;
+
+export { default } from "../../components/Pricing/PaymentPage";

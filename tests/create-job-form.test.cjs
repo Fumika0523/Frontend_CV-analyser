@@ -177,13 +177,23 @@ test("Submission cannot open confirmation with an unreviewed experience value", 
 });
 
 test("Job Details displays new selections and legacy strings verbatim", () => {
-  const detailsModule = { exports: {} };
-  vm.runInNewContext(transform(read("components/Jobs/JobDetailsModal.jsx"), {
-    transforms: ["jsx", "imports"],
-  }).code, { exports: detailsModule.exports, require: (name) => {
-    if (name === "./jobUtils") return { formatLocation: () => "London, UK" };
-    return require(name);
-  } });
+  const modules = new Map();
+  const load = (file) => {
+    if (modules.has(file)) return modules.get(file);
+    const exports = {};
+    modules.set(file, exports);
+    vm.runInNewContext(transform(fs.readFileSync(file, "utf8"), { transforms: ["jsx", "imports"] }).code, {
+      exports,
+      require: (name) => {
+        if (name === "./jobUtils") return { formatLocation: () => "London, UK" };
+        if (!name.startsWith(".")) return require(name);
+        const base = path.resolve(path.dirname(file), name);
+        return load([base, `${base}.jsx`, `${base}.js`].find((candidate) => fs.existsSync(candidate)));
+      },
+    });
+    return exports;
+  };
+  const detailsModule = { exports: load(path.join(root, "components/Jobs/JobDetailsModal.jsx")) };
   const { renderToStaticMarkup } = require("react-dom/server");
   for (const experience of [...helpers.exports.experienceOptions, "1-2 years", "Senior engineer, 6 years preferred"]) {
     const html = renderToStaticMarkup(React.createElement(detailsModule.exports.default, {

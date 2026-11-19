@@ -54,6 +54,11 @@ const authHeader = () => ({
   },
 });
 
+// This hook is imported by PostedJobsPage and has no standalone route.
+export function getStaticProps() {
+  return { notFound: true };
+}
+
 export default function usePostedJobs() {
   const router = useRouter();
 

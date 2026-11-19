@@ -75,7 +75,6 @@ export default function CVUpload({
     try {
       const formData = new FormData();
       formData.append("cv", file);
-      console.log("formData",formData)
 
       const endpoint = isGuest
         ? `${url}/cv/guest-upload`
@@ -89,9 +88,10 @@ export default function CVUpload({
         let guestSessionId = localStorage.getItem("guest_session_id");
 
         if (!guestSessionId) {
-          guestSessionId = `guest_${Date.now()}_${Math.random()
-            .toString(36)
-            .substring(2, 10)}`;
+          const randomBytes = window.crypto.getRandomValues(new Uint8Array(16));
+          guestSessionId = "guest_" + Array.from(
+            randomBytes, (byte) => byte.toString(16).padStart(2, "0")
+          ).join("");
 
           localStorage.setItem("guest_session_id", guestSessionId);
         }
@@ -102,10 +102,6 @@ export default function CVUpload({
         const token = localStorage.getItem("token");
         headers.Authorization = `Bearer ${token}`;
       }
-    console.log("endpoint:", endpoint);
-    console.log("file:", file);
-    console.log("guest_session_id:", localStorage.getItem("guest_session_id"));
-    
       const res = await axios.post(endpoint, formData, { headers });
      // Save the successfully uploaded CV.
         setUploadedCV(res.data.cv || null);

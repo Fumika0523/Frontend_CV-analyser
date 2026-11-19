@@ -298,7 +298,7 @@ const ApplyJobs = () => {
           "Your session has expired. Please sign in again."
         );
 
-        router.push("/signin");
+        router.replace("/?auth=signin");
         return;
       }
 

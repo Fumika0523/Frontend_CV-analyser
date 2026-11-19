@@ -131,7 +131,7 @@ const MobileGuestButton = ({ item, activeLink, onSelect }) => {
 /* Header                                                            */
 /* ---------------------------------------------------------------- */
 
-const viewHeader = ({ guestView = "candidate", setGuestView = EMPTY_SET_GUEST_VIEW }) => {
+const viewHeader = ({ guestView = "candidate", setGuestView = EMPTY_SET_GUEST_VIEW, onSessionChange }) => {
   const router = useRouter();
 const [guestSessionId, setGuestSessionId] = useState("");
   const [activeLink, setActiveLink] = useState(null);
@@ -257,6 +257,11 @@ const [guestSessionId, setGuestSessionId] = useState("");
 
     setUser(authenticatedUser);
     setGuestView(authenticatedUser.role === "company" ? "company" : "candidate");
+    if (onSessionChange) {
+      onSessionChange();
+    } else if (router.pathname === "/" && router.query.auth === "signin") {
+      router.replace(authenticatedUser.role === "company" ? "/company/dashboard" : "/candidate/dashboard");
+    }
   };
 
   /* Runs when signup or sign-in requires OTP verification. */
@@ -354,6 +359,12 @@ const [guestSessionId, setGuestSessionId] = useState("");
 
     return () => router.events.off("routeChangeComplete", scrollToHashSection);
   }, [router.pathname, router.events]);
+
+useEffect(() => {
+  if (router.isReady && router.pathname === "/" && router.query.auth === "signin") {
+    setAuthModal({ isOpen: true, mode: "signin" });
+  }
+}, [router.isReady, router.pathname, router.query.auth]);
 
 useEffect(() => {
   const fetchUser = async () => {
@@ -684,13 +695,18 @@ useEffect(() => {
             localStorage.removeItem("guest_session_id");
 
             const verifiedUser = normaliseUser(data?.user);
-            if (verifiedUser) handleAuthSuccess(verifiedUser);
+            if (verifiedUser) {
+              setUser(verifiedUser);
+              setGuestView(verifiedUser.role === "company" ? "company" : "candidate");
+            }
 
             setOtpModal({ isOpen: false, _id: "", email: "" });
 
-            router.push(
-              verifiedUser?.role === "company" ? "/company/dashboard" : "/candidate/dashboard"
-            );
+            if (onSessionChange) {
+              onSessionChange();
+            } else {
+              router.push(verifiedUser?.role === "company" ? "/company/dashboard" : "/candidate/dashboard");
+            }
           }}
         />
       )}

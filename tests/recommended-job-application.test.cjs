@@ -23,7 +23,8 @@ function loadPure(file) {
 const { transform } = require("sucrase");
 
 const jobs = [
-  { jobId: "job-a", title: "Engineer A", matchScore: 83 },
+  { jobId: "job-a", title: "Engineer A", matchScore: 83, companyName: "Example Employer",
+    companyUrl: "https://example.com", keySkills: ["React"], salary: "£40,000–£50,000" },
   { jobId: "job-b", title: "Engineer B", matchScore: 61 },
 ];
 const tick = () => new Promise((resolve) => setImmediate(resolve));
@@ -36,6 +37,7 @@ function harness(isGuest = false, { noCv = false } = {}) {
   let mounted = false;
   const effects = [];
   const calls = { get: [], post: [], pending: [], success: [], error: [], scoreEnabled: [] };
+  const storage = new Map(isGuest ? [["guest_session_id", "test-guest"]] : [["token", "test-token"]]);
   const hooks = {
     ...React,
     useState(initial) {
@@ -57,7 +59,11 @@ function harness(isGuest = false, { noCv = false } = {}) {
   vm.runInNewContext(transform(source, { transforms: ["jsx", "imports"] }).code, {
     exports,
     console: { error() {} },
-    localStorage: { getItem: (key) => key === "token" ? "test-token" : "test-guest" },
+    localStorage: {
+      getItem: (key) => storage.get(key),
+      setItem: (key, value) => storage.set(key, value),
+      removeItem: (key) => storage.delete(key),
+    },
     require(name) {
       if (name === "react") return hooks;
       if (name === "axios") return {
@@ -85,13 +91,14 @@ function harness(isGuest = false, { noCv = false } = {}) {
         return { status: enabled ? "ready" : "guest", cv: noCv ? null : { _id: "cv-latest" }, retry() {}, selectCv() {} };
       };
       if (name.endsWith("/MatchScoreModal")) return function MatchScoreModal() { return null; };
-      if (/AuthModal|authModal|otpModal|MatchScoreModal/.test(name)) return () => null;
+      if (name.endsWith("/otpModal")) return function OtpModal() { return null; };
+      if (name.endsWith("/authModal")) return function AuthModal() { return null; };
       throw new Error(`Unexpected dependency: ${name}`);
     },
   });
   return {
-    calls,
-    render() { cursor = 0; return exports.default({ isGuest }); },
+    calls, storage,
+    render() { cursor = 0; return exports.default({ isGuest, guestMatches: isGuest ? jobs : undefined }); },
     async mount() {
       this.render();
       mounted = true;
@@ -199,6 +206,7 @@ test("guests open signup without submitting an application", async () => {
   assert.equal(applyButtons(tree).length, 0);
   const signup = all(tree).find((node) => node.type === "button" && text(node).includes("Sign up to Apply"));
   signup.props.onClick();
+  assert.deepEqual(app.calls.get, []);
   assert.equal(app.calls.post.length, 0);
   assert.ok(app.calls.scoreEnabled.every((enabled) => !enabled));
   assert.ok(all(app.render()).some((node) => node.props?.isOpen && node.props?.initialMode === "signup"));
@@ -234,17 +242,47 @@ test("recommended JD receives the original card match after loading the full job
   assert.equal(details.props.matchState.status, "ready");
   assert.equal(details.props.matchState.match.jobId, "job-a");
   assert.equal(details.props.matchState.match.matchScore, 83);
+  assert.equal(details.props.job.companyName, "Example Employer");
+  assert.equal(details.props.job.companyUrl, "https://example.com");
   assert.equal(app.calls.post.length, 0);
   assert.equal(app.calls.get.length, 2, "only recommendation feed and full JD are fetched");
 });
 
-test("recommended JD omits guest score and identifies a candidate without a CV", async () => {
+test("recommended JD uses the restricted guest mode and identifies a candidate without a CV", async () => {
   for (const [guest, options, expected] of [[true, {}, "guest"], [false, { noCv: true }, "no-cv"]]) {
     const app = harness(guest, options);
     const tree = await app.mount();
     await all(tree).find((node) => node.type === "button" && text(node).includes("Engineer A")).props.onClick();
     const details = all(app.render()).find((node) => node.type?.name === "JobDetailsModal");
     assert.equal(details.props.matchState.status, expected);
+    if (guest) {
+      assert.equal(details.props.guestPreview, true);
+      assert.equal(details.props.job.matchScore, 83);
+      assert.deepEqual(app.calls.get, []);
+    }
     assert.equal(app.calls.post.length, 0);
   }
+});
+
+test("guest cards hide employer data and the invitation carries the session through OTP", async () => {
+  const app = harness(true);
+  const tree = await app.mount();
+  assert.doesNotMatch(text(tree), /Example Employer/);
+  assert.equal(all(tree).filter((node) => node.type === "a").length, 0);
+  assert.match(text(tree), /Engineer A.*83%.*£40,000–£50,000.*React/s);
+
+  const ring = all(tree).find((node) => node.type?.name === "MatchScoreRing" && node.props.score === 83);
+  ring.props.onClick();
+  const invitation = all(app.render()).find((node) => node.type?.name === "MatchScoreModal");
+  assert.equal(invitation.props.isGuest, true);
+  invitation.props.onSignUp();
+  const auth = all(app.render()).find((node) => node.type?.name === "AuthModal");
+  assert.equal(auth.props.isOpen, true);
+  assert.equal(auth.props.initialMode, "signup");
+  auth.props.onOtpSent({ _id: "user", email: "test@example.invalid" });
+  assert.equal(app.storage.get("guest_session_id"), "test-guest");
+  const otp = all(app.render()).find((node) => node.type?.name === "OtpModal");
+  otp.props.onVerified({ token: "verified-token" });
+  assert.equal(app.storage.get("token"), "verified-token");
+  assert.equal(app.storage.has("guest_session_id"), false);
 });

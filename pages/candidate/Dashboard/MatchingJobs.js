@@ -7,7 +7,6 @@ import { jobDetailsMatchState } from "../../../components/Jobs/jobDetailsMatchSt
 import useLatestJobScores from "../../../components/Jobs/useLatestJobScores";
 import React, { useEffect, useRef, useState } from "react";
 import axios from "axios";
-import { useRouter } from "next/router";
 import { toast } from "react-toastify";
 import {
   FiAlertCircle, FiBriefcase, FiCheckCircle, FiFileText, FiInbox, FiLoader, FiLock, FiLogIn, FiTarget,
@@ -43,10 +42,10 @@ function JobCardSkeleton() {
   );
 }
 
-const MatchingJobs = ({ isGuest = false }) => {
-  const router = useRouter();
+const MatchingJobs = ({ isGuest = false, guestMatches = [], onSessionChange }) => {
   const [selectedMatch, setSelectedMatch] = useState(null);
-  const [matchedJobs, setMatchedJobs] = useState([]);
+  const [candidateMatches, setMatchedJobs] = useState([]);
+  const matchedJobs = isGuest ? guestMatches : candidateMatches;
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [selectedJob, setSelectedJob] = useState(null);
@@ -68,11 +67,15 @@ const MatchingJobs = ({ isGuest = false }) => {
     email: "",
   });
 
-  const openSignup = () => setAuthModal({ isOpen: true, mode: "signup" });
+  const openSignup = () => {
+    setSelectedMatch(null);
+    setSelectedJob(null);
+    setAuthModal({ isOpen: true, mode: "signup" });
+  };
 
   const handleAuthSuccess = () => {
     setAuthModal({ isOpen: false, mode: "signup" });
-    router.push("/candidate/dashboard");
+    onSessionChange?.();
   };
 
   const handleOtpSent = ({ _id, email }) => {
@@ -86,29 +89,10 @@ const MatchingJobs = ({ isGuest = false }) => {
       setMessage("");
 
       const token = localStorage.getItem("token");
-      const guestSessionId = localStorage.getItem("guest_session_id");
-
-      if (isGuest && !guestSessionId) {
-        setMessage("Please upload your CV first to see preview jobs.");
-        return;
-      }
-
-      const endpoint = isGuest
-        ? `${url}/guest/matched-jobs?guestSessionId=${guestSessionId}`
-        : `${url}/candidate/matched-jobs`;
-
-      const config = isGuest
-        ? {}
-        : {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          };
-
-      const res = await axios.get(endpoint, config);
-      const jobsData = res.data.matchedJobs || [];
-
-      setMatchedJobs(isGuest ? jobsData.slice(0, 3) : jobsData);
+      const res = await axios.get(`${url}/candidate/matched-jobs`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setMatchedJobs(res.data.matchedJobs || []);
     } catch (error) {
       console.error(error);
       setMessage(
@@ -119,7 +103,7 @@ const MatchingJobs = ({ isGuest = false }) => {
     }
   };
   useEffect(() => {
-    getMatchedJob();
+    if (!isGuest) getMatchedJob();
   }, [isGuest]);
 
 const openQuickApply = (job) => {
@@ -194,6 +178,11 @@ setSelectedJob(null);
 const openJobDetails = async (job) => {
   if (detailsLoadingId !== null) return;
   setSelectedMatch(null);
+
+  if (isGuest) {
+    setSelectedJob(job);
+    return;
+  }
 
   setDetailsLoadingId(String(job.jobId));
 
@@ -278,7 +267,7 @@ const openJobDetails = async (job) => {
   };
 
   const candidateCv = useLatestJobScores([], !isGuest);
-  const detailsMatch = selectedJob && matchedJobs.find((job) => String(job.jobId) === String(selectedJob.jobId || selectedJob._id));
+  const detailsMatch = !isGuest && selectedJob && matchedJobs.find((job) => String(job.jobId) === String(selectedJob.jobId || selectedJob._id));
   const scoreLabel = isGuest ? "Skill match" : "Match score";
   const showCount = !loading && !message;
 
@@ -382,10 +371,11 @@ const openJobDetails = async (job) => {
           {/* Matched jobs */}
           {!loading && matchedJobs.length > 0 && (
             <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-              {matchedJobs.map((job) => (
+              {matchedJobs.map((job, index) => (
                 <JobCard
-                  key={job.jobId}
-                  job={{ ...job, _id: job.jobId, status: job.status || "Open", keySkills: job.matchedSkills || [] }}
+                  key={isGuest ? index : job.jobId}
+                  job={{ ...job, _id: job.jobId, status: job.status || "Open", keySkills: isGuest ? job.keySkills : job.matchedSkills }}
+                  guestPreview={isGuest}
                   maxSkills={MAX_VISIBLE_SKILLS}
                   detailsLoading={detailsLoadingId === String(job.jobId)}
                   onViewDetails={() => openJobDetails(job)}
@@ -406,6 +396,8 @@ const openJobDetails = async (job) => {
   <JobDetailsModal
     job={selectedJob}
     matchState={jobDetailsMatchState(candidateCv, selectedJob, detailsMatch, isGuest)}
+    guestPreview={isGuest}
+    onGuestSignup={openSignup}
     onRetryMatch={candidateCv.retry}
     onUploadCv={() => openQuickApply(selectedJob)}
     onClose={() => setSelectedJob(null)}
@@ -443,11 +435,11 @@ const openJobDetails = async (job) => {
           onVerified={(data) => {
             if (data?.token) {
               localStorage.setItem("token", data.token);
+              localStorage.removeItem("guest_session_id");
             }
 
-            localStorage.removeItem("guest_session_id");
             setOtpModal({ isOpen: false, _id: "", email: "" });
-            router.push("/candidate/dashboard");
+            onSessionChange?.();
           }}
         />
       )}
@@ -456,6 +448,7 @@ const openJobDetails = async (job) => {
         <MatchScoreModal
           data={selectedMatch}
           isGuest={isGuest}
+          onSignUp={openSignup}
           onClose={() => setSelectedMatch(null)}
         />
       )}

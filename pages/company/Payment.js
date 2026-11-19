@@ -196,3 +196,5 @@
 // };
 
 // export default CompanyPayment;
+
+export { default } from "../../components/Pricing/PaymentPage";
